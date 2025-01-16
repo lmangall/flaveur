@@ -18,10 +18,10 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
+    "baseUrl": ".",  // This is correct, as src is at the root level
     "paths": {
-      "@/app/*": ["src/app/*"],
-      "@/components/*": ["src/components/*"],
+      "@/app/*": ["src/app/*"],  // Correct mapping
+      "@/components/*": ["src/app/components/*"],  // Correct mapping based on your structure
       "@/styles/*": ["src/styles/*"]
     }
   },
