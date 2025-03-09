@@ -82,6 +82,7 @@ export default function FlavourDetailPage() {
       try {
         const response = await fetch(`/api/flavours/${id}`);
         const data = await response.json();
+        console.log("Fetched data:", data);
         setFlavour(data);
       } catch (error) {
         console.error("Error fetching flavour data:", error);
@@ -115,12 +116,16 @@ export default function FlavourDetailPage() {
     });
   };
 
-  if (isLoading || !flavour) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  if (!flavour) {
+    return <div>No flavour data found.</div>;
   }
 
   return (
