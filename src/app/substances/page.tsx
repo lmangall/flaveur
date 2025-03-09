@@ -115,7 +115,7 @@ export default function SubstancesPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    fetch(`${API_URL}/substances`)
+    fetch(`${API_URL}/api/substances`)
       .then((res) => res.json())
       .then((data) => {
         setSubstances(data);
@@ -322,7 +322,9 @@ export default function SubstancesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() =>
-                            router.push(`/substances/${substance.fema_number}`)
+                            router.push(
+                              `/api/substances/${substance.fema_number}`
+                            )
                           }
                         >
                           View Details
@@ -330,7 +332,7 @@ export default function SubstancesPage() {
                         <DropdownMenuItem
                           onClick={() =>
                             router.push(
-                              `/substances/${substance.fema_number}/edit`
+                              `/api/substances/${substance.fema_number}/edit`
                             )
                           }
                         >
