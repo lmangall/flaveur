@@ -125,7 +125,7 @@ export default function SubstancesPage() {
         console.error("Error fetching substances:", error);
         setIsLoading(false);
       });
-  }, []);
+  }, [API_URL]);
 
   const filteredSubstances = substances.filter(
     (substance) =>

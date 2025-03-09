@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,12 +41,6 @@ import {
 } from "lucide-react";
 import React from "react";
 
-type Params = {
-  params: {
-    id: string;
-  };
-};
-
 type Flavour = {
   id: number;
   name: string;
@@ -77,65 +71,26 @@ type Flavour = {
   }>;
 };
 
-export default function FlavourDetailPage({ params }: Params) {
+export default function FlavourDetailPage() {
   const router = useRouter();
-  const id = params.id; // Directly use params.id
+  const { id } = useParams();
   const [flavour, setFlavour] = useState<Flavour | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching flavour data
-    setTimeout(() => {
-      const mockFlavour = {
-        id: Number.parseInt(id),
-        name: "Vanilla Bean Blend",
-        description:
-          "A rich vanilla flavor with authentic bean undertones, perfect for desserts and bakery applications.",
-        status: "published",
-        category: "Dessert",
-        category_id: 5,
-        baseUnit: "g/kg",
-        version: 1,
-        created_at: "2023-10-15T12:34:56Z",
-        updated_at: "2023-11-20T09:12:34Z",
-        is_public: true,
-        user: {
-          id: "user_123",
-          name: "John Doe",
-        },
-        substances: [
-          {
-            substance_id: 2219,
-            name: "Cinnamaldehyde",
-            concentration: 0.05,
-            unit: "g/kg",
-          },
-          {
-            substance_id: 2454,
-            name: "Ethyl vanillin",
-            concentration: 2.0,
-            unit: "g/kg",
-          },
-          {
-            substance_id: 3078,
-            name: "2-Acetylpyrazine",
-            concentration: 0.02,
-            unit: "g/kg",
-          },
-        ],
-        ingredients: [
-          {
-            flavour_id: 101,
-            name: "Base Vanilla",
-            concentration: 200,
-            unit: "g/kg",
-          },
-        ],
-      };
+    const fetchFlavour = async () => {
+      try {
+        const response = await fetch(`/api/flavours/${id}`);
+        const data = await response.json();
+        setFlavour(data);
+      } catch (error) {
+        console.error("Error fetching flavour data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      setFlavour(mockFlavour);
-      setIsLoading(false);
-    }, 1000);
+    fetchFlavour();
   }, [id]);
 
   const getStatusBadgeClasses = (status: string) => {
