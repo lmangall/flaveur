@@ -111,6 +111,22 @@ export default function SubstancesPage() {
     }, 1000);
   }, []);
 
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch(`${API_URL}/substances`)
+      .then((res) => res.json())
+      .then((data) => {
+        setSubstances(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching substances:", error);
+        setIsLoading(false);
+      });
+  }, []);
+
   const filteredSubstances = substances.filter(
     (substance) =>
       substance.common_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
