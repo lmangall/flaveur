@@ -1,11 +1,21 @@
-import {
-  ClerkProvider,
-  SignInButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs";
-import "./globals.css";
+import type React from "react";
+import "@/app/globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
+import Navbar from "@/components/navbar";
+import { Mona_Sans as FontSans } from "next/font/google";
+// import { cn } from "@/lib/utils";
+import { cn } from "src/app/lib/utils";
+
+export const fontSans = FontSans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+export const metadata = {
+  title: "Flavor Composition App",
+  description: "Create and manage flavor compositions",
+};
 
 export default function RootLayout({
   children,
@@ -15,16 +25,17 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body>
-          <header>
-            <SignedOut>
-              <SignInButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </header>
-          <main>{children}</main>
+        <body
+          className={cn(
+            "min-h-screen bg-background font-sans antialiased",
+            fontSans.variable
+          )}
+        >
+          <Navbar />
+          <div className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
+            {children}
+          </div>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>
