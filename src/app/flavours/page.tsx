@@ -62,68 +62,25 @@ export default function FlavoursPage() {
       return;
     }
 
-    // Simulate fetching flavours
-    setTimeout(() => {
-      const mockFlavours = [
-        {
-          id: 1,
-          name: "Vanilla Bean Blend",
-          description: "Rich vanilla flavor with bean undertones",
-          status: "published",
-          category: "Dessert",
-          unit: "g/kg",
-          createdAt: "2023-10-15",
-          isPublic: true,
-          version: 1,
-        },
-        {
-          id: 2,
-          name: "Citrus Explosion",
-          description: "Bright citrus blend with lemon and orange",
-          status: "draft",
-          category: "Fruit",
-          unit: "mL/L",
-          createdAt: "2023-11-22",
-          isPublic: false,
-          version: 2,
-        },
-        {
-          id: 3,
-          name: "Cherry Cola",
-          description: "Classic cherry cola flavor",
-          status: "published",
-          category: "Beverage",
-          unit: "g/L",
-          createdAt: "2023-09-05",
-          isPublic: true,
-          version: 1,
-        },
-        {
-          id: 4,
-          name: "Mint Chocolate",
-          description: "Cooling mint with rich chocolate notes",
-          status: "archived",
-          category: "Dessert",
-          unit: "g/kg",
-          createdAt: "2023-08-18",
-          isPublic: false,
-          version: 3,
-        },
-        {
-          id: 5,
-          name: "Spicy Cinnamon",
-          description: "Warm cinnamon with a spicy kick",
-          status: "draft",
-          category: "Spice",
-          unit: "g/kg",
-          createdAt: "2023-12-01",
-          isPublic: false,
-          version: 1,
-        },
-      ];
-      setFlavours(mockFlavours);
-      setIsLoading(false);
-    }, 1000);
+    // Fetch flavours from the API
+    const fetchFlavours = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours`
+        );
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        setFlavours(data);
+      } catch (error) {
+        console.error("Failed to fetch flavours:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFlavours();
   }, [isSignedIn, router]);
 
   const filteredFlavours = flavours.filter((flavour) => {
