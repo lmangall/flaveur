@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+import { useAuth } from "@clerk/nextjs"; // Import useAuth
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +58,7 @@ export default function FlavoursPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const { getToken } = useAuth(); // Move useAuth here
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -65,12 +69,20 @@ export default function FlavoursPage() {
     // Fetch flavours from the API
     const fetchFlavours = async () => {
       try {
+        const token = await getToken(); // Get Clerk token
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours`
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Send token
+            },
+          }
         );
+
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
+
         const data = await response.json();
         setFlavours(data);
       } catch (error) {
