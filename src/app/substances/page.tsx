@@ -56,64 +56,63 @@ export default function SubstancesPage() {
     flavor_profile: "",
   });
 
-  useEffect(() => {
-    // Simulate fetching substances
-    setTimeout(() => {
-      const mockSubstances = [
-        {
-          fema_number: 2219,
-          common_name: "Cinnamaldehyde",
-          is_natural: true,
-          cas_id: "104-55-2",
-          odor: "Cinnamon, spicy",
-          functional_groups: "Aldehyde",
-          flavor_profile: "Warm, sweet, spicy",
-        },
-        {
-          fema_number: 2454,
-          common_name: "Ethyl vanillin",
-          is_natural: false,
-          cas_id: "121-32-4",
-          odor: "Intense vanilla",
-          functional_groups: "Phenolic aldehyde",
-          flavor_profile: "Strong vanilla, creamy",
-        },
-        {
-          fema_number: 2491,
-          common_name: "Benzaldehyde",
-          is_natural: true,
-          cas_id: "100-52-7",
-          odor: "Almond, cherry",
-          functional_groups: "Aldehyde",
-          flavor_profile: "Fruity, nutty",
-        },
-        {
-          fema_number: 2622,
-          common_name: "γ-Undecalactone",
-          is_natural: true,
-          cas_id: "104-67-6",
-          odor: "Peach, apricot",
-          functional_groups: "Lactone",
-          flavor_profile: "Fruity, creamy, peach",
-        },
-        {
-          fema_number: 3078,
-          common_name: "2-Acetylpyrazine",
-          is_natural: true,
-          cas_id: "22047-25-2",
-          odor: "Popcorn, nutty",
-          functional_groups: "Ketone, pyrazine",
-          flavor_profile: "Toasted, nutty, bready",
-        },
-      ];
-      setSubstances(mockSubstances);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
-
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   useEffect(() => {
+    // Simulate fetching substances
+    // Removed placeholder substances
+    // setTimeout(() => {
+    //   const mockSubstances = [
+    //     {
+    //       fema_number: 2219,
+    //       common_name: "Cinnamaldehyde",
+    //       is_natural: true,
+    //       cas_id: "104-55-2",
+    //       odor: "Cinnamon, spicy",
+    //       functional_groups: "Aldehyde",
+    //       flavor_profile: "Warm, sweet, spicy",
+    //     },
+    //     {
+    //       fema_number: 2454,
+    //       common_name: "Ethyl vanillin",
+    //       is_natural: false,
+    //       cas_id: "121-32-4",
+    //       odor: "Intense vanilla",
+    //       functional_groups: "Phenolic aldehyde",
+    //       flavor_profile: "Strong vanilla, creamy",
+    //     },
+    //     {
+    //       fema_number: 2491,
+    //       common_name: "Benzaldehyde",
+    //       is_natural: true,
+    //       cas_id: "100-52-7",
+    //       odor: "Almond, cherry",
+    //       functional_groups: "Aldehyde",
+    //       flavor_profile: "Fruity, nutty",
+    //     },
+    //     {
+    //       fema_number: 2622,
+    //       common_name: "γ-Undecalactone",
+    //       is_natural: true,
+    //       cas_id: "104-67-6",
+    //       odor: "Peach, apricot",
+    //       functional_groups: "Lactone",
+    //       flavor_profile: "Fruity, creamy, peach",
+    //     },
+    //     {
+    //       fema_number: 3078,
+    //       common_name: "2-Acetylpyrazine",
+    //       is_natural: true,
+    //       cas_id: "22047-25-2",
+    //       odor: "Popcorn, nutty",
+    //       functional_groups: "Ketone, pyrazine",
+    //       flavor_profile: "Toasted, nutty, bready",
+    //     },
+    //   ];
+    //   setSubstances(mockSubstances);
+    //   setIsLoading(false);
+    // }, 1000);
+    // Fetch substances from the API
     setIsLoading(true);
     fetch(`${API_URL}/api/substances`)
       .then((res) => res.json())
