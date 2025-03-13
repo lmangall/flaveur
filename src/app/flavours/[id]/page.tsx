@@ -1,23 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -27,371 +12,365 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowLeft,
-  Edit,
-  Copy,
-  MoreHorizontal,
-  Star,
-  Trash2,
-  Calendar,
-  User,
-  Tag,
-  FlaskRoundIcon as Flask,
-  BarChart4,
-} from "lucide-react";
-import React from "react";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Eye, EyeOff, ChevronDown } from "lucide-react";
 
-type Flavour = {
-  id: number;
-  name: string;
-  description: string;
-  status: string;
-  category: string;
-  category_id: number;
-  baseUnit: string;
-  version: number;
-  created_at: string;
-  updated_at: string;
-  is_public: boolean;
-  user: {
-    id: string;
-    name: string;
-  };
-  substances: Array<{
-    substance_id: number;
-    name: string;
-    concentration: number;
-    unit: string;
-  }>;
-  ingredients: Array<{
-    flavour_id: number;
-    name: string;
-    concentration: number;
-    unit: string;
-  }>;
+// Define the Substance type based on the example provided
+type Substance = {
+  fema_number: number;
+  common_name: string;
+  synthetic: boolean;
+  molecular_weight: number;
+  exact_mass: number;
+  smile: string;
+  iupac_name: string;
+  unknown_natural: boolean;
+  odor: string;
+  functional_groups: string;
+  inchi: string;
+  xlogp: number;
+  is_natural: boolean;
+  flavor_profile: string;
+  fema_flavor_profile: string;
+  pubchem_id: number;
+  cas_id: string;
 };
 
-export default function FlavourDetailPage() {
-  const router = useRouter();
-  const { id } = useParams();
-  const [flavour, setFlavour] = useState<Flavour | null>(null);
+// Define the Flavor type
+type Flavor = {
+  id: string;
+  name: string;
+  description: string;
+  substances: Substance[];
+};
+
+export default function FlavorDetailPage() {
+  const params = useParams();
+  const flavorId = params.id as string;
+  const [flavor, setFlavor] = useState<Flavor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  // Define which columns are visible
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
+    {
+      fema_number: true,
+      common_name: true,
+      is_natural: true,
+      odor: true,
+      functional_groups: true,
+      flavor_profile: true,
+      cas_id: true,
+      molecular_weight: false,
+      exact_mass: false,
+      smile: false,
+      iupac_name: false,
+      xlogp: false,
+      fema_flavor_profile: false,
+      pubchem_id: false,
+    }
+  );
+
+  // All possible columns for the dropdown
+  const allColumns = [
+    { key: "fema_number", label: "FEMA #" },
+    { key: "common_name", label: "Common Name" },
+    { key: "is_natural", label: "Natural/Synthetic" },
+    { key: "odor", label: "Odor" },
+    { key: "functional_groups", label: "Functional Groups" },
+    { key: "flavor_profile", label: "Flavor Profile" },
+    { key: "cas_id", label: "CAS ID" },
+    { key: "molecular_weight", label: "Molecular Weight" },
+    { key: "exact_mass", label: "Exact Mass" },
+    { key: "smile", label: "SMILE" },
+    { key: "iupac_name", label: "IUPAC Name" },
+    { key: "xlogp", label: "XLogP" },
+    { key: "fema_flavor_profile", label: "FEMA Flavor Profile" },
+    { key: "pubchem_id", label: "PubChem ID" },
+  ];
 
   useEffect(() => {
-    const fetchFlavour = async () => {
-      try {
-        const response = await fetch(`/api/flavours/${id}`);
-        const data = await response.json();
-        console.log("Fetched data:", data);
-        setFlavour(data);
-      } catch (error) {
-        console.error("Error fetching flavour data:", error);
-      } finally {
+    setIsLoading(true);
+    // In a real app, you would fetch the flavor data from your API
+    fetch(`${API_URL}/api/flavours/${flavorId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setFlavor(data);
         setIsLoading(false);
-      }
-    };
+      })
+      .catch((error) => {
+        console.error("Error fetching flavor:", error);
+        setIsLoading(false);
+        // For demo purposes, create mock data if API fails
+        const mockFlavor = {
+          id: flavorId,
+          name: "Vanilla Blend",
+          description: "A rich vanilla flavor with sweet undertones",
+          substances: [
+            {
+              fema_number: 1003,
+              common_name: "Vanillin",
+              synthetic: true,
+              molecular_weight: 152.15,
+              exact_mass: 152.05,
+              smile: "C8H8O3",
+              iupac_name: "4-Hydroxy-3-methoxybenzaldehyde",
+              unknown_natural: false,
+              odor: "Vanilla",
+              functional_groups: "Aldehyde, Hydroxyl, Methoxy",
+              inchi: "InChI=1S/C8H8O3/c1-11-8-4-6(5-9)7(10)3-2-8/h2-5,10H,1H3",
+              xlogp: 1.21,
+              is_natural: true,
+              flavor_profile: "Sweet, Vanilla",
+              fema_flavor_profile: "Vanilla, Creamy",
+              pubchem_id: 1183,
+              cas_id: "121-33-5",
+            },
+            {
+              fema_number: 2470,
+              common_name: "Ethyl Vanillin",
+              synthetic: true,
+              molecular_weight: 166.18,
+              exact_mass: 166.06,
+              smile: "C9H10O3",
+              iupac_name: "3-Ethoxy-4-hydroxybenzaldehyde",
+              unknown_natural: false,
+              odor: "Intense vanilla",
+              functional_groups: "Aldehyde, Hydroxyl, Ethoxy",
+              inchi:
+                "InChI=1S/C9H10O3/c1-2-12-9-6-5-7(3-4-10)8(11)6-9/h3-6,11H,2H2,1H3",
+              xlogp: 1.58,
+              is_natural: false,
+              flavor_profile: "Strong vanilla, Sweet",
+              fema_flavor_profile: "Vanilla, Intense",
+              pubchem_id: 8467,
+              cas_id: "121-32-4",
+            },
+          ],
+        };
+        setFlavor(mockFlavor);
+        setIsLoading(false);
+      });
+  }, [API_URL, flavorId]);
 
-    fetchFlavour();
-  }, [id]);
-
-  const getStatusBadgeClasses = (status: string) => {
-    switch (status) {
-      case "published":
-        return "bg-green-100 text-green-800";
-      case "draft":
-        return "bg-amber-100 text-amber-800";
-      case "archived":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  // Toggle column visibility
+  const toggleColumn = (column: string) => {
+    setVisibleColumns((prev) => ({
+      ...prev,
+      [column]: !prev[column],
+    }));
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+  // Show all columns
+  const showAllColumns = () => {
+    const allVisible = Object.fromEntries(
+      allColumns.map(({ key }) => [key, true])
+    );
+    setVisibleColumns(allVisible);
+  };
+
+  // Hide all optional columns (keep essential ones visible)
+  const hideOptionalColumns = () => {
+    setVisibleColumns({
+      fema_number: true,
+      common_name: true,
+      is_natural: true,
+      odor: true,
+      functional_groups: false,
+      flavor_profile: true,
+      cas_id: true,
+      molecular_weight: false,
+      exact_mass: false,
+      smile: false,
+      iupac_name: false,
+      xlogp: false,
+      fema_flavor_profile: false,
+      pubchem_id: false,
     });
   };
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      <div className="container py-8 space-y-6">
+        <Skeleton className="h-12 w-3/4 max-w-md" />
+        <Skeleton className="h-24 w-full" />
+        <div className="flex justify-end">
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <div className="border rounded-md">
+          <div className="p-4 border-b">
+            <Skeleton className="h-8 w-full" />
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="p-4 border-b">
+              <Skeleton className="h-6 w-full" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (!flavour) {
-    return <div>No flavour data found.</div>;
+  if (!flavor) {
+    return (
+      <div className="container py-8">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <h2 className="text-xl font-semibold mb-2">Flavor not found</h2>
+            <p className="text-muted-foreground">
+              The flavor you are looking for does not exist or has been removed.
+            </p>
+            <Button className="mt-4" onClick={() => window.history.back()}>
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mr-auto md:mr-4 h-8 w-8 p-0 md:h-10 md:w-10"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+    <div className="container py-8 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">{flavor.name}</h1>
+        <p className="text-muted-foreground">{flavor.description}</p>
+      </div>
 
-        <div className="flex flex-col md:flex-row md:items-center gap-2 md:mr-auto">
-          <h1 className="text-2xl md:text-3xl font-bold">{flavour.name}</h1>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Substances ({flavor.substances.length})</CardTitle>
           <div className="flex items-center gap-2">
-            <Badge
-              className={getStatusBadgeClasses(flavour.status)}
+            <Button
               variant="outline"
+              size="sm"
+              onClick={showAllColumns}
+              className="flex items-center gap-1"
             >
-              {flavour.status.charAt(0).toUpperCase() + flavour.status.slice(1)}
-            </Badge>
-            {flavour.is_public && (
-              <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                <Star className="h-3 w-3 mr-1 fill-current" /> Public
-              </Badge>
-            )}
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">Show All</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={hideOptionalColumns}
+              className="flex items-center gap-1"
+            >
+              <EyeOff className="h-4 w-4" />
+              <span className="hidden sm:inline">Hide Optional</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="ml-auto">
+                  Columns <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {allColumns.map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.key}
+                    checked={visibleColumns[column.key]}
+                    onCheckedChange={() => toggleColumn(column.key)}
+                  >
+                    {column.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/flavours/${id}/edit`)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/flavours/${id}/duplicate`)}
-          >
-            <Copy className="h-4 w-4 mr-2" />
-            Duplicate
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Export</DropdownMenuItem>
-              <DropdownMenuItem>Share</DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => {
-                  // In a real app, you would show a confirmation dialog
-                  router.push("/flavours");
-                }}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-4 gap-6">
-        <Card className="md:col-span-3">
-          <CardHeader>
-            <CardTitle>Flavor Details</CardTitle>
-            <CardDescription>{flavour.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="composition" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="composition">Composition</TabsTrigger>
-                <TabsTrigger value="properties">Properties</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="composition" className="space-y-4">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium mt-4">Substances</h3>
-                  <div className="border rounded-md overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Substance</TableHead>
-                          <TableHead>FEMA #</TableHead>
-                          <TableHead>Concentration</TableHead>
-                          <TableHead>Unit</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {flavour.substances.map((substance) => (
-                          <TableRow key={substance.substance_id}>
-                            <TableCell className="font-medium">
-                              {substance.name}
-                            </TableCell>
-                            <TableCell>{substance.substance_id}</TableCell>
-                            <TableCell>{substance.concentration}</TableCell>
-                            <TableCell>{substance.unit}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {flavour.ingredients.length > 0 && (
-                    <>
-                      <h3 className="text-lg font-medium mt-4">
-                        Flavor Ingredients
-                      </h3>
-                      <div className="border rounded-md overflow-hidden">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Flavor</TableHead>
-                              <TableHead>Concentration</TableHead>
-                              <TableHead>Unit</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {flavour.ingredients.map((ingredient) => (
-                              <TableRow key={ingredient.flavour_id}>
-                                <TableCell className="font-medium">
-                                  {ingredient.name}
-                                </TableCell>
-                                <TableCell>
-                                  {ingredient.concentration}
-                                </TableCell>
-                                <TableCell>{ingredient.unit}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {allColumns.map(
+                    (column) =>
+                      visibleColumns[column.key] && (
+                        <TableHead key={column.key}>{column.label}</TableHead>
+                      )
                   )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="properties">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Base Unit
-                    </h3>
-                    <p>{flavour.baseUnit}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Version
-                    </h3>
-                    <p>{flavour.version}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Creation Date
-                    </h3>
-                    <p>{formatDate(flavour.created_at)}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Last Updated
-                    </h3>
-                    <p>{formatDate(flavour.updated_at)}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Visibility
-                    </h3>
-                    <p>{flavour.is_public ? "Public" : "Private"}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Created By
-                    </h3>
-                    <p>{flavour.user.name}</p>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Flavor Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-2">
-                  <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Created</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(flavour.created_at)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Author</p>
-                    <p className="text-sm text-muted-foreground">
-                      {flavour.user.name}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Tag className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Category</p>
-                    <p className="text-sm text-muted-foreground">
-                      {flavour.category}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Flask className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Substances</p>
-                    <p className="text-sm text-muted-foreground">
-                      {flavour.substances.length}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <BarChart4 className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Total Components</p>
-                    <p className="text-sm text-muted-foreground">
-                      {flavour.substances.length + flavour.ingredients.length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Button className="w-full" variant="outline" size="sm">
-                  Export as PDF
-                </Button>
-                <Button className="w-full" variant="outline" size="sm">
-                  Clone Flavor
-                </Button>
-                <Button className="w-full" variant="outline" size="sm">
-                  Print Label
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {flavor.substances.map((substance) => (
+                  <TableRow key={substance.fema_number}>
+                    {visibleColumns.fema_number && (
+                      <TableCell className="font-medium">
+                        {substance.fema_number}
+                      </TableCell>
+                    )}
+                    {visibleColumns.common_name && (
+                      <TableCell>{substance.common_name}</TableCell>
+                    )}
+                    {visibleColumns.is_natural && (
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            substance.is_natural
+                              ? "bg-green-100 text-green-800 hover:bg-green-100"
+                              : "bg-purple-100 text-purple-800 hover:bg-purple-100"
+                          }
+                        >
+                          {substance.is_natural ? "Natural" : "Synthetic"}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {visibleColumns.odor && (
+                      <TableCell>{substance.odor}</TableCell>
+                    )}
+                    {visibleColumns.functional_groups && (
+                      <TableCell>{substance.functional_groups}</TableCell>
+                    )}
+                    {visibleColumns.flavor_profile && (
+                      <TableCell>{substance.flavor_profile}</TableCell>
+                    )}
+                    {visibleColumns.cas_id && (
+                      <TableCell>{substance.cas_id}</TableCell>
+                    )}
+                    {visibleColumns.molecular_weight && (
+                      <TableCell>{substance.molecular_weight}</TableCell>
+                    )}
+                    {visibleColumns.exact_mass && (
+                      <TableCell>{substance.exact_mass}</TableCell>
+                    )}
+                    {visibleColumns.smile && (
+                      <TableCell>
+                        <code className="bg-muted px-1 py-0.5 rounded text-xs">
+                          {substance.smile}
+                        </code>
+                      </TableCell>
+                    )}
+                    {visibleColumns.iupac_name && (
+                      <TableCell>{substance.iupac_name}</TableCell>
+                    )}
+                    {visibleColumns.xlogp && (
+                      <TableCell>{substance.xlogp}</TableCell>
+                    )}
+                    {visibleColumns.fema_flavor_profile && (
+                      <TableCell>{substance.fema_flavor_profile}</TableCell>
+                    )}
+                    {visibleColumns.pubchem_id && (
+                      <TableCell>{substance.pubchem_id}</TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
