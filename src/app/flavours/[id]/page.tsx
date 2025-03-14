@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { useAuth } from "@clerk/nextjs"; // Import useAuth
 
 // Define the Substance type based on the example provided
 type Substance = {
@@ -55,9 +56,13 @@ type Flavor = {
 
 export default function FlavorDetailPage() {
   const params = useParams();
+  console.log("Params:", params);
   const flavorId = params.id as string;
+  console.log("Flavor ID:", flavorId);
   const [flavor, setFlavor] = useState<Flavor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { getToken } = useAuth();
+
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   // Define which columns are visible
@@ -99,68 +104,36 @@ export default function FlavorDetailPage() {
   ];
 
   useEffect(() => {
-    setIsLoading(true);
-    // In a real app, you would fetch the flavor data from your API
-    fetch(`${API_URL}/api/flavours/${flavorId}`)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchFlavorData = async () => {
+      setIsLoading(true);
+      try {
+        const token = await getToken();
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavorId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const data = await response.json();
         setFlavor(data);
-        setIsLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching flavor:", error);
+      } finally {
         setIsLoading(false);
-        // For demo purposes, create mock data if API fails
-        const mockFlavor = {
-          id: flavorId,
-          name: "Vanilla Blend",
-          description: "A rich vanilla flavor with sweet undertones",
-          substances: [
-            {
-              fema_number: 1003,
-              common_name: "Vanillin",
-              synthetic: true,
-              molecular_weight: 152.15,
-              exact_mass: 152.05,
-              smile: "C8H8O3",
-              iupac_name: "4-Hydroxy-3-methoxybenzaldehyde",
-              unknown_natural: false,
-              odor: "Vanilla",
-              functional_groups: "Aldehyde, Hydroxyl, Methoxy",
-              inchi: "InChI=1S/C8H8O3/c1-11-8-4-6(5-9)7(10)3-2-8/h2-5,10H,1H3",
-              xlogp: 1.21,
-              is_natural: true,
-              flavor_profile: "Sweet, Vanilla",
-              fema_flavor_profile: "Vanilla, Creamy",
-              pubchem_id: 1183,
-              cas_id: "121-33-5",
-            },
-            {
-              fema_number: 2470,
-              common_name: "Ethyl Vanillin",
-              synthetic: true,
-              molecular_weight: 166.18,
-              exact_mass: 166.06,
-              smile: "C9H10O3",
-              iupac_name: "3-Ethoxy-4-hydroxybenzaldehyde",
-              unknown_natural: false,
-              odor: "Intense vanilla",
-              functional_groups: "Aldehyde, Hydroxyl, Ethoxy",
-              inchi:
-                "InChI=1S/C9H10O3/c1-2-12-9-6-5-7(3-4-10)8(11)6-9/h3-6,11H,2H2,1H3",
-              xlogp: 1.58,
-              is_natural: false,
-              flavor_profile: "Strong vanilla, Sweet",
-              fema_flavor_profile: "Vanilla, Intense",
-              pubchem_id: 8467,
-              cas_id: "121-32-4",
-            },
-          ],
-        };
-        setFlavor(mockFlavor);
-        setIsLoading(false);
-      });
-  }, [API_URL, flavorId]);
+      }
+    };
+
+    if (flavorId) {
+      fetchFlavorData();
+    }
+  }, [API_URL, flavorId, getToken]);
 
   // Toggle column visibility
   const toggleColumn = (column: string) => {

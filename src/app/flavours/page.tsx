@@ -51,6 +51,18 @@ type Flavour = {
   version: number;
 };
 
+type ApiFlavour = {
+  flavour_id: number; // Adjust the type based on your API response
+  name?: string;
+  description?: string;
+  status?: string;
+  category_id?: number;
+  base_unit?: string;
+  created_at?: string;
+  is_public?: boolean;
+  version?: number;
+};
+
 export default function FlavoursPage() {
   const { isSignedIn } = useUser();
   const router = useRouter();
@@ -84,7 +96,22 @@ export default function FlavoursPage() {
         }
 
         const data = await response.json();
-        setFlavours(data);
+
+        // Map the API response to match our Flavour type
+        // This fixes the property name mismatch between API and frontend
+        const processedFlavours = data.map((item: ApiFlavour) => ({
+          id: item.flavour_id, // Use flavour_id as id
+          name: item.name || "Unnamed",
+          description: item.description || "",
+          status: item.status || "draft",
+          category: item.category_id ? `Category ${item.category_id}` : "Other",
+          unit: item.base_unit || "",
+          createdAt: item.created_at || new Date().toISOString(),
+          isPublic: !!item.is_public,
+          version: item.version || 1,
+        }));
+
+        setFlavours(processedFlavours);
       } catch (error) {
         console.error("Failed to fetch flavours:", error);
       } finally {
@@ -93,7 +120,7 @@ export default function FlavoursPage() {
     };
 
     fetchFlavours();
-  }, [isSignedIn, router]);
+  }, [isSignedIn, router, getToken]);
 
   const filteredFlavours = flavours.filter((flavour) => {
     const matchesSearch = flavour.name
@@ -195,7 +222,7 @@ export default function FlavoursPage() {
                     </span>
                   </TableCell>
                   <TableCell>{flavour.category}</TableCell>
-                  <TableCell>v{flavour.version}</TableCell>
+                  <TableCell>v{flavour.version || 1}</TableCell>
                   <TableCell>
                     {flavour.isPublic ? (
                       <span className="flex items-center gap-1">
