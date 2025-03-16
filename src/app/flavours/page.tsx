@@ -78,6 +78,7 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
     { attribute: "Umami", value: 50 },
     { attribute: "Saltiness", value: 50 },
   ]);
+  const [isChanged, setIsChanged] = useState(false);
 
   const router = useRouter();
 
@@ -85,6 +86,17 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
     setChartData((prev) =>
       prev.map((item, i) => (i === index ? { ...item, value: newValue } : item))
     );
+    setIsChanged(true);
+  };
+
+  const handleSaveButton = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent default behavior if necessary
+    event.preventDefault();
+
+    // Your existing save logic here
+    // For example, you might want to save the chart data
+    console.log("Save button clicked");
+    setIsChanged(false); // Reset the change state after saving
   };
 
   const chartConfig = {
@@ -112,10 +124,11 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
       </CardHeader>
       <CardContent>
         {showChart ? (
-          <div>
+          <div className="flex items-center justify-between">
+            {/* Left Side - Radar Chart */}
             <ChartContainer
               config={chartConfig}
-              className="mx-auto aspect-square h-[200px]"
+              className="h-[200px] w-[200px]"
             >
               <RadarChart data={chartData}>
                 <ChartTooltip
@@ -128,33 +141,41 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
                   dataKey="value"
                   fill="blue"
                   fillOpacity={0.6}
-                  dot={{
-                    r: 4,
-                    fillOpacity: 1,
-                  }}
+                  dot={{ r: 4, fillOpacity: 1 }}
                 />
               </RadarChart>
             </ChartContainer>
 
-            {/* Input Fields for Custom Values */}
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            {/* Right Side - Adjusters */}
+            <div className="flex flex-col gap-1 text-xs w-1/2">
               {chartData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <label className="text-sm font-medium w-1/2">
-                    {item.attribute}
-                  </label>
-                  <Input
-                    type="number"
-                    value={item.value}
-                    min={0}
-                    max={100}
-                    className="w-16 text-center"
-                    onChange={(e) =>
-                      handleChange(index, Number(e.target.value))
+                <div key={index} className="flex items-center gap-1">
+                  {/* Label - Smaller Width */}
+                  <label className="w-3/5 text-right">{item.attribute}</label>
+
+                  {/* Editable Text - Smaller, Centered */}
+                  <span
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="w-12 px-1 py-0.5 text-center border rounded bg-muted/50"
+                    onBlur={(e) =>
+                      handleChange(index, Number(e.target.textContent))
                     }
-                  />
+                  >
+                    {item.value}
+                  </span>
                 </div>
               ))}
+              {isChanged && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 self-end text-xs px-2 py-1"
+                  onClick={handleSaveButton}
+                >
+                  Save
+                </Button>
+              )}
             </div>
           </div>
         ) : (
