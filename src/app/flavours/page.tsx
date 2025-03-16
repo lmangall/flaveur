@@ -14,15 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { Switch } from "@/components/ui/switch";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +36,116 @@ import {
   Star,
   StarOff,
 } from "lucide-react";
+import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
+// Flavor Profile Component
+type FlavorProfileData = {
+  attribute: string;
+  value: number;
+};
+
+type RadarFlavorProfileProps = {
+  initialData?: FlavorProfileData[];
+  onSave?: (data: FlavorProfileData[]) => void;
+  className?: string;
+};
+
+function RadarFlavorProfile({
+  initialData = [
+    { attribute: "Sweetness", value: 50 },
+    { attribute: "Sourness", value: 50 },
+    { attribute: "Bitterness", value: 50 },
+    { attribute: "Umami", value: 50 },
+    { attribute: "Saltiness", value: 50 },
+  ],
+  onSave,
+  className = "",
+}: RadarFlavorProfileProps) {
+  const [chartData, setChartData] = useState<FlavorProfileData[]>(initialData);
+  const [isChanged, setIsChanged] = useState(false);
+
+  const handleChange = (index: number, newValue: number) => {
+    setChartData((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, value: newValue } : item))
+    );
+    setIsChanged(true);
+  };
+
+  const handleSaveButton = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (onSave) {
+      onSave(chartData);
+    }
+    setIsChanged(false);
+  };
+
+  const chartConfig = {
+    value: {
+      label: "Intensity",
+      color: "hsl(var(--primary))",
+    },
+  } satisfies ChartConfig;
+
+  return (
+    <div className={`flex items-center justify-between ${className}`}>
+      {/* Radar Chart */}
+      <ChartContainer config={chartConfig} className="h-[200px] w-[200px]">
+        <RadarChart data={chartData}>
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel />}
+          />
+          <PolarGrid />
+          <PolarAngleAxis dataKey="attribute" />
+          <Radar
+            dataKey="value"
+            fill="blue"
+            fillOpacity={0.6}
+            dot={{ r: 4, fillOpacity: 1 }}
+          />
+        </RadarChart>
+      </ChartContainer>
+
+      {/* Adjusters */}
+      <div className="flex flex-col gap-1 text-xs w-1/2">
+        {chartData.map((item, index) => (
+          <div key={index} className="flex items-center gap-1">
+            {/* Label */}
+            <label className="w-3/5 text-right">{item.attribute}</label>
+
+            {/* Editable Text */}
+            <span
+              contentEditable
+              suppressContentEditableWarning
+              className="w-12 px-1 py-0.5 text-center border rounded bg-muted/50"
+              onBlur={(e) => handleChange(index, Number(e.target.textContent))}
+            >
+              {item.value}
+            </span>
+          </div>
+        ))}
+        {isChanged && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2 self-end text-xs px-2 py-1"
+            onClick={handleSaveButton}
+          >
+            Save
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Types for flavours
 type Flavour = {
   id: number;
   name: string;
@@ -58,7 +159,7 @@ type Flavour = {
 };
 
 type ApiFlavour = {
-  flavour_id: number; // Adjust the type based on your API response
+  flavour_id: number;
   name?: string;
   description?: string;
   status?: string;
@@ -69,42 +170,15 @@ type ApiFlavour = {
   version?: number;
 };
 
+// Flavour Card Component
 function FlavourCard({ flavour }: { flavour: Flavour }) {
   const [showChart, setShowChart] = useState(false);
-  const [chartData, setChartData] = useState([
-    { attribute: "Sweetness", value: 50 },
-    { attribute: "Sourness", value: 50 },
-    { attribute: "Bitterness", value: 50 },
-    { attribute: "Umami", value: 50 },
-    { attribute: "Saltiness", value: 50 },
-  ]);
-  const [isChanged, setIsChanged] = useState(false);
-
   const router = useRouter();
 
-  const handleChange = (index: number, newValue: number) => {
-    setChartData((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, value: newValue } : item))
-    );
-    setIsChanged(true);
+  const handleSaveProfile = (data: FlavorProfileData[]) => {
+    console.log("Saving flavor profile for:", flavour.name, data);
+    // Here you would implement the actual save logic to your backend
   };
-
-  const handleSaveButton = (event: React.MouseEvent<HTMLButtonElement>) => {
-    // Prevent default behavior if necessary
-    event.preventDefault();
-
-    // Your existing save logic here
-    // For example, you might want to save the chart data
-    console.log("Save button clicked");
-    setIsChanged(false); // Reset the change state after saving
-  };
-
-  const chartConfig = {
-    value: {
-      label: "Intensity",
-      color: "hsl(var(--primary))",
-    },
-  } satisfies ChartConfig;
 
   return (
     <Card className="w-full">
@@ -124,60 +198,7 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
       </CardHeader>
       <CardContent>
         {showChart ? (
-          <div className="flex items-center justify-between">
-            {/* Left Side - Radar Chart */}
-            <ChartContainer
-              config={chartConfig}
-              className="h-[200px] w-[200px]"
-            >
-              <RadarChart data={chartData}>
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                />
-                <PolarGrid />
-                <PolarAngleAxis dataKey="attribute" />
-                <Radar
-                  dataKey="value"
-                  fill="blue"
-                  fillOpacity={0.6}
-                  dot={{ r: 4, fillOpacity: 1 }}
-                />
-              </RadarChart>
-            </ChartContainer>
-
-            {/* Right Side - Adjusters */}
-            <div className="flex flex-col gap-1 text-xs w-1/2">
-              {chartData.map((item, index) => (
-                <div key={index} className="flex items-center gap-1">
-                  {/* Label - Smaller Width */}
-                  <label className="w-3/5 text-right">{item.attribute}</label>
-
-                  {/* Editable Text - Smaller, Centered */}
-                  <span
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="w-12 px-1 py-0.5 text-center border rounded bg-muted/50"
-                    onBlur={(e) =>
-                      handleChange(index, Number(e.target.textContent))
-                    }
-                  >
-                    {item.value}
-                  </span>
-                </div>
-              ))}
-              {isChanged && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 self-end text-xs px-2 py-1"
-                  onClick={handleSaveButton}
-                >
-                  Save
-                </Button>
-              )}
-            </div>
-          </div>
+          <RadarFlavorProfile onSave={handleSaveProfile} />
         ) : (
           <div className="space-y-2">
             <p className="text-sm">{flavour.description || "No description"}</p>
@@ -255,6 +276,7 @@ const getStatusBadgeClasses = (status: string) => {
   }
 };
 
+// Main Page Component
 export default function FlavoursPage() {
   const { isSignedIn } = useUser();
   const router = useRouter();
@@ -262,7 +284,7 @@ export default function FlavoursPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
-  const { getToken } = useAuth(); // Move useAuth here
+  const { getToken } = useAuth();
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -273,12 +295,12 @@ export default function FlavoursPage() {
     // Fetch flavours from the API
     const fetchFlavours = async () => {
       try {
-        const token = await getToken(); // Get Clerk token
+        const token = await getToken();
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Send token
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -290,9 +312,8 @@ export default function FlavoursPage() {
         const data = await response.json();
 
         // Map the API response to match our Flavour type
-        // This fixes the property name mismatch between API and frontend
         const processedFlavours = data.map((item: ApiFlavour) => ({
-          id: item.flavour_id, // Use flavour_id as id
+          id: item.flavour_id,
           name: item.name || "Unnamed",
           description: item.description || "",
           status: item.status || "draft",
