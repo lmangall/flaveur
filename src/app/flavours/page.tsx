@@ -302,7 +302,7 @@ export default function FlavoursPage() {
             category_id: number | null;
             created_at: string;
             updated_at: string;
-            user_id: string;
+            user_id: string; // Add if available
           }) => ({
             id: item.flavour_id,
             name: item.name || "Unnamed",
