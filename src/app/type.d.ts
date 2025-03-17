@@ -23,18 +23,18 @@
 //   order_index?: number;
 // };
 
-// Define the Flavor type
-export type Flavor = {
-  id: number;
-  name: string;
-  description: string;
-  substances: Substance[];
-  status: string;
-  isPublic: boolean;
-  version: number | null;
-  baseUnit: string;
-  categoryId: number | null;
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
+// Define the Flavour type
+export type Flavour = {
+  id: number; // Maps to flavour_id from API
+  name: string; // Maps to name from API
+  description: string; // Maps to description from API
+  substances: Substance[]; // Array of substances
+  status: string; // Maps to status from API
+  isPublic: boolean; // Maps to is_public from API
+  version: number | null; // Maps to version from API
+  baseUnit: string; // Maps to base_unit from API
+  categoryId: number | null; // Maps to category_id from API
+  createdAt: string; // Maps to created_at from API
+  updatedAt: string; // Maps to updated_at from API
+  userId: string; // Maps to user_id from API
 };

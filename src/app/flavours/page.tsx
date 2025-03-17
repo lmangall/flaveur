@@ -43,6 +43,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Flavour } from "@/app/type";
 
 // Flavor Profile Component
 type FlavorProfileData = {
@@ -145,31 +146,6 @@ function RadarFlavorProfile({
   );
 }
 
-// Types for flavours
-type Flavour = {
-  id: number;
-  name: string;
-  description: string;
-  status: string;
-  category: string;
-  unit: string;
-  createdAt: string;
-  isPublic: boolean;
-  version: number;
-};
-
-type ApiFlavour = {
-  flavour_id: number;
-  name?: string;
-  description?: string;
-  status?: string;
-  category_id?: number;
-  base_unit?: string;
-  created_at?: string;
-  is_public?: boolean;
-  version?: number;
-};
-
 // Flavour Card Component
 function FlavourCard({ flavour }: { flavour: Flavour }) {
   const [showChart, setShowChart] = useState(false);
@@ -229,7 +205,9 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
       </CardContent>
       <CardFooter className="flex justify-between">
         <span className="text-sm text-muted-foreground">
-          {flavour.category}
+          {flavour.categoryId !== null
+            ? `Category ${flavour.categoryId}`
+            : "No Category"}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -312,17 +290,35 @@ export default function FlavoursPage() {
         const data = await response.json();
 
         // Map the API response to match our Flavour type
-        const processedFlavours = data.map((item: ApiFlavour) => ({
-          id: item.flavour_id,
-          name: item.name || "Unnamed",
-          description: item.description || "",
-          status: item.status || "draft",
-          category: item.category_id ? `Category ${item.category_id}` : "Other",
-          unit: item.base_unit || "",
-          createdAt: item.created_at || new Date().toISOString(),
-          isPublic: !!item.is_public,
-          version: item.version || 1,
-        }));
+        const processedFlavours: Flavour[] = data.map(
+          (item: {
+            flavour_id: number;
+            name: string;
+            description: string;
+            status: string;
+            is_public: boolean;
+            version: number | null;
+            base_unit: string;
+            category_id: number | null;
+            created_at: string;
+            updated_at: string;
+            user_id: string;
+          }) => ({
+            id: item.flavour_id,
+            name: item.name || "Unnamed",
+            description: item.description || "",
+            substances: [], // Initialize with an empty array or map from the API if available
+            status: item.status || "draft",
+            isPublic: !!item.is_public,
+            version: item.version || null,
+            baseUnit: item.base_unit || "",
+            categoryId:
+              item.category_id !== null ? Number(item.category_id) : null,
+            createdAt: item.created_at || new Date().toISOString(),
+            updatedAt: item.updated_at || new Date().toISOString(),
+            userId: item.user_id || "Unknown", // Add user_id if available
+          })
+        );
 
         setFlavours(processedFlavours);
       } catch (error) {

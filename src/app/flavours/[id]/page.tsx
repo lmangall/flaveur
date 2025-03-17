@@ -23,9 +23,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Eye, EyeOff, ChevronDown, Trash2 } from "lucide-react";
 import { useAuth } from "@clerk/nextjs"; // Import useAuth
-import { Flavor } from "@/app/type"; // Adjust the path as necessary
+import { Flavour } from "@/app/type"; // Adjust the path as necessary
 
-function FlavorContent({ flavor }: { flavor: Flavor }) {
+function FlavorContent({ flavor }: { flavor: Flavour }) {
   // Move the table-related state and logic here
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
     {
@@ -411,7 +411,7 @@ function LoadingState() {
 export default function FlavorDetailPage() {
   const params = useParams();
   const flavorId = parseInt(params.id as string, 10);
-  const [flavor, setFlavor] = useState<Flavor | null>(null);
+  const [flavor, setFlavor] = useState<Flavour | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { getToken } = useAuth();
@@ -441,7 +441,7 @@ export default function FlavorDetailPage() {
         }
 
         const data = await response.json();
-        const transformedData: Flavor = {
+        const transformedData: Flavour = {
           id: Number(data.flavour.flavour_id),
           name: data.flavour.name || "Unnamed Flavor",
           description: data.flavour.description || "",
