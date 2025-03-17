@@ -23,47 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Eye, EyeOff, ChevronDown, Trash2 } from "lucide-react";
 import { useAuth } from "@clerk/nextjs"; // Import useAuth
-
-// Define the Substance type based on the example provided
-type Substance = {
-  fema_number: number;
-  common_name: string;
-  synthetic: boolean;
-  molecular_weight: number;
-  exact_mass: number;
-  smile: string;
-  iupac_name: string;
-  unknown_natural: boolean;
-  odor: string;
-  functional_groups: string;
-  inchi: string;
-  xlogp: number;
-  is_natural: boolean;
-  flavor_profile: string;
-  fema_flavor_profile: string;
-  pubchem_id: number;
-  cas_id: string;
-  substance_id: number;
-  concentration?: number;
-  unit?: string;
-  order_index?: number;
-};
-
-// Define the Flavor type
-type Flavor = {
-  id: number;
-  name: string;
-  description: string;
-  substances: Substance[];
-  status: string;
-  isPublic: boolean;
-  version: number | null;
-  baseUnit: string;
-  categoryId: number | null;
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
-};
+import { Flavor } from "@/app/type"; // Adjust the path as necessary
 
 function FlavorContent({ flavor }: { flavor: Flavor }) {
   // Move the table-related state and logic here
