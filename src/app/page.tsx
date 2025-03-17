@@ -275,7 +275,7 @@ export default function Home() {
                     </p>
                   </div>
                   <p className="text-center text-muted-foreground">
-                    "{testimonial.quote}"
+                    &quot;{testimonial.quote}&quot;
                   </p>
                 </div>
               ))}
