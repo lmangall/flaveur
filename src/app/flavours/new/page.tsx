@@ -166,7 +166,7 @@ export default function NewFlavourPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
+    //TODO: This is only a simulation, correct it!
     setTimeout(() => {
       toast("`${flavour.name} has been created successfully.");
       router.push("/flavours");

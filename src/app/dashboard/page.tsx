@@ -15,6 +15,12 @@ import {
 } from "@/components/ui/card";
 import { PlusCircle, FlaskConical, FolderTree, Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 type Flavor = {
   id: number;
@@ -34,6 +40,17 @@ export default function Dashboard() {
     categories: 0,
   });
 
+  // Show toast on any click on the page
+  const handlePageClick = () => {
+    toast("This feature is under development", {
+      // description: "Sorry for the inconvenience",
+      style: {
+        background: "white", // red background
+        color: "red", // white text
+      },
+    });
+  };
+
   useEffect(() => {
     if (!isSignedIn) {
       router.push("/");
@@ -49,7 +66,7 @@ export default function Dashboard() {
         {
           id: 2,
           name: "Citrus Explosion",
-          status: "draft",
+          status: "draft", // dev feature (draft) status
           updatedAt: "5 days ago",
         },
         {
@@ -72,7 +89,10 @@ export default function Dashboard() {
   if (!isSignedIn) return null;
 
   return (
-    <div className="space-y-8">
+    <div
+      className="space-y-8 opacity-50"
+      onClick={handlePageClick} // Attach click handler for the entire page
+    >
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <Button onClick={() => router.push("/flavours/new")}>
@@ -147,28 +167,53 @@ export default function Dashboard() {
         <TabsContent value="recent" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {recentFlavors.map((flavor) => (
-              <Card key={flavor.id} className="overflow-hidden">
-                <CardHeader className="p-4">
-                  <CardTitle className="text-lg">{flavor.name}</CardTitle>
-                  <CardDescription>Updated {flavor.updatedAt}</CardDescription>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 flex justify-between">
-                  <span
-                    className={`px-2 py-1 rounded text-xs ${
-                      flavor.status === "published"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-amber-100 text-amber-800"
-                    }`}
-                  >
-                    {flavor.status.charAt(0).toUpperCase() +
-                      flavor.status.slice(1)}
-                  </span>
-                </CardContent>
-                <CardFooter className="p-4 border-t bg-muted/50">
-                  <Button variant="ghost" size="sm" asChild className="ml-auto">
-                    <Link href={`/flavours/${flavor.id}`}>View Details</Link>
-                  </Button>
-                </CardFooter>
+              <Card
+                key={flavor.id}
+                className={`overflow-hidden ${
+                  flavor.status === "draft" ? "opacity-70" : ""
+                }`} // Lower opacity for draft status
+              >
+                <Tooltip>
+                  <div className="w-full">
+                    <TooltipTrigger>
+                      <CardHeader className="p-4">
+                        <CardTitle className="text-lg">{flavor.name}</CardTitle>
+                        <CardDescription>
+                          Updated {flavor.updatedAt}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0 flex justify-between">
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${
+                            flavor.status === "published"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {flavor.status.charAt(0).toUpperCase() +
+                            flavor.status.slice(1)}
+                        </span>
+                      </CardContent>
+                    </TooltipTrigger>
+                    <CardFooter className="p-4 border-t bg-muted/50">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="ml-auto"
+                      >
+                        <Link href={`/flavours/${flavor.id}`}>
+                          View Details
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </div>
+                  {flavor.status === "draft" && (
+                    <TooltipContent>
+                      <p>Coming soon</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
               </Card>
             ))}
             {recentFlavors.length === 0 && (
