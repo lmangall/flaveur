@@ -2,12 +2,10 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowRight,
-  Beaker,
   BookOpen,
   BriefcaseBusiness,
   ChevronRight,
   Sparkles,
-  Users,
 } from "lucide-react";
 
 import { Button } from "@/app/[locale]/components/ui/button";
@@ -27,23 +25,25 @@ export default function Home() {
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
                     {t("headline")} {/* Dynamic translation for headline */}
-                    Master the Art of Flavor Creation
+                    {t("masterFlavor")} {/* Translation for master flavor */}
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Learn, create, and showcase your flavor compositions. The
-                    ultimate platform for aspiring flavor scientists.
+                    {t("learnCreateShowcase")}{" "}
+                    {/* Translation for Learn, Create, Showcase */}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Button size="lg" asChild>
                     <Link href="/create">
-                      Create Your First Flavor
+                      {t("createFlavor")}{" "}
+                      {/* Translation for Create Your First Flavor */}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button size="lg" variant="outline" asChild>
                     <Link href="/explore">
-                      Explore Substances
+                      {t("exploreSubstances")}{" "}
+                      {/* Translation for Explore Substances */}
                       <ChevronRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -73,14 +73,15 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                  Features
+                  {t("features")} {/* Translation for Features */}
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  Everything You Need to Succeed
+                  {t("everythingYouNeed")}{" "}
+                  {/* Translation for Everything You Need to Succeed */}
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Our comprehensive platform provides all the tools you need to
-                  learn, create, and showcase your flavor expertise.
+                  {t("platformDescription")}{" "}
+                  {/* Translation for platform description */}
                 </p>
               </div>
             </div>
@@ -89,30 +90,33 @@ export default function Home() {
                 <div className="rounded-full bg-primary/10 p-3">
                   <BookOpen className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">Learn</h3>
+                <h3 className="text-xl font-bold">{t("learn")}</h3>{" "}
+                {/* Translation for Learn */}
                 <p className="text-center text-muted-foreground">
-                  Access comprehensive learning materials, tutorials, and guides
-                  from industry experts.
+                  {t("learnDescription")}{" "}
+                  {/* Translation for Learn description */}
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
                 <div className="rounded-full bg-primary/10 p-3">
                   <Sparkles className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">Create</h3>
+                <h3 className="text-xl font-bold">{t("create")}</h3>{" "}
+                {/* Translation for Create */}
                 <p className="text-center text-muted-foreground">
-                  Build and test your own flavor compositions with our intuitive
-                  creation tools.
+                  {t("createDescription")}{" "}
+                  {/* Translation for Create description */}
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
                 <div className="rounded-full bg-primary/10 p-3">
                   <BriefcaseBusiness className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">Showcase</h3>
+                <h3 className="text-xl font-bold">{t("showcase")}</h3>{" "}
+                {/* Translation for Showcase */}
                 <p className="text-center text-muted-foreground">
-                  Build your professional portfolio and connect with potential
-                  employers.
+                  {t("showcaseDescription")}{" "}
+                  {/* Translation for Showcase description */}
                 </p>
               </div>
             </div>
@@ -125,11 +129,12 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  Trusted By Industry Leaders
-                </h2>
+                  {t("trustedBy")}
+                </h2>{" "}
+                {/* Translation for Trusted By Industry Leaders */}
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Our platform is recognized and used by top flavor companies
-                  and educational institutions.
+                  {t("platformRecognition")}{" "}
+                  {/* Translation for platform recognition */}
                 </p>
               </div>
             </div>
@@ -158,7 +163,7 @@ export default function Home() {
                 <div className="relative h-[350px] w-[350px] sm:h-[400px] sm:w-[400px] lg:h-[450px] lg:w-[450px]">
                   <Image
                     src="/placeholder.svg?height=450&width=450"
-                    alt="Students using Oumamie"
+                    alt={t("studentsUsingApp")} // Translation for Students using app
                     fill
                     className="object-contain"
                   />
@@ -167,14 +172,15 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                    For Students
+                    {t("forStudents")} {/* Translation for For Students */}
                   </div>
                   <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                    Launch Your Flavor Career
+                    {t("launchFlavorCareer")}{" "}
+                    {/* Translation for Launch Your Flavor Career */}
                   </h2>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed">
-                    Oumamie is specifically designed to help students transition
-                    from learning to professional success.
+                    {t("studentDescription")}{" "}
+                    {/* Translation for description */}
                   </p>
                 </div>
                 <ul className="grid gap-3">
@@ -183,7 +189,8 @@ export default function Home() {
                       <ChevronRight className="h-4 w-4 text-primary" />
                     </div>
                     <span>
-                      Build a professional portfolio of your flavor creations
+                      {t("buildPortfolio")}{" "}
+                      {/* Translation for Build a professional portfolio */}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -191,7 +198,8 @@ export default function Home() {
                       <ChevronRight className="h-4 w-4 text-primary" />
                     </div>
                     <span>
-                      Learn from industry-standard methodologies and practices
+                      {t("learnMethodologies")}{" "}
+                      {/* Translation for Learn from industry-standard methodologies */}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -199,20 +207,23 @@ export default function Home() {
                       <ChevronRight className="h-4 w-4 text-primary" />
                     </div>
                     <span>
-                      Connect with potential employers looking for fresh talent
+                      {t("connectEmployers")}{" "}
+                      {/* Translation for Connect with potential employers */}
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="rounded-full bg-primary/10 p-1">
                       <ChevronRight className="h-4 w-4 text-primary" />
                     </div>
-                    <span>Receive feedback from professionals and peers</span>
+                    <span>{t("receiveFeedback")}</span>{" "}
+                    {/* Translation for Receive feedback */}
                   </li>
                 </ul>
                 <div>
                   <Button size="lg" asChild>
                     <Link href="/signup">
-                      Start Your Journey
+                      {t("startJourney")}{" "}
+                      {/* Translation for Start Your Journey */}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -228,14 +239,14 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                  Testimonials
+                  {t("testimonials")} {/* Translation for Testimonials */}
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  Success Stories
+                  {t("successStories")} {/* Translation for Success Stories */}
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Hear from students who have transformed their careers with
-                  Oumamie.
+                  {t("hearFromStudents")}{" "}
+                  {/* Translation for Hear from students */}
                 </p>
               </div>
             </div>
@@ -293,64 +304,34 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  Ready to Master Flavor Creation?
+                  {t("readyToMaster")}{" "}
+                  {/* Translation for Ready to Master Flavor Creation */}
                 </h2>
                 <p className="max-w-[600px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Join thousands of students and professionals who are advancing
-                  their careers with Oumamie.
+                  {t("joinOumamie")}{" "}
+                  {/* Translation for Join thousands of students */}
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <Button size="lg" variant="secondary" asChild>
                   <Link href="/signup">
-                    Get Started for Free
+                    {t("getStarted")}{" "}
+                    {/* Translation for Get Started for Free */}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link href="/demo">Request a Demo</Link>
+                  <Link href="/explore">
+                    {t("explorePlatform")}{" "}
+                    {/* Translation for Explore the Platform */}
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               </div>
             </div>
           </div>
         </section>
       </main>
-
-      {/* Footer */}
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <div className="flex items-center gap-2">
-            <Beaker className="h-5 w-5" />
-            <p className="text-sm leading-loose text-center md:text-left">
-              © 2025 Oumamie. All rights reserved.
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/terms"
-              className="text-sm underline underline-offset-4"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/privacy"
-              className="text-sm underline underline-offset-4"
-            >
-              Privacy
-            </Link>
-            <div className="flex items-center gap-2">
-              {["twitter", "github", "linkedin"].map((social) => (
-                <Button key={social} variant="ghost" size="icon" asChild>
-                  <Link href={`#${social}`}>
-                    <Users className="h-4 w-4" />
-                    <span className="sr-only">{social}</span>
-                  </Link>
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
