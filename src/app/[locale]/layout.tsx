@@ -6,7 +6,7 @@ import Navbar from "@/app/[locale]/components/navbar";
 import { Mona_Sans as FontSans } from "next/font/google";
 import { TooltipProvider } from "@/app/[locale]/components/ui/tooltip";
 import { cn } from "src/app/lib/utils";
-import { getLocale } from "next-intl/server"; // Correct method for server-side
+import { getLocale } from "next-intl/server";
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -29,8 +29,6 @@ export default async function RootLayout({
     <ClerkProvider>
       <TooltipProvider>
         <html lang={locale}>
-          {" "}
-          {/* Set the HTML lang attribute dynamically */}
           <body
             className={cn(
               "min-h-screen bg-background font-sans antialiased",
