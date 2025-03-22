@@ -4,8 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { MenuIcon, Beaker } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/app/[locale]/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/app/[locale]/components/ui/sheet";
 
 const routes = [
   { href: "/dashboard", label: "Dashboard" },

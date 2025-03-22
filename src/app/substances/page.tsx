@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/app/[locale]/components/ui/button";
+import { Input } from "@/app/[locale]/components/ui/input";
 import {
   Table,
   TableBody,
@@ -11,13 +11,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/app/[locale]/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/app/[locale]/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -26,8 +26,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+} from "@/app/[locale]/components/ui/dialog";
+import { Label } from "@/app/[locale]/components/ui/label";
 import { Search, PlusCircle, MoreHorizontal } from "lucide-react";
 
 type Substance = {

@@ -1,11 +1,12 @@
-import type React from "react";
+import type { ReactNode } from "react";
 import "@/app/globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "@/components/ui/sonner";
-import Navbar from "@/components/navbar";
+import { Toaster } from "@/app/[locale]/components/ui/sonner";
+import Navbar from "@/app/[locale]/components/navbar";
 import { Mona_Sans as FontSans } from "next/font/google";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/app/[locale]/components/ui/tooltip";
 import { cn } from "src/app/lib/utils";
+import { getLocale } from "next-intl/server"; // Correct method for server-side
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -17,15 +18,19 @@ export const metadata = {
   description: "Create and manage flavor compositions",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
+  const locale = await getLocale(); // Get the locale from the server
+
   return (
     <ClerkProvider>
       <TooltipProvider>
-        <html lang="en">
+        <html lang={locale}>
+          {" "}
+          {/* Set the HTML lang attribute dynamically */}
           <body
             className={cn(
               "min-h-screen bg-background font-sans antialiased",

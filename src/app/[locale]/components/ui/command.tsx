@@ -6,7 +6,7 @@ import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 
 import { cn } from "@/app/lib/utils";
-import { Dialog, DialogContent } from "@/app/components/ui/dialog";
+import { Dialog, DialogContent } from "@/app/[locale]/components/ui/dialog";
 
 // Define proper types for the components
 interface CommandProps

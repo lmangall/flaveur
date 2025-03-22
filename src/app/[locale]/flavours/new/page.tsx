@@ -2,20 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/app/[locale]/components/ui/button";
+import { Card } from "@/app/[locale]/components/ui/card";
+import { Input } from "@/app/[locale]/components/ui/input";
+import { Label } from "@/app/[locale]/components/ui/label";
+import { Textarea } from "@/app/[locale]/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
+} from "@/app/[locale]/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/app/[locale]/components/ui/tabs";
+import { Switch } from "@/app/[locale]/components/ui/switch";
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 

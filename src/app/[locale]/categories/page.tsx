@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/app/[locale]/components/ui/button";
+import { Input } from "@/app/[locale]/components/ui/input";
+import { Textarea } from "@/app/[locale]/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -11,13 +11,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/app/[locale]/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/app/[locale]/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -26,15 +26,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/app/[locale]/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+} from "@/app/[locale]/components/ui/select";
+import { Label } from "@/app/[locale]/components/ui/label";
 import { Search, PlusCircle, MoreHorizontal, ChevronRight } from "lucide-react";
 
 type Category = {

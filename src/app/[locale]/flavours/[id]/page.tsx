@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/app/[locale]/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -18,9 +18,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+} from "@/app/[locale]/components/ui/dropdown-menu";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/app/[locale]/components/ui/card";
+import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Eye, EyeOff, ChevronDown, Trash2 } from "lucide-react";
 import { useAuth } from "@clerk/nextjs"; // Import useAuth
 import { Flavour } from "@/app/type"; // Adjust the path as necessary

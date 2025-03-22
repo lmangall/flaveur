@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/[locale]/components/ui/button";
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "@/app/[locale]/components/ui/chart";
 
 type FlavorProfileData = {
   attribute: string;

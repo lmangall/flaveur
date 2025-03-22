@@ -10,9 +10,12 @@ import {
   Users,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/[locale]/components/ui/button";
+import { useTranslations } from "next-intl"; // Import the useTranslations hook
 
 export default function Home() {
+  const t = useTranslations("Home"); // Use the "Home" namespace for translations
+
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
@@ -23,6 +26,7 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+                    {t("headline")} {/* Dynamic translation for headline */}
                     Master the Art of Flavor Creation
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">

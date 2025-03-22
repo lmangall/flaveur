@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser, useAuth } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/app/[locale]/components/ui/button";
+import { Input } from "@/app/[locale]/components/ui/input";
 import {
   Card,
   CardContent,
@@ -13,21 +13,21 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+} from "@/app/[locale]/components/ui/card";
+import { Switch } from "@/app/[locale]/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/app/[locale]/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/app/[locale]/components/ui/select";
 import {
   PlusCircle,
   Search,
@@ -42,7 +42,7 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "@/app/[locale]/components/ui/chart";
 import { Flavour } from "@/app/type";
 
 // Flavor Profile Component
