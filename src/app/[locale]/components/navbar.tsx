@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { useState } from "react";
 import { UserButton, useUser } from "@clerk/nextjs";
@@ -11,7 +10,8 @@ import {
   SheetTrigger,
 } from "@/app/[locale]/components/ui/sheet";
 
-const routes = [
+// Routes for authenticated users
+const authRoutes = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/flavours", label: "My Flavors" },
   { href: "/substances", label: "Substances" },
@@ -19,11 +19,19 @@ const routes = [
   { href: "/jobs", label: "Jobs" },
 ];
 
+// Routes for guests
+const publicRoutes = [
+  { href: "/explore", label: "Explore" },
+  { href: "/about", label: "About" },
+  { href: "/jobs", label: "Jobs" },
+];
+
 export default function Navbar() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!isSignedIn) return null;
+  // Which routes to show based on auth status
+  const routes = isSignedIn ? authRoutes : publicRoutes;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
@@ -46,7 +54,23 @@ export default function Navbar() {
         </nav>
 
         <div className="ml-auto flex items-center space-x-4">
-          <UserButton afterSignOutUrl="/" />
+          {isLoaded ? (
+            isSignedIn ? (
+              <UserButton afterSignOutUrl="/" />
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/sign-in">Sign In</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href="/sign-up">Sign Up</Link>
+                </Button>
+              </div>
+            )
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+          )}
+
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
@@ -56,11 +80,12 @@ export default function Navbar() {
             </SheetTrigger>
             <SheetContent side="left" className="pr-0">
               <Link
-                href="/dashboard"
+                href="/"
                 className="flex items-center mb-6"
                 onClick={() => setIsOpen(false)}
               >
-                <span className="font-bold text-lg">FlavorLab</span>
+                <Beaker className="h-6 w-6 mr-2" />
+                <span className="font-bold text-lg">Oumamie</span>
               </Link>
               <nav className="flex flex-col space-y-4">
                 {routes.map((route) => (
@@ -73,6 +98,26 @@ export default function Navbar() {
                     {route.label}
                   </Link>
                 ))}
+
+                {!isSignedIn && (
+                  <>
+                    <div className="h-px bg-border my-2" />
+                    <Link
+                      href="/sign-in"
+                      className="text-sm font-medium transition-colors hover:text-primary"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/sign-up"
+                      className="text-sm font-medium transition-colors hover:text-primary"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
