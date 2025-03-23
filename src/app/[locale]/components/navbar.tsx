@@ -16,6 +16,7 @@ const routes = [
   { href: "/flavours", label: "My Flavors" },
   { href: "/substances", label: "Substances" },
   { href: "/categories", label: "Categories" },
+  { href: "/jobs", label: "Jobs" },
 ];
 
 export default function Navbar() {

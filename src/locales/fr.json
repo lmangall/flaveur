@@ -35,6 +35,34 @@
 	  "getStarted": "Commencez Gratuitement",
 	  "explorePlatform": "Explorez la Plateforme",
 	  "exploreSubstances": "Explorez les Substances"
-	}
+	},
+	"Jobs": {
+		"jobListingHeading": "Offres d'Emploi",
+		"jobListingSubheading": "Trouvez votre prochaine opportunité dans l'industrie des arômes",
+		"postedOn": "Publiée le {date}",
+		"viewDetails": "Voir les détails",
+		"errorFetchingJobs": "Erreur lors de la récupération des offres d'emploi. Veuillez réessayer.",
+		"noJobsFound": "Aucune offre d'emploi trouvée",
+		"checkBackLater": "Veuillez vérifier ultérieurement pour de nouvelles opportunités"
+	  },
+	  "JobDetail": {
+		"backToJobs": "Retour aux offres",
+		"jobNotFound": "Offre Non Trouvée",
+		"jobNotAvailable": "Cette offre d'emploi n'est plus disponible",
+		"browseAllJobs": "Parcourir toutes les offres",
+		"postedOn": "Publiée le {date}",
+		"forCompany": "pour {company}",
+		"description": "Description",
+		"requirements": "Exigences",
+		"noRequirementsListed": "Aucune exigence spécifique mentionnée",
+		"sourcedFrom": "Offre provenant de",
+		"applicationInfo": "Informations de candidature",
+		"applicationDeadline": "Date limite de candidature",
+		"contactInformation": "Coordonnées",
+		"viewContactInfo": "Voir les coordonnées",
+		"signInToViewContact": "Connectez-vous pour voir les coordonnées",
+		"applyNow": "Postuler maintenant",
+		"errorFetchingJobDetails": "Erreur lors de la récupération des détails de l'offre. Veuillez réessayer."
+	  }
   }
   

@@ -7,6 +7,7 @@ import { Mona_Sans as FontSans } from "next/font/google";
 import { TooltipProvider } from "@/app/[locale]/components/ui/tooltip";
 import { cn } from "src/app/lib/utils";
 import { getLocale } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -24,6 +25,21 @@ export default async function RootLayout({
   children: ReactNode;
 }) {
   const locale = await getLocale(); // Get the locale from the server
+  let messages;
+
+  type Messages = Record<string, Record<string, string>>;
+
+  const messagesMap: Record<string, () => Promise<{ default: Messages }>> = {
+    en: () => import("../../locales/en.json"),
+    fr: () => import("../../locales/fr.json"),
+  };
+
+  try {
+    messages = messagesMap[locale] ? (await messagesMap[locale]()).default : {};
+  } catch (error) {
+    console.error(`Could not load translations for locale "${locale}":`, error);
+    messages = {};
+  }
 
   return (
     <ClerkProvider>
@@ -35,11 +51,13 @@ export default async function RootLayout({
               fontSans.variable
             )}
           >
-            <Navbar />
-            <div className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
-              {children}
-            </div>
-            <Toaster />
+            <NextIntlClientProvider locale={locale} messages={messages}>
+              <Navbar />
+              <div className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
+                {children}
+              </div>
+              <Toaster />
+            </NextIntlClientProvider>
           </body>
         </html>
       </TooltipProvider>

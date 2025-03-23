@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/app/[locale]/components/ui/button";
-import { useTranslations } from "next-intl"; // Import the useTranslations hook
+import { useTranslations } from "next-intl";
 
 export default function Home() {
-  const t = useTranslations("Home"); // Use the "Home" namespace for translations
+  const t = useTranslations("Home");
 
   return (
     <div className="flex min-h-screen flex-col">

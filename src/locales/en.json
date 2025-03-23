@@ -38,6 +38,34 @@
 	  "joinOumamie": "Join thousands of students mastering the art of flavor creation.",
 	  "getStarted": "Get Started for Free",
 	  "explorePlatform": "Explore the Platform"
-	}
+	},
+	"Jobs": {
+		"jobListingHeading": "Job Listings",
+		"jobListingSubheading": "Find your next opportunity in the flavor industry",
+		"postedOn": "Posted on {date}",
+		"viewDetails": "View Details",
+		"errorFetchingJobs": "Error fetching job listings. Please try again.",
+		"noJobsFound": "No job listings found",
+		"checkBackLater": "Please check back later for new opportunities"
+	  },
+	  "JobDetail": {
+		"backToJobs": "Back to Jobs",
+		"jobNotFound": "Job Not Found",
+		"jobNotAvailable": "This job listing is no longer available",
+		"browseAllJobs": "Browse All Jobs",
+		"postedOn": "Posted on {date}",
+		"forCompany": "for {company}",
+		"description": "Description",
+		"requirements": "Requirements",
+		"noRequirementsListed": "No specific requirements listed",
+		"sourcedFrom": "Job sourced from",
+		"applicationInfo": "Application Information",
+		"applicationDeadline": "Application Deadline",
+		"contactInformation": "Contact Information",
+		"viewContactInfo": "View Contact Info",
+		"signInToViewContact": "Sign in to view contact information",
+		"applyNow": "Apply Now",
+		"errorFetchingJobDetails": "Error fetching job details. Please try again."
+	  }
   }
   

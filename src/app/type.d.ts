@@ -38,3 +38,40 @@ export type Flavour = {
   updatedAt: string; // Maps to updated_at from API
   userId: string; // Maps to user_id from API
 };
+
+// Add these interfaces to your existing type.d.ts file
+
+interface JobOffer {
+  id: string;
+  title: string;
+  description: string;
+  company_name: string;
+  original_company_name?: string;
+  through_recruiter: boolean;
+  source_website?: string;
+  source_url?: string;
+  location: string;
+  employment_type: string;
+  salary?: string;
+  requirements?: string[];
+  tags?: string[];
+  industry?: string;
+  experience_level?: string;
+  contact_person?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
+  posted_at: string;
+  expires_at?: string;
+  status: boolean;
+}
+
+interface JobInteraction {
+  id: string;
+  user_id: string;
+  job_offer_id: string;
+  action: "viewed" | "applied" | "seen_contact";
+  referrer?: string;
+  created_at: string;
+}
