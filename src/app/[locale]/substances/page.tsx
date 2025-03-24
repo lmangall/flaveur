@@ -106,28 +106,64 @@ export default function SubstancesPage() {
     setNewSubstance({ ...newSubstance, [name]: value });
   };
 
-  const handleSubmitSubstance = () => {
-    // Convert FEMA number to integer
-    const femaNumber = Number.parseInt(newSubstance.fema_number);
-    // In a real app, you would submit this to an API
-    // For now, just add it to the local state
-    const newSubstanceData = {
-      ...newSubstance,
-      fema_number: femaNumber,
-    };
+  const handleSubmitSubstance = async () => {
+    try {
+      const femaNumber = Number.parseInt(newSubstance.fema_number);
+      if (!femaNumber) {
+        alert("Please enter a valid FEMA Number");
+        return;
+      }
 
-    setSubstances([newSubstanceData, ...substances]);
-    setOpenDialog(false);
-    // Reset form
-    setNewSubstance({
-      fema_number: "",
-      common_name: "",
-      is_natural: true,
-      cas_id: "",
-      odor: "",
-      functional_groups: "",
-      flavor_profile: "",
-    });
+      // Step 1: Fetch Substance ID based on FEMA Number
+      const res = await fetch(
+        `${API_URL}/api/substances?fema_number=${femaNumber}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch substance");
+
+      const substances = await res.json();
+      const foundSubstance = substances.find(
+        (sub: Substance) => sub.fema_number === femaNumber
+      );
+
+      if (!foundSubstance) {
+        alert("Substance not found in database.");
+        return;
+      }
+
+      // Step 2: Add the substance to the flavour
+      const addRes = await fetch(`${API_URL}/api/flavours/6/substances`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          substance_id: foundSubstance.substance_id, // Use the correct ID
+          concentration: 10.5, // Example concentration
+          unit: "g/kg",
+          order_index: 1,
+        }),
+      });
+
+      if (!addRes.ok) throw new Error("Failed to add substance to flavour");
+
+      // Step 3: Update UI with the newly added substance
+      setSubstances([foundSubstance, ...substances]);
+      setOpenDialog(false);
+
+      // Reset form
+      setNewSubstance({
+        fema_number: "",
+        common_name: "",
+        is_natural: true,
+        cas_id: "",
+        odor: "",
+        functional_groups: "",
+        flavor_profile: "",
+      });
+    } catch (error) {
+      console.error("Error adding substance:", error);
+      alert("Failed to add substance.");
+    }
   };
 
   const handlePageChange = (newPage: number) => {

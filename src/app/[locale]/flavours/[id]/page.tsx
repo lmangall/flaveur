@@ -106,7 +106,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
   };
 
   const { getToken } = useAuth();
-  const [substanceIdToAdd, setSubstanceIdToAdd] = useState("");
+  const [femaNumberToAdd, setfemaNumberToAdd] = useState("");
   const [concentration, setConcentration] = useState("");
   const [unit, setUnit] = useState("");
 
@@ -122,7 +122,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            substance_id: parseInt(substanceIdToAdd),
+            fema_number: parseInt(femaNumberToAdd),
             concentration: parseFloat(concentration),
             unit,
             order_index: flavor.substances.length,
@@ -231,8 +231,8 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                 type="text"
                 placeholder="Substance ID"
                 className="px-2 py-1 border rounded"
-                value={substanceIdToAdd}
-                onChange={(e) => setSubstanceIdToAdd(e.target.value)}
+                value={femaNumberToAdd}
+                onChange={(e) => setfemaNumberToAdd(e.target.value)}
               />
               <input
                 type="text"
@@ -252,7 +252,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                 variant="outline"
                 size="sm"
                 onClick={handleAddSubstance}
-                disabled={!substanceIdToAdd || !concentration || !unit}
+                disabled={!femaNumberToAdd || !concentration || !unit}
               >
                 Add Substance
               </Button>
