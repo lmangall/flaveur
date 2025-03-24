@@ -53,7 +53,6 @@ export default function SubstancesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
   const [newSubstance, setNewSubstance] = useState({
     fema_number: "",
     common_name: "",
