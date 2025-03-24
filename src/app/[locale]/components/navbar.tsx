@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useLocale } from "next-intl"; // Import useLocale to get current locale
 import { UserButton, useUser } from "@clerk/nextjs";
 import { MenuIcon, Beaker } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
@@ -27,6 +28,7 @@ const publicRoutes = [
 ];
 
 export default function Navbar() {
+  const locale = useLocale(); // Get current locale
   const { isSignedIn, isLoaded } = useUser();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -36,7 +38,7 @@ export default function Navbar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
       <div className="flex h-16 items-center px-4 md:px-8">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href={`/${locale}`} className="flex items-center space-x-2">
           <Beaker className="h-6 w-6" />
           <span className="font-bold inline-block">Oumamie</span>
         </Link>
@@ -45,7 +47,7 @@ export default function Navbar() {
           {routes.map((route) => (
             <Link
               key={route.href}
-              href={route.href}
+              href={`/${locale}${route.href}`}
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               {route.label}
@@ -56,14 +58,14 @@ export default function Navbar() {
         <div className="ml-auto flex items-center space-x-4">
           {isLoaded ? (
             isSignedIn ? (
-              <UserButton afterSignOutUrl="/" />
+              <UserButton afterSignOutUrl={`/${locale}`} />
             ) : (
               <div className="flex items-center space-x-2">
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/sign-in">Sign In</Link>
+                  <Link href={`/${locale}/auth/sign-in`}>Sign In</Link>
                 </Button>
                 <Button size="sm" asChild>
-                  <Link href="/sign-up">Sign Up</Link>
+                  <Link href={`/${locale}/auth/sign-up`}>Sign Up</Link>
                 </Button>
               </div>
             )
@@ -80,7 +82,7 @@ export default function Navbar() {
             </SheetTrigger>
             <SheetContent side="left" className="pr-0">
               <Link
-                href="/"
+                href={`/${locale}`}
                 className="flex items-center mb-6"
                 onClick={() => setIsOpen(false)}
               >
@@ -91,7 +93,7 @@ export default function Navbar() {
                 {routes.map((route) => (
                   <Link
                     key={route.href}
-                    href={route.href}
+                    href={`/${locale}${route.href}`}
                     className="text-sm font-medium transition-colors hover:text-primary"
                     onClick={() => setIsOpen(false)}
                   >
@@ -103,14 +105,14 @@ export default function Navbar() {
                   <>
                     <div className="h-px bg-border my-2" />
                     <Link
-                      href="/sign-in"
+                      href={`/${locale}/auth/sign-in`}
                       className="text-sm font-medium transition-colors hover:text-primary"
                       onClick={() => setIsOpen(false)}
                     >
                       Sign In
                     </Link>
                     <Link
-                      href="/sign-up"
+                      href={`/${locale}/auth/sign-up`}
                       className="text-sm font-medium transition-colors hover:text-primary"
                       onClick={() => setIsOpen(false)}
                     >
