@@ -28,7 +28,13 @@ import {
   DialogTrigger,
 } from "@/app/[locale]/components/ui/dialog";
 import { Label } from "@/app/[locale]/components/ui/label";
-import { Search, PlusCircle, MoreHorizontal } from "lucide-react";
+import {
+  Search,
+  PlusCircle,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 type Substance = {
   fema_number: number;
@@ -46,6 +52,8 @@ export default function SubstancesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
   const [newSubstance, setNewSubstance] = useState({
     fema_number: "",
     common_name: "",
@@ -57,11 +65,22 @@ export default function SubstancesPage() {
   });
 
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
+    fetchSubstances();
+  }, [currentPage, API_URL]);
+
+  const fetchSubstances = () => {
     setIsLoading(true);
-    fetch(`${API_URL}/api/substances`)
-      .then((res) => res.json())
+    fetch(`${API_URL}/api/substances?page=${currentPage}`)
+      .then((res) => {
+        // Check if the response is ok (status in the range 200-299)
+        if (!res.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return res.json();
+      })
       .then((data) => {
         setSubstances(data);
         setIsLoading(false);
@@ -70,8 +89,9 @@ export default function SubstancesPage() {
         console.error("Error fetching substances:", error);
         setIsLoading(false);
       });
-  }, [API_URL]);
+  };
 
+  // Local search and filtering (since we're paginating server-side)
   const filteredSubstances = substances.filter(
     (substance) =>
       substance.common_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -109,6 +129,10 @@ export default function SubstancesPage() {
       functional_groups: "",
       flavor_profile: "",
     });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   return (
@@ -223,74 +247,101 @@ export default function SubstancesPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
       ) : filteredSubstances.length > 0 ? (
-        <div className="border rounded-md overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>FEMA #</TableHead>
-                <TableHead>Common Name</TableHead>
-                <TableHead>Natural/Synthetic</TableHead>
-                <TableHead>CAS ID</TableHead>
-                <TableHead>Odor</TableHead>
-                <TableHead>Flavor Profile</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSubstances.map((substance) => (
-                <TableRow key={substance.fema_number}>
-                  <TableCell className="font-medium">
-                    {substance.fema_number}
-                  </TableCell>
-                  <TableCell>{substance.common_name}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded text-xs ${
-                        substance.is_natural
-                          ? "bg-green-100 text-green-800"
-                          : "bg-purple-100 text-purple-800"
-                      }`}
-                    >
-                      {substance.is_natural ? "Natural" : "Synthetic"}
-                    </span>
-                  </TableCell>
-                  <TableCell>{substance.cas_id}</TableCell>
-                  <TableCell>{substance.odor}</TableCell>
-                  <TableCell>{substance.flavor_profile}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(
-                              `/api/substances/${substance.fema_number}`
-                            )
-                          }
-                        >
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(
-                              `/api/substances/${substance.fema_number}/edit`
-                            )
-                          }
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        <>
+          <div className="border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>FEMA #</TableHead>
+                  <TableHead>Common Name</TableHead>
+                  <TableHead>Natural/Synthetic</TableHead>
+                  <TableHead>CAS ID</TableHead>
+                  <TableHead>Odor</TableHead>
+                  <TableHead>Flavor Profile</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filteredSubstances.map((substance, index) => (
+                  <TableRow key={`substance-${index}`}>
+                    <TableCell className="font-medium">
+                      {substance.fema_number}
+                    </TableCell>
+                    <TableCell>{substance.common_name}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${
+                          substance.is_natural
+                            ? "bg-green-100 text-green-800"
+                            : "bg-purple-100 text-purple-800"
+                        }`}
+                      >
+                        {substance.is_natural ? "Natural" : "Synthetic"}
+                      </span>
+                    </TableCell>
+                    <TableCell>{substance.cas_id}</TableCell>
+                    <TableCell>{substance.odor}</TableCell>
+                    <TableCell>{substance.flavor_profile}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(
+                                `/api/substances/${substance.fema_number}`
+                              )
+                            }
+                          >
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(
+                                `/api/substances/${substance.fema_number}/edit`
+                              )
+                            }
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex justify-center items-center space-x-4 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={substances.length < ITEMS_PER_PAGE}
+            >
+              Next
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </>
       ) : (
         <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted/30">
           <p className="text-muted-foreground mb-4">
