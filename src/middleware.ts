@@ -3,13 +3,20 @@ import { routing } from "./i18n/routing";
 import { NextRequest, NextResponse } from "next/server";
 
 export default function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
   // Handle root path redirect
-  if (req.nextUrl.pathname === "/") {
+  if (pathname === "/") {
     return NextResponse.redirect(new URL("/en", req.url));
   }
 
-  // Skip localization for auth routes
-  if (req.nextUrl.pathname.startsWith("/auth")) {
+  // Skip localization for auth routes and handle redirects
+  if (pathname.startsWith("/auth")) {
+    // If we're coming from accounts.oumamie.xyz, redirect to home
+    const referer = req.headers.get("referer");
+    if (referer?.includes("accounts.oumamie.xyz")) {
+      return NextResponse.redirect(new URL("/en", req.url));
+    }
     return NextResponse.next();
   }
 
