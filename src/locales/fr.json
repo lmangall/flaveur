@@ -73,6 +73,56 @@
 		"signInToViewContact": "Connectez-vous pour voir les coordonnées",
 		"applyNow": "Postuler maintenant",
 		"errorFetchingJobDetails": "Erreur lors de la récupération des détails de l'offre. Veuillez réessayer."
+	  },
+	  "privacy": {
+		"title": "Politique de Confidentialité",
+		"dataCollection": {
+		  "title": "Collecte des Données",
+		  "content": "Nous collectons les informations que vous nous fournissez directement, notamment lorsque vous créez un compte, utilisez nos services ou communiquez avec nous. Cela peut inclure votre nom, votre adresse e-mail et toute autre information que vous choisissez de fournir."
+		},
+		"dataUse": {
+		  "title": "Utilisation de Vos Données",
+		  "content": "Nous utilisons les informations collectées pour fournir, maintenir et améliorer nos services, pour communiquer avec vous et pour protéger nos droits et ceux des autres."
+		},
+		"dataSecurity": {
+		  "title": "Sécurité des Données",
+		  "content": "Nous prenons des mesures raisonnables pour protéger vos informations contre la perte, le vol, l'utilisation abusive, l'accès non autorisé, la divulgation, l'altération et la destruction."
+		},
+		"cookies": {
+		  "title": "Cookies et Technologies Similaires",
+		  "content": "Nous utilisons des cookies et des technologies de suivi similaires pour suivre l'activité sur notre service et conserver certaines informations afin d'améliorer et d'analyser notre service."
+		},
+		"contact": {
+		  "title": "Nous Contacter",
+		  "content": "Si vous avez des questions concernant cette Politique de Confidentialité, veuillez nous contacter à privacy@oumamie.com"
+		}
+	  },
+	  "terms": {
+		"title": "Conditions d'Utilisation",
+		"acceptance": {
+		  "title": "Acceptation des Conditions",
+		  "content": "En accédant et en utilisant ce site web, vous acceptez et vous engagez à respecter ces Conditions d'Utilisation et notre Politique de Confidentialité."
+		},
+		"userAccounts": {
+		  "title": "Comptes Utilisateurs",
+		  "content": "Vous êtes responsable de la confidentialité de vos identifiants de compte et de toutes les activités qui se produisent sous votre compte."
+		},
+		"intellectualProperty": {
+		  "title": "Propriété Intellectuelle",
+		  "content": "Le service et son contenu original, ses fonctionnalités et ses fonctions appartiennent à Oumamie et sont protégés par les lois internationales sur le droit d'auteur, les marques et autres lois sur la propriété intellectuelle."
+		},
+		"userContent": {
+		  "title": "Contenu Utilisateur",
+		  "content": "En soumettant du contenu sur notre plateforme, vous nous accordez une licence mondiale, non exclusive et libre de redevance pour utiliser, reproduire, modifier et distribuer ce contenu."
+		},
+		"termination": {
+		  "title": "Résiliation du Compte",
+		  "content": "Nous nous réservons le droit de résilier ou de suspendre votre compte et votre accès au service immédiatement, sans préavis, pour quelque raison que ce soit."
+		},
+		"liability": {
+		  "title": "Limitation de Responsabilité",
+		  "content": "En aucun cas Oumamie ne sera responsable des dommages indirects, accessoires, spéciaux, consécutifs ou punitifs découlant de ou liés à votre utilisation du service."
+		}
 	  }
   }
   

@@ -78,6 +78,56 @@
 		"signInToViewContact": "Sign in to view contact information",
 		"applyNow": "Apply Now",
 		"errorFetchingJobDetails": "Error fetching job details. Please try again."
+	  },
+	  "privacy": {
+		"title": "Privacy Policy",
+		"dataCollection": {
+		  "title": "Data Collection",
+		  "content": "We collect information that you provide directly to us, including when you create an account, use our services, or communicate with us. This may include your name, email address, and any other information you choose to provide."
+		},
+		"dataUse": {
+		  "title": "How We Use Your Data",
+		  "content": "We use the information we collect to provide, maintain, and improve our services, to communicate with you, and to protect our rights and the rights of others."
+		},
+		"dataSecurity": {
+		  "title": "Data Security",
+		  "content": "We take reasonable measures to help protect information about you from loss, theft, misuse, unauthorized access, disclosure, alteration, and destruction."
+		},
+		"cookies": {
+		  "title": "Cookies and Similar Technologies",
+		  "content": "We use cookies and similar tracking technologies to track the activity on our service and hold certain information to improve and analyze our service."
+		},
+		"contact": {
+		  "title": "Contact Us",
+		  "content": "If you have any questions about this Privacy Policy, please contact us at privacy@oumamie.com"
+		}
+	  },
+	  "terms": {
+		"title": "Terms of Service",
+		"acceptance": {
+		  "title": "Acceptance of Terms",
+		  "content": "By accessing and using this website, you accept and agree to be bound by these Terms of Service and our Privacy Policy."
+		},
+		"userAccounts": {
+		  "title": "User Accounts",
+		  "content": "You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account."
+		},
+		"intellectualProperty": {
+		  "title": "Intellectual Property",
+		  "content": "The service and its original content, features, and functionality are owned by Oumamie and are protected by international copyright, trademark, and other intellectual property laws."
+		},
+		"userContent": {
+		  "title": "User Content",
+		  "content": "By submitting content to our platform, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, modify, and distribute that content."
+		},
+		"termination": {
+		  "title": "Account Termination",
+		  "content": "We reserve the right to terminate or suspend your account and access to the service immediately, without prior notice, for any reason."
+		},
+		"liability": {
+		  "title": "Limitation of Liability",
+		  "content": "In no event shall Oumamie be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or relating to your use of the service."
+		}
 	  }
   }
   

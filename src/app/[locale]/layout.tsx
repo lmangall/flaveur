@@ -19,6 +19,9 @@ export const metadata = {
   description: "Create and manage flavor compositions",
 };
 
+type TranslationValue = string | { [key: string]: TranslationValue };
+type Messages = { [key: string]: TranslationValue };
+
 export default async function RootLayout({
   children,
 }: {
@@ -26,8 +29,6 @@ export default async function RootLayout({
 }) {
   const locale = await getLocale(); // Get the locale from the server
   let messages;
-
-  type Messages = Record<string, Record<string, string>>;
 
   const messagesMap: Record<string, () => Promise<{ default: Messages }>> = {
     en: () => import("../../locales/en.json"),
