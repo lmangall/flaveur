@@ -7,7 +7,7 @@ export default function middleware(req: NextRequest) {
 
   // Handle root path redirect
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/en", req.url));
+    return NextResponse.redirect(new URL(`/${routing.defaultLocale}`, req.url));
   }
 
   // Skip localization for auth routes and handle redirects
@@ -15,7 +15,9 @@ export default function middleware(req: NextRequest) {
     // If we're coming from accounts.oumamie.xyz, redirect to home
     const referer = req.headers.get("referer");
     if (referer?.includes("accounts.oumamie.xyz")) {
-      return NextResponse.redirect(new URL("/en", req.url));
+      return NextResponse.redirect(
+        new URL(`/${routing.defaultLocale}`, req.url)
+      );
     }
     return NextResponse.next();
   }
