@@ -128,6 +128,11 @@
 		  "title": "Limitation of Liability",
 		  "content": "In no event shall Oumamie be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or relating to your use of the service."
 		}
+	  },
+	  "Footer": {
+		"allRightsReserved": "All rights reserved.",
+		"privacyPolicy": "Privacy Policy",
+		"termsOfService": "Terms of Service"
 	  }
   }
   

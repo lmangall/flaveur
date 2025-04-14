@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/app/[locale]/components/ui/sonner";
 import Navbar from "@/app/[locale]/components/navbar";
+import Footer from "@/app/[locale]/components/footer";
 import { Mona_Sans as FontSans } from "next/font/google";
 import { TooltipProvider } from "@/app/[locale]/components/ui/tooltip";
 import { cn } from "src/app/lib/utils";
@@ -57,6 +58,7 @@ export default async function RootLayout({
               <div className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
                 {children}
               </div>
+              <Footer />
               <Toaster />
             </NextIntlClientProvider>
           </body>

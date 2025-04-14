@@ -123,6 +123,11 @@
 		  "title": "Limitation de Responsabilité",
 		  "content": "En aucun cas Oumamie ne sera responsable des dommages indirects, accessoires, spéciaux, consécutifs ou punitifs découlant de ou liés à votre utilisation du service."
 		}
+	  },
+	  "Footer": {
+		"allRightsReserved": "Tous droits réservés.",
+		"privacyPolicy": "Politique de confidentialité",
+		"termsOfService": "Conditions d'utilisation"
 	  }
   }
   
