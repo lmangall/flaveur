@@ -50,15 +50,15 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center justify-center">
-                {/* <div className="relative h-[350px] w-[350px] sm:h-[400px] sm:w-[400px] lg:h-[450px] lg:w-[450px]">
+                <div className="relative h-[350px] w-[350px] sm:h-[400px] sm:w-[400px] lg:h-[450px] lg:w-[450px]">
                   <Image
-                    src="https://placehold.co/600x400"
-                    alt="App Screenshot"
+                    src="/logo_transparent_bg.png"
+                    alt="Flaveur Logo"
                     width={450}
                     height={450}
-                    className="object-cover"
+                    className="object-contain"
                   />
-                </div> */}
+                </div>
               </div>
             </div>
           </div>

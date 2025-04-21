@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useLocale } from "next-intl"; // Import useLocale to get current locale
 import { UserButton, useUser } from "@clerk/nextjs";
-import { MenuIcon, Beaker } from "lucide-react";
+import { MenuIcon } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Sheet,
@@ -39,7 +40,14 @@ export default function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
       <div className="flex h-16 items-center px-4 md:px-8">
         <Link href={`/${locale}`} className="flex items-center space-x-2">
-          <Beaker className="h-6 w-6" />
+          <div className="relative h-12 w-12">
+            <Image
+              src="/logo_transparent_bg_tiny.png"
+              alt="Flaveur Logo"
+              fill
+              className="object-contain"
+            />
+          </div>
           <span className="font-bold inline-block">Oumamie</span>
         </Link>
 
@@ -86,7 +94,14 @@ export default function Navbar() {
                 className="flex items-center mb-6"
                 onClick={() => setIsOpen(false)}
               >
-                <Beaker className="h-6 w-6 mr-2" />
+                <div className="relative h-10 w-10 mr-2">
+                  <Image
+                    src="/logo_transparent_bg_tiny.png"
+                    alt="Flaveur Logo"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
                 <span className="font-bold text-lg">Oumamie</span>
               </Link>
               <nav className="flex flex-col space-y-4">
