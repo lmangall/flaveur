@@ -34,15 +34,24 @@ type Flavor = {
   updatedAt: string;
 };
 
+type DashboardData = {
+  totalFlavors: number;
+  publicFlavors: number;
+  substances: number;
+  categories: number;
+  updatedAt: string;
+};
+
 export default function Dashboard() {
   const { isSignedIn } = useUser();
   const router = useRouter();
   const [recentFlavors, setRecentFlavors] = useState<Flavor[]>([]);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardData>({
     totalFlavors: 0,
     publicFlavors: 0,
     substances: 0,
     categories: 0,
+    updatedAt: "",
   });
 
   // Show toast on any click on the page
@@ -87,6 +96,7 @@ export default function Dashboard() {
         publicFlavors: 8,
         substances: 245,
         categories: 18,
+        updatedAt: "30 days ago",
       });
     }
   }, [isSignedIn, router]);

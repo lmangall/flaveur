@@ -1,0 +1,313 @@
+diff --git a/src/app/[locale]/dashboard/page.tsx b/src/app/[locale]/dashboard/page.tsx
+index 78f6c67..ab37a02 100644
+--- a/src/app/[locale]/dashboard/page.tsx
++++ b/src/app/[locale]/dashboard/page.tsx
+@@ -34,15 +34,24 @@ type Flavor = {
+   updatedAt: string;
+ };
+ 
++type DashboardData = {
++  totalFlavors: number;
++  publicFlavors: number;
++  substances: number;
++  categories: number;
++  updatedAt: string;
++};
++
+ export default function Dashboard() {
+   const { isSignedIn } = useUser();
+   const router = useRouter();
+   const [recentFlavors, setRecentFlavors] = useState<Flavor[]>([]);
+-  const [stats, setStats] = useState({
++  const [stats, setStats] = useState<DashboardData>({
+     totalFlavors: 0,
+     publicFlavors: 0,
+     substances: 0,
+     categories: 0,
++    updatedAt: "",
+   });
+ 
+   // Show toast on any click on the page
+@@ -87,6 +96,7 @@ export default function Dashboard() {
+         publicFlavors: 8,
+         substances: 245,
+         categories: 18,
++        updatedAt: "30 days ago",
+       });
+     }
+   }, [isSignedIn, router]);
+diff --git a/src/app/[locale]/jobs/[id]/page.tsx b/src/app/[locale]/jobs/[id]/page.tsx
+index f4b97ea..8f60f90 100644
+--- a/src/app/[locale]/jobs/[id]/page.tsx
++++ b/src/app/[locale]/jobs/[id]/page.tsx
+@@ -70,6 +70,33 @@ export default function JobDetailPage() {
+   const [error, setError] = useState<string | null>(null);
+   const [showContact, setShowContact] = useState(false);
+ 
++  // Track job interactions (viewed, applied, seen_contact)
++  const trackInteraction = async (
++    action: "viewed" | "applied" | "seen_contact"
++  ) => {
++    if (!isSignedIn) return;
++
++    try {
++      const token = await getToken();
++      await fetch(
++        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${id}/interactions`,
++        {
++          method: "POST",
++          headers: {
++            "Content-Type": "application/json",
++            Authorization: `Bearer ${token}`,
++          },
++          body: JSON.stringify({
++            action,
++            referrer: "job_detail",
++          }),
++        }
++      );
++    } catch (err) {
++      console.error("Error tracking job interaction:", err);
++    }
++  };
++
+   useEffect(() => {
+     async function fetchJobDetail() {
+       try {
+@@ -116,32 +143,11 @@ export default function JobDetailPage() {
+     }
+   }, [isLoaded, isSignedIn, getToken, id, t]);
+ 
+-  // Track job interactions (viewed, applied, seen_contact)
+-  const trackInteraction = async (
+-    action: "viewed" | "applied" | "seen_contact"
+-  ) => {
+-    if (!isSignedIn || !id) return;
+-
+-    try {
+-      const token = await getToken();
+-      await fetch(
+-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${id}/interactions`,
+-        {
+-          method: "POST",
+-          headers: {
+-            "Content-Type": "application/json",
+-            Authorization: `Bearer ${token}`,
+-          },
+-          body: JSON.stringify({
+-            action,
+-            referrer: "job_detail",
+-          }),
+-        }
+-      );
+-    } catch (err) {
+-      console.error(`Error tracking job ${action}:`, err);
++  useEffect(() => {
++    if (job) {
++      trackInteraction("viewed");
+     }
+-  };
++  }, [job, trackInteraction]);
+ 
+   // Handle contact info reveal
+   const handleShowContact = () => {
+diff --git a/src/app/[locale]/layout.tsx b/src/app/[locale]/layout.tsx
+index 6ec8060..ffdc5e2 100644
+--- a/src/app/[locale]/layout.tsx
++++ b/src/app/[locale]/layout.tsx
+@@ -16,8 +16,72 @@ export const fontSans = FontSans({
+ });
+ 
+ export const metadata = {
+-  title: "Flavor Composition App",
+-  description: "Create and manage flavor compositions",
++  title: {
++    default: "Flavor Composition App",
++    template: "%s | Flavor Composition App",
++  },
++  description:
++    "Create and manage flavor compositions. The ultimate platform for aspiring flavor scientists to learn, create, and showcase their expertise.",
++  keywords: [
++    "flavor",
++    "composition",
++    "flavor science",
++    "flavor creation",
++    "flavor development",
++    "flavor portfolio",
++  ],
++  authors: [{ name: "Oumamie Team" }],
++  creator: "Oumamie Team",
++  publisher: "Oumamie",
++  formatDetection: {
++    email: false,
++    address: false,
++    telephone: false,
++  },
++  metadataBase: new URL("http://oumamie.xyz/"),
++  alternates: {
++    canonical: "/",
++    languages: {
++      en: "/en",
++      fr: "/fr",
++    },
++  },
++  openGraph: {
++    title: "Flavor Composition App",
++    description:
++      "Create and manage flavor compositions. The ultimate platform for aspiring flavorists.",
++    url: "https://Oumamie.com",
++    siteName: "Oumamie",
++    images: [
++      {
++        url: "/og-image.jpg",
++        width: 1200,
++        height: 630,
++        alt: "Oumamie - Flavor Composition Platform",
++      },
++    ],
++    locale: "en_US",
++    type: "website",
++  },
++  twitter: {
++    card: "summary_large_image",
++    title: "Flavor Composition App",
++    description:
++      "Create and manage flavor compositions. The ultimate platform for aspiring flavor scientists.",
++    images: ["/twitter-image.jpg"],
++    creator: "@Oumamie",
++  },
++  robots: {
++    index: true,
++    follow: true,
++    googleBot: {
++      index: true,
++      follow: true,
++      "max-video-preview": -1,
++      "max-image-preview": "large",
++      "max-snippet": -1,
++    },
++  },
+ };
+ 
+ type TranslationValue = string | { [key: string]: TranslationValue };
+diff --git a/src/app/[locale]/page.tsx b/src/app/[locale]/page.tsx
+index 71e3a1e..f72e93c 100644
+--- a/src/app/[locale]/page.tsx
++++ b/src/app/[locale]/page.tsx
+@@ -7,10 +7,19 @@ import {
+   ChevronRight,
+   Sparkles,
+ } from "lucide-react";
++import { Metadata } from "next";
+ 
+ import { Button } from "@/app/[locale]/components/ui/button";
+ import { useTranslations } from "next-intl";
+ 
++export async function generateMetadata(): Promise<Metadata> {
++  return {
++    title: "Home",
++    description:
++      "Master the art of flavor creation. Learn, create, and showcase your flavor compositions.",
++  };
++}
++
+ export default function Home() {
+   const t = useTranslations("Home");
+ 
+diff --git a/src/app/[locale]/substances/page.tsx b/src/app/[locale]/substances/page.tsx
+index d938f3f..e2cdd49 100644
+--- a/src/app/[locale]/substances/page.tsx
++++ b/src/app/[locale]/substances/page.tsx
+@@ -66,15 +66,10 @@ export default function SubstancesPage() {
+   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+   const ITEMS_PER_PAGE = 10;
+ 
+-  useEffect(() => {
+-    fetchSubstances();
+-  }, [currentPage, API_URL]);
+-
+   const fetchSubstances = () => {
+     setIsLoading(true);
+     fetch(`${API_URL}/api/substances?page=${currentPage}`)
+       .then((res) => {
+-        // Check if the response is ok (status in the range 200-299)
+         if (!res.ok) {
+           throw new Error("Network response was not ok");
+         }
+@@ -90,6 +85,10 @@ export default function SubstancesPage() {
+       });
+   };
+ 
++  useEffect(() => {
++    fetchSubstances();
++  }, [fetchSubstances]);
++
+   // Local search and filtering (since we're paginating server-side)
+   const filteredSubstances = substances.filter(
+     (substance) =>
+diff --git a/src/app/[locale]/terms-of-service/page.tsx b/src/app/[locale]/terms-of-service/page.tsx
+index 83a7076..5d306bd 100644
+--- a/src/app/[locale]/terms-of-service/page.tsx
++++ b/src/app/[locale]/terms-of-service/page.tsx
+@@ -18,40 +18,25 @@ export default function TermsOfService() {
+         </section>
+ 
+         <section>
+-          <h2 className="text-2xl font-semibold mb-4">
+-            {t("userAccounts.title")}
+-          </h2>
+-          <p className="text-muted-foreground">{t("userAccounts.content")}</p>
++          <h2 className="text-2xl font-semibold mb-4">{t("use.title")}</h2>
++          <p className="text-muted-foreground">{t("use.content")}</p>
+         </section>
+ 
+         <section>
+-          <h2 className="text-2xl font-semibold mb-4">
+-            {t("intellectualProperty.title")}
+-          </h2>
+-          <p className="text-muted-foreground">
+-            {t("intellectualProperty.content")}
+-          </p>
++          <h2 className="text-2xl font-semibold mb-4">{t("content.title")}</h2>
++          <p className="text-muted-foreground">{t("content.content")}</p>
+         </section>
+ 
+         <section>
+           <h2 className="text-2xl font-semibold mb-4">
+-            {t("userContent.title")}
+-          </h2>
+-          <p className="text-muted-foreground">{t("userContent.content")}</p>
+-        </section>
+-
+-        <section>
+-          <h2 className="text-2xl font-semibold mb-4">
+-            {t("termination.title")}
++            {t("liability.title")}
+           </h2>
+-          <p className="text-muted-foreground">{t("termination.content")}</p>
++          <p className="text-muted-foreground">{t("liability.content")}</p>
+         </section>
+ 
+         <section>
+-          <h2 className="text-2xl font-semibold mb-4">
+-            {t("liability.title")}
+-          </h2>
+-          <p className="text-muted-foreground">{t("liability.content")}</p>
++          <h2 className="text-2xl font-semibold mb-4">{t("changes.title")}</h2>
++          <p className="text-muted-foreground">{t("changes.content")}</p>
+         </section>
+       </div>
+     </div>
+diff --git a/src/locales/en.json b/src/locales/en.json
+index 0614ba6..092e882 100644
+--- a/src/locales/en.json
++++ b/src/locales/en.json
+@@ -1,7 +1,7 @@
+ {
+ 	"Home": {
+ 	  "headline": "Master the Art of Flavor Creation",
+-	  "heroDescription": "Learn, create, and showcase your flavor compositions. The ultimate platform for aspiring flavor scientists.",
++	  "heroDescription": "Learn, create, and showcase your flavor compositions. The ultimate platform for aspiring flavorists.",
+ 	  "createButton": "Create Your First Flavor",
+ 	  "exploreButton": "Explore Substances",
+ 	  "featuresTitle": "Features",

@@ -16,8 +16,72 @@ export const fontSans = FontSans({
 });
 
 export const metadata = {
-  title: "Flavor Composition App",
-  description: "Create and manage flavor compositions",
+  title: {
+    default: "Flavor Composition App",
+    template: "%s | Flavor Composition App",
+  },
+  description:
+    "Create and manage flavor compositions. The ultimate platform for aspiring flavor scientists to learn, create, and showcase their expertise.",
+  keywords: [
+    "flavor",
+    "composition",
+    "flavor science",
+    "flavor creation",
+    "flavor development",
+    "flavor portfolio",
+  ],
+  authors: [{ name: "Oumamie Team" }],
+  creator: "Oumamie Team",
+  publisher: "Oumamie",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL("http://oumamie.xyz/"),
+  alternates: {
+    canonical: "/",
+    languages: {
+      en: "/en",
+      fr: "/fr",
+    },
+  },
+  openGraph: {
+    title: "Flavor Composition App",
+    description:
+      "Create and manage flavor compositions. The ultimate platform for aspiring flavorists.",
+    url: "https://Oumamie.com",
+    siteName: "Oumamie",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Oumamie - Flavor Composition Platform",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Flavor Composition App",
+    description:
+      "Create and manage flavor compositions. The ultimate platform for aspiring flavor scientists.",
+    images: ["/twitter-image.jpg"],
+    creator: "@Oumamie",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 type TranslationValue = string | { [key: string]: TranslationValue };

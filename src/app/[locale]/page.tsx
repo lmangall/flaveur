@@ -7,9 +7,18 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
+import { Metadata } from "next";
 
 import { Button } from "@/app/[locale]/components/ui/button";
 import { useTranslations } from "next-intl";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Home",
+    description:
+      "Master the art of flavor creation. Learn, create, and showcase your flavor compositions.",
+  };
+}
 
 export default function Home() {
   const t = useTranslations("Home");

@@ -18,33 +18,13 @@ export default function TermsOfService() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {t("userAccounts.title")}
-          </h2>
-          <p className="text-muted-foreground">{t("userAccounts.content")}</p>
+          <h2 className="text-2xl font-semibold mb-4">{t("use.title")}</h2>
+          <p className="text-muted-foreground">{t("use.content")}</p>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {t("intellectualProperty.title")}
-          </h2>
-          <p className="text-muted-foreground">
-            {t("intellectualProperty.content")}
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {t("userContent.title")}
-          </h2>
-          <p className="text-muted-foreground">{t("userContent.content")}</p>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {t("termination.title")}
-          </h2>
-          <p className="text-muted-foreground">{t("termination.content")}</p>
+          <h2 className="text-2xl font-semibold mb-4">{t("content.title")}</h2>
+          <p className="text-muted-foreground">{t("content.content")}</p>
         </section>
 
         <section>
@@ -52,6 +32,11 @@ export default function TermsOfService() {
             {t("liability.title")}
           </h2>
           <p className="text-muted-foreground">{t("liability.content")}</p>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">{t("changes.title")}</h2>
+          <p className="text-muted-foreground">{t("changes.content")}</p>
         </section>
       </div>
     </div>

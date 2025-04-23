@@ -70,6 +70,33 @@ export default function JobDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showContact, setShowContact] = useState(false);
 
+  // Track job interactions (viewed, applied, seen_contact)
+  const trackInteraction = async (
+    action: "viewed" | "applied" | "seen_contact"
+  ) => {
+    if (!isSignedIn) return;
+
+    try {
+      const token = await getToken();
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${id}/interactions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            action,
+            referrer: "job_detail",
+          }),
+        }
+      );
+    } catch (err) {
+      console.error("Error tracking job interaction:", err);
+    }
+  };
+
   useEffect(() => {
     async function fetchJobDetail() {
       try {
@@ -116,32 +143,11 @@ export default function JobDetailPage() {
     }
   }, [isLoaded, isSignedIn, getToken, id, t]);
 
-  // Track job interactions (viewed, applied, seen_contact)
-  const trackInteraction = async (
-    action: "viewed" | "applied" | "seen_contact"
-  ) => {
-    if (!isSignedIn || !id) return;
-
-    try {
-      const token = await getToken();
-      await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${id}/interactions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            action,
-            referrer: "job_detail",
-          }),
-        }
-      );
-    } catch (err) {
-      console.error(`Error tracking job ${action}:`, err);
+  useEffect(() => {
+    if (job) {
+      trackInteraction("viewed");
     }
-  };
+  }, [job, trackInteraction]);
 
   // Handle contact info reveal
   const handleShowContact = () => {

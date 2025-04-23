@@ -66,15 +66,10 @@ export default function SubstancesPage() {
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const ITEMS_PER_PAGE = 10;
 
-  useEffect(() => {
-    fetchSubstances();
-  }, [currentPage, API_URL]);
-
   const fetchSubstances = () => {
     setIsLoading(true);
     fetch(`${API_URL}/api/substances?page=${currentPage}`)
       .then((res) => {
-        // Check if the response is ok (status in the range 200-299)
         if (!res.ok) {
           throw new Error("Network response was not ok");
         }
@@ -89,6 +84,10 @@ export default function SubstancesPage() {
         setIsLoading(false);
       });
   };
+
+  useEffect(() => {
+    fetchSubstances();
+  }, [fetchSubstances]);
 
   // Local search and filtering (since we're paginating server-side)
   const filteredSubstances = substances.filter(
