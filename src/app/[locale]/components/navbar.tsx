@@ -17,15 +17,8 @@ const authRoutes = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/flavours", label: "My Flavors" },
   { href: "/substances", label: "Substances" },
-  { href: "/categories", label: "Categories" },
   { href: "/jobs", label: "Jobs" },
-];
-
-// Routes for guests
-const publicRoutes = [
-  { href: "/explore", label: "Explore" },
   { href: "/about", label: "About" },
-  { href: "/jobs", label: "Jobs" },
 ];
 
 export default function Navbar() {
@@ -33,8 +26,19 @@ export default function Navbar() {
   const { isSignedIn, isLoaded } = useUser();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Which routes to show based on auth status
-  const routes = isSignedIn ? authRoutes : publicRoutes;
+  // Always show the same routes, but handle auth redirects in the click handler
+  const routes = authRoutes;
+
+  const handleRouteClick = (href: string) => {
+    // If the route requires auth and user is not signed in, redirect to sign in
+    if (
+      !isSignedIn &&
+      ["/dashboard", "/flavours", "/substances"].includes(href)
+    ) {
+      window.location.href = `/${locale}/auth/sign-in`;
+      return;
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
@@ -57,6 +61,10 @@ export default function Navbar() {
               key={route.href}
               href={`/${locale}${route.href}`}
               className="text-sm font-medium transition-colors hover:text-primary"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRouteClick(route.href);
+              }}
             >
               {route.label}
             </Link>
@@ -110,7 +118,11 @@ export default function Navbar() {
                     key={route.href}
                     href={`/${locale}${route.href}`}
                     className="text-sm font-medium transition-colors hover:text-primary"
-                    onClick={() => setIsOpen(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleRouteClick(route.href);
+                      setIsOpen(false);
+                    }}
                   >
                     {route.label}
                   </Link>
