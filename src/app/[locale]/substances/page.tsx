@@ -71,8 +71,6 @@ export default function SubstancesPage() {
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const ITEMS_PER_PAGE = 10;
 
-  console.log("API URL:", API_URL); // Debug log for API URL
-
   const fetchSubstances = useCallback(() => {
     setIsLoading(true);
     const searchParams = new URLSearchParams();
@@ -87,19 +85,16 @@ export default function SubstancesPage() {
     const url = `${API_URL}/api/substances${
       searchParams.toString() ? `?${searchParams.toString()}` : ""
     }`;
-    console.log(`Fetching substances from ${url}`);
 
     fetch(url)
       .then((res) => {
-        console.log("Response status:", res.status);
         if (!res.ok) {
           throw new Error(`Network response was not ok: ${res.status}`);
         }
         return res.json();
       })
       .then((data) => {
-        console.log("Received data:", data);
-        setSubstances(data.results || []);
+        setSubstances(Array.isArray(data) ? data : data.results || []);
         setIsLoading(false);
       })
       .catch((error) => {
@@ -109,7 +104,6 @@ export default function SubstancesPage() {
   }, [currentPage, API_URL, searchQuery, searchType]);
 
   useEffect(() => {
-    console.log("Page changed to:", currentPage);
     fetchSubstances();
   }, [currentPage, fetchSubstances]);
 
