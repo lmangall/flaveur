@@ -38,6 +38,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
       common_name: true,
       is_natural: true,
       odor: true,
+      olfactory_taste_notes: true,
       functional_groups: true,
       flavor_profile: true,
       cas_id: true,
@@ -56,7 +57,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
     { key: "fema_number", label: "FEMA #" },
     { key: "common_name", label: "Common Name" },
     { key: "is_natural", label: "Natural/Synthetic" },
-    { key: "odor", label: "Odor" },
+    { key: "olfactory_taste_notes", label: "Odor" },
     { key: "functional_groups", label: "Functional Groups" },
     { key: "flavor_profile", label: "Flavor Profile" },
     { key: "cas_id", label: "CAS ID" },
@@ -91,7 +92,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
       fema_number: true,
       common_name: true,
       is_natural: true,
-      odor: true,
+      olfactory_taste_notes: true,
       functional_groups: false,
       flavor_profile: true,
       cas_id: true,
@@ -341,8 +342,8 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                           </Badge>
                         </TableCell>
                       )}
-                      {visibleColumns.odor && (
-                        <TableCell>{substance.odor}</TableCell>
+                      {visibleColumns.olfactory_taste_notes && (
+                        <TableCell>{substance.olfactory_taste_notes}</TableCell>
                       )}
                       {visibleColumns.functional_groups && (
                         <TableCell>{substance.functional_groups}</TableCell>

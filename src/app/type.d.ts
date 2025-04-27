@@ -8,7 +8,7 @@ export type Substance = {
   smile: string | null;
   iupac_name: string | null;
   unknown_natural: boolean | null;
-  olfactory_taste_notes: string | null; // <- correct name
+  olfactory_taste_notes: string | null;
   functional_groups: string | null;
   inchi: string | null;
   xlogp: number | null;
@@ -28,6 +28,7 @@ export type Substance = {
   concentration?: number;
   unit?: string;
   order_index?: number;
+  odor?: string | null;
 };
 
 // Define the Flavour type
