@@ -11,6 +11,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/app/[locale]/components/ui/sheet";
+import { useRouter } from "next/navigation";
 
 // Routes for authenticated users
 const authRoutes = [
@@ -25,6 +26,7 @@ export default function Navbar() {
   const locale = useLocale(); // Get current locale
   const { isSignedIn, isLoaded } = useUser();
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   // Always show the same routes, but handle auth redirects in the click handler
   const routes = authRoutes;
@@ -35,9 +37,11 @@ export default function Navbar() {
       !isSignedIn &&
       ["/dashboard", "/flavours", "/substances"].includes(href)
     ) {
-      window.location.href = `/${locale}/auth/sign-in`;
+      router.push(`/${locale}/auth/sign-in`);
       return;
     }
+    // If user is signed in or route doesn't require auth, navigate to the route
+    router.push(`/${locale}${href}`);
   };
 
   return (
