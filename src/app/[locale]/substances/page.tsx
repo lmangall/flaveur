@@ -29,12 +29,12 @@ import {
 } from "@/app/[locale]/components/ui/dialog";
 import { Label } from "@/app/[locale]/components/ui/label";
 import {
-  Search,
   PlusCircle,
   MoreHorizontal,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
 
 type Substance = {
   fema_number: number;
@@ -52,6 +52,9 @@ export default function SubstancesPage() {
   const router = useRouter();
   const [substances, setSubstances] = useState<Substance[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<"all" | "name" | "profile">(
+    "all"
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,11 +75,21 @@ export default function SubstancesPage() {
 
   const fetchSubstances = useCallback(() => {
     setIsLoading(true);
-    console.log(
-      `Fetching substances from ${API_URL}/api/substances?page=${currentPage}`
-    );
+    const searchParams = new URLSearchParams();
 
-    fetch(`${API_URL}/api/substances?page=${currentPage}`)
+    if (searchQuery) {
+      searchParams.append("query", searchQuery);
+      searchParams.append("type", searchType);
+    } else {
+      searchParams.append("page", currentPage.toString());
+    }
+
+    const url = `${API_URL}/api/substances${
+      searchParams.toString() ? `?${searchParams.toString()}` : ""
+    }`;
+    console.log(`Fetching substances from ${url}`);
+
+    fetch(url)
       .then((res) => {
         console.log("Response status:", res.status);
         if (!res.ok) {
@@ -86,32 +99,22 @@ export default function SubstancesPage() {
       })
       .then((data) => {
         console.log("Received data:", data);
-        setSubstances(data);
+        setSubstances(data.results || []);
         setIsLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching substances:", error);
         setIsLoading(false);
       });
-  }, [currentPage, API_URL]);
+  }, [currentPage, API_URL, searchQuery, searchType]);
 
   useEffect(() => {
     console.log("Page changed to:", currentPage);
     fetchSubstances();
   }, [currentPage, fetchSubstances]);
 
-  // Local search and filtering (since we're paginating server-side)
-  const filteredSubstances = substances.filter(
-    (substance) =>
-      (substance.common_name?.toLowerCase() || "").includes(
-        searchQuery.toLowerCase()
-      ) ||
-      substance.fema_number?.toString().includes(searchQuery) ||
-      (substance.cas_id || "").includes(searchQuery) ||
-      (substance.flavor_profile?.toLowerCase() || "").includes(
-        searchQuery.toLowerCase()
-      )
-  );
+  // Remove the local filtering since we're now using backend search
+  const filteredSubstances = substances;
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -274,16 +277,12 @@ export default function SubstancesPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <div className="relative w-full sm:w-96">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search substances..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        <SubstanceSearch
+          searchQuery={searchQuery}
+          searchType={searchType}
+          onSearchChange={setSearchQuery}
+          onSearchTypeChange={setSearchType}
+        />
       </div>
 
       {isLoading ? (
