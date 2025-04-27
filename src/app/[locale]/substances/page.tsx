@@ -44,6 +44,8 @@ type Substance = {
   odor: string;
   functional_groups: string;
   flavor_profile: string;
+  taste?: string;
+  olfactory_taste_notes?: string;
 };
 
 export default function SubstancesPage() {
@@ -291,10 +293,10 @@ export default function SubstancesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>FEMA #</TableHead>
-                  <TableHead>Common Name</TableHead>
-                  <TableHead>Natural/Synthetic</TableHead>
                   <TableHead>CAS ID</TableHead>
-                  <TableHead>Odor</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Taste</TableHead>
+                  <TableHead>Olfactory Notes</TableHead>
                   <TableHead>Flavor Profile</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -305,21 +307,13 @@ export default function SubstancesPage() {
                     <TableCell className="font-medium">
                       {substance.fema_number}
                     </TableCell>
-                    <TableCell>{substance.common_name}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          substance.is_natural
-                            ? "bg-green-100 text-green-800"
-                            : "bg-purple-100 text-purple-800"
-                        }`}
-                      >
-                        {substance.is_natural ? "Natural" : "Synthetic"}
-                      </span>
-                    </TableCell>
                     <TableCell>{substance.cas_id}</TableCell>
-                    <TableCell>{substance.odor}</TableCell>
-                    <TableCell>{substance.flavor_profile}</TableCell>
+                    <TableCell>{substance.common_name}</TableCell>
+                    <TableCell>{substance.taste || "-"}</TableCell>
+                    <TableCell>
+                      {substance.olfactory_taste_notes || "-"}
+                    </TableCell>
+                    <TableCell>{substance.flavor_profile || "-"}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

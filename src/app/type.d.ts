@@ -1,27 +1,34 @@
-// Define the Substance type based on the example provided
-// export type Substance = {
-//   fema_number: number;
-//   common_name: string;
-//   synthetic: boolean;
-//   molecular_weight: number;
-//   exact_mass: number;
-//   smile: string;
-//   iupac_name: string;
-//   unknown_natural: boolean;
-//   odor: string;
-//   functional_groups: string;
-//   inchi: string;
-//   xlogp: number;
-//   is_natural: boolean;
-//   flavor_profile: string;
-//   fema_flavor_profile: string;
-//   pubchem_id: number;
-//   cas_id: string;
-//   substance_id: number;
-//   concentration?: number;
-//   unit?: string;
-//   order_index?: number;
-// };
+export type Substance = {
+  db_id: number;
+  fema_number: number | null;
+  common_name: string | null;
+  synthetic: boolean | null;
+  molecular_weight: number | null;
+  exact_mass: number | null;
+  smile: string | null;
+  iupac_name: string | null;
+  unknown_natural: boolean | null;
+  olfactory_taste_notes: string | null; // <- correct name
+  functional_groups: string | null;
+  inchi: string | null;
+  xlogp: number | null;
+  is_natural: boolean | null;
+  flavor_profile: string | null;
+  fema_flavor_profile: string | null;
+  pubchem_id: number | null;
+  cas_id: string | null;
+  substance_id: number;
+  taste?: string | null;
+  solubility?: Record<string, string> | null;
+  food_additive_classes?: string[] | null;
+  alternative_names?: string[] | null;
+  molecular_formula?: string | null;
+  melting_point_c?: string | null;
+  boiling_point_c?: string | null;
+  concentration?: number;
+  unit?: string;
+  order_index?: number;
+};
 
 // Define the Flavour type
 export type Flavour = {
