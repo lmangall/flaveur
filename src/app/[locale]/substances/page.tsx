@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
@@ -66,16 +66,24 @@ export default function SubstancesPage() {
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const ITEMS_PER_PAGE = 10;
 
-  const fetchSubstances = () => {
+  console.log("API URL:", API_URL); // Debug log for API URL
+
+  const fetchSubstances = useCallback(() => {
     setIsLoading(true);
+    console.log(
+      `Fetching substances from ${API_URL}/api/substances?page=${currentPage}`
+    );
+
     fetch(`${API_URL}/api/substances?page=${currentPage}`)
       .then((res) => {
+        console.log("Response status:", res.status);
         if (!res.ok) {
-          throw new Error("Network response was not ok");
+          throw new Error(`Network response was not ok: ${res.status}`);
         }
         return res.json();
       })
       .then((data) => {
+        console.log("Received data:", data);
         setSubstances(data);
         setIsLoading(false);
       })
@@ -83,11 +91,12 @@ export default function SubstancesPage() {
         console.error("Error fetching substances:", error);
         setIsLoading(false);
       });
-  };
+  }, [currentPage, API_URL]);
 
   useEffect(() => {
+    console.log("Page changed to:", currentPage);
     fetchSubstances();
-  }, [fetchSubstances]);
+  }, [currentPage, fetchSubstances]);
 
   // Local search and filtering (since we're paginating server-side)
   const filteredSubstances = substances.filter(
@@ -114,15 +123,10 @@ export default function SubstancesPage() {
       }
 
       // Step 1: Fetch Substance ID based on FEMA Number
-      const res = await fetch(
-        `${API_URL}/api/substances?fema_number=${femaNumber}`
-      );
+      const res = await fetch(`${API_URL}/api/substances/${femaNumber}`);
       if (!res.ok) throw new Error("Failed to fetch substance");
 
-      const substances = await res.json();
-      const foundSubstance = substances.find(
-        (sub: Substance) => sub.fema_number === femaNumber
-      );
+      const foundSubstance = await res.json();
 
       if (!foundSubstance) {
         alert("Substance not found in database.");
@@ -146,7 +150,7 @@ export default function SubstancesPage() {
       if (!addRes.ok) throw new Error("Failed to add substance to flavour");
 
       // Step 3: Update UI with the newly added substance
-      setSubstances([foundSubstance, ...substances]);
+      fetchSubstances(); // Refresh the list after adding
       setOpenDialog(false);
 
       // Reset form
@@ -327,7 +331,7 @@ export default function SubstancesPage() {
                           <DropdownMenuItem
                             onClick={() =>
                               router.push(
-                                `/api/substances/${substance.fema_number}`
+                                `/substances/${substance.fema_number}`
                               )
                             }
                           >
@@ -336,7 +340,7 @@ export default function SubstancesPage() {
                           <DropdownMenuItem
                             onClick={() =>
                               router.push(
-                                `/api/substances/${substance.fema_number}/edit`
+                                `/substances/${substance.fema_number}/edit`
                               )
                             }
                           >
