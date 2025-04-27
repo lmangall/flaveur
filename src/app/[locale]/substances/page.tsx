@@ -103,10 +103,14 @@ export default function SubstancesPage() {
   // Local search and filtering (since we're paginating server-side)
   const filteredSubstances = substances.filter(
     (substance) =>
-      substance.common_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      substance.fema_number.toString().includes(searchQuery) ||
-      substance.cas_id.includes(searchQuery) ||
-      substance.flavor_profile.toLowerCase().includes(searchQuery.toLowerCase())
+      (substance.common_name?.toLowerCase() || "").includes(
+        searchQuery.toLowerCase()
+      ) ||
+      substance.fema_number?.toString().includes(searchQuery) ||
+      (substance.cas_id || "").includes(searchQuery) ||
+      (substance.flavor_profile?.toLowerCase() || "").includes(
+        searchQuery.toLowerCase()
+      )
   );
 
   const handleInputChange = (
