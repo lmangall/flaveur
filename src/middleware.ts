@@ -12,12 +12,15 @@ export default function middleware(req: NextRequest) {
 
   // Skip localization for auth routes and handle redirects
   if (pathname.startsWith("/auth")) {
-    // If we're coming from accounts.oumamie.xyz, redirect to home
-    const referer = req.headers.get("referer");
-    if (referer?.includes("accounts.oumamie.xyz")) {
-      return NextResponse.redirect(
-        new URL(`/${routing.defaultLocale}`, req.url)
-      );
+    // Only redirect to production auth URL in production environment
+    if (process.env.NODE_ENV === "production") {
+      // If we're coming from accounts.oumamie.xyz, redirect to home
+      const referer = req.headers.get("referer");
+      if (referer?.includes("accounts.oumamie.xyz")) {
+        return NextResponse.redirect(
+          new URL(`/${routing.defaultLocale}`, req.url)
+        );
+      }
     }
     return NextResponse.next();
   }
