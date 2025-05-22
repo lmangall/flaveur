@@ -14,12 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/[locale]/components/ui/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/app/[locale]/components/ui/tabs";
 import { Switch } from "@/app/[locale]/components/ui/switch";
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -75,11 +69,6 @@ export default function NewFlavourPage() {
   const [currentConcentration, setCurrentConcentration] = useState("");
   const [currentUnit, setCurrentUnit] = useState("g/kg");
 
-  // Flavor ingredients state
-  const [ingredients, setIngredients] = useState([
-    { id: 1, flavour_id: "", name: "", concentration: "", unit: "g/kg" },
-  ]);
-
   // Mock categories
   const categories = [
     { id: 1, name: "Fruit" },
@@ -87,14 +76,6 @@ export default function NewFlavourPage() {
     { id: 3, name: "Beverage" },
     { id: 4, name: "Spice" },
     { id: 5, name: "Savory" },
-  ];
-
-  // Mock flavors for demo
-  const availableFlavors = [
-    { id: 101, name: "Base Vanilla" },
-    { id: 102, name: "Simple Chocolate" },
-    { id: 103, name: "Basic Cherry" },
-    { id: 104, name: "Plain Lemon" },
   ];
 
   const handleFlavourChange = (
@@ -138,45 +119,6 @@ export default function NewFlavourPage() {
     setSubstances(substances.filter((s) => s.id !== id));
   };
 
-  const addIngredient = () => {
-    setIngredients([
-      ...ingredients,
-      {
-        id: ingredients.length + 1,
-        flavour_id: "",
-        name: "",
-        concentration: "",
-        unit: "g/kg",
-      },
-    ]);
-  };
-
-  const removeIngredient = (id: number) => {
-    if (ingredients.length === 1) return;
-    setIngredients(ingredients.filter((i) => i.id !== id));
-  };
-
-  const handleIngredientChange = (id: number, field: string, value: string) => {
-    setIngredients(
-      ingredients.map((i) => {
-        if (i.id === id) {
-          if (field === "flavour_id") {
-            const selectedFlavor = availableFlavors.find(
-              (flav) => flav.id.toString() === value
-            );
-            return {
-              ...i,
-              [field]: value,
-              name: selectedFlavor ? selectedFlavor.name : "",
-            };
-          }
-          return { ...i, [field]: value };
-        }
-        return i;
-      })
-    );
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -185,7 +127,15 @@ export default function NewFlavourPage() {
       const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
       const token = await getToken();
 
-      // First create the flavour
+      // Prepare substances data for the API
+      const substancesData = substances.map((substance, index) => ({
+        fema_number: substance.substance?.fema_number,
+        concentration: parseFloat(substance.concentration),
+        unit: substance.unit,
+        order_index: index + 1,
+      }));
+
+      // Create the flavour with substances in a single API call
       const flavourResponse = await fetch(`${API_URL}/api/flavours`, {
         method: "POST",
         headers: {
@@ -199,6 +149,7 @@ export default function NewFlavourPage() {
           // category_id: parseInt(flavour.category),
           status: flavour.status,
           base_unit: flavour.baseUnit,
+          substances: substancesData, // Include substances in the main request
         }),
       });
 
@@ -207,51 +158,7 @@ export default function NewFlavourPage() {
         throw new Error(errorData.error || "Failed to create flavour");
       }
 
-      const createdFlavour = await flavourResponse.json();
-
-      // Then add all substances
-      const substancePromises = substances.map((substance, index) =>
-        fetch(
-          `${API_URL}/api/flavours/${createdFlavour.flavour_id}/substances`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              fema_number: substance.substance?.fema_number,
-              concentration: parseFloat(substance.concentration),
-              unit: substance.unit,
-              order_index: index + 1,
-            }),
-          }
-        )
-      );
-
-      await Promise.all(substancePromises);
-
-      // Finally add all ingredients
-      const ingredientPromises = ingredients.map((ingredient, index) =>
-        fetch(
-          `${API_URL}/api/flavours/${createdFlavour.flavour_id}/ingredients`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              flavour_id: parseInt(ingredient.flavour_id),
-              concentration: parseFloat(ingredient.concentration),
-              unit: ingredient.unit,
-              order_index: index + 1,
-            }),
-          }
-        )
-      );
-
-      await Promise.all(ingredientPromises);
+      await flavourResponse.json();
 
       toast.success(`${flavour.name} has been created successfully.`);
       router.push("/flavours");
@@ -374,196 +281,136 @@ export default function NewFlavourPage() {
             </div>
           </Card>
 
-          <Tabs defaultValue="substances" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="substances">Substance Components</TabsTrigger>
-              <TabsTrigger value="ingredients">Flavor Ingredients</TabsTrigger>
-            </TabsList>
-            <TabsContent value="substances" className="mt-4">
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Substances</h2>
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Substances</h2>
 
+            <div className="space-y-4">
+              {/* Search and Add Section */}
+              <div className="grid gap-4 sm:grid-cols-12 p-4 border rounded-lg bg-muted/30">
+                <div className="sm:col-span-5 space-y-2">
+                  <SubstanceSearchField
+                    onSelect={(substance) => {
+                      setCurrentSubstance(substance);
+                      // Enable the concentration input when a substance is selected
+                      const concentrationInput = document.querySelector(
+                        'input[type="number"]'
+                      ) as HTMLInputElement;
+                      if (concentrationInput) {
+                        concentrationInput.focus();
+                      }
+                    }}
+                  />
+                </div>
+                <div className="sm:col-span-3 space-y-2">
+                  <Input
+                    value={currentConcentration}
+                    onChange={(e) => setCurrentConcentration(e.target.value)}
+                    placeholder="Amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    disabled={!currentSubstance}
+                  />
+                </div>
+                <div className="sm:col-span-3 space-y-2">
+                  <Select
+                    value={currentUnit}
+                    onValueChange={setCurrentUnit}
+                    disabled={!currentSubstance}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="g/kg">g/kg</SelectItem>
+                      <SelectItem value="%(v/v)">%(v/v)</SelectItem>
+                      <SelectItem value="g/L">g/L</SelectItem>
+                      <SelectItem value="mL/L">mL/L</SelectItem>
+                      <SelectItem value="ppm">ppm</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="sm:col-span-1 flex items-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddSubstance}
+                    disabled={!currentSubstance || !currentConcentration}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Selected Substances List */}
+              {substances.length > 0 && (
                 <div className="space-y-4">
-                  {/* Search and Add Section */}
-                  <div className="grid gap-4 sm:grid-cols-12 p-4 border rounded-lg bg-muted/30">
-                    <div className="sm:col-span-5 space-y-2">
-                      {/* <Label>Search Substance</Label> */}
-                      <SubstanceSearchField
-                        onSelect={(substance) => {
-                          setCurrentSubstance(substance);
-                          // Enable the concentration input when a substance is selected
-                          const concentrationInput = document.querySelector(
-                            'input[type="number"]'
-                          ) as HTMLInputElement;
-                          if (concentrationInput) {
-                            concentrationInput.focus();
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="sm:col-span-3 space-y-2">
-                      {/* <Label>Concentration</Label> */}
-                      <Input
-                        value={currentConcentration}
-                        onChange={(e) =>
-                          setCurrentConcentration(e.target.value)
-                        }
-                        placeholder="Amount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        disabled={!currentSubstance}
-                      />
-                    </div>
-                    <div className="sm:col-span-3 space-y-2">
-                      {/* <Label>Unit</Label> */}
-                      <Select
-                        value={currentUnit}
-                        onValueChange={setCurrentUnit}
-                        disabled={!currentSubstance}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select unit" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="g/kg">g/kg</SelectItem>
-                          <SelectItem value="%(v/v)">%(v/v)</SelectItem>
-                          <SelectItem value="g/L">g/L</SelectItem>
-                          <SelectItem value="mL/L">mL/L</SelectItem>
-                          <SelectItem value="ppm">ppm</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="sm:col-span-1 flex items-end">
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={handleAddSubstance}
-                        disabled={!currentSubstance || !currentConcentration}
-                        className="w-full"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Added Substances</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {substances.length} component
+                      {substances.length !== 1 ? "s" : ""}
+                    </Badge>
                   </div>
-                  {/* Selected Substances List */}
-                  {substances.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-medium">
-                          Added Substances
-                        </h3>
-                        <Badge variant="secondary" className="text-xs">
-                          {substances.length} component
-                          {substances.length !== 1 ? "s" : ""}
-                        </Badge>
-                      </div>
 
-                      {/* Desktop Table View */}
-                      <Card className="hidden md:block">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Substance Name</TableHead>
-                              <TableHead>FEMA #</TableHead>
-                              <TableHead>CAS #</TableHead>
-                              <TableHead className="text-right">
-                                Concentration
-                              </TableHead>
-                              <TableHead>Unit</TableHead>
-                              <TableHead className="w-[80px] text-center">
-                                Actions
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {substances.map((item) => (
-                              <TableRow key={item.id}>
-                                <TableCell>
-                                  <div className="space-y-1">
-                                    <div className="font-medium">
-                                      {item.name}
-                                    </div>
-                                    {item.substance?.chemical_name && (
-                                      <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                        {item.substance.chemical_name}
-                                      </div>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  {item.substance?.fema_number ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {item.substance.fema_number}
-                                    </Badge>
-                                  ) : (
-                                    <span className="text-muted-foreground text-xs">
-                                      N/A
-                                    </span>
-                                  )}
-                                </TableCell>
-                                <TableCell className="font-mono text-xs">
-                                  {item.substance?.cas_number || (
-                                    <span className="text-muted-foreground">
-                                      N/A
-                                    </span>
-                                  )}
-                                </TableCell>
-                                <TableCell className="text-right font-medium">
-                                  {item.concentration}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    {item.unit}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8"
-                                          onClick={() =>
-                                            removeSubstance(item.id)
-                                          }
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Remove substance</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </Card>
-
-                      {/* Mobile Card View */}
-                      <div className="md:hidden space-y-3">
+                  {/* Desktop Table View */}
+                  <Card className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Substance Name</TableHead>
+                          <TableHead>FEMA #</TableHead>
+                          <TableHead>CAS #</TableHead>
+                          <TableHead className="text-right">
+                            Concentration
+                          </TableHead>
+                          <TableHead>Unit</TableHead>
+                          <TableHead className="w-[80px] text-center">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {substances.map((item) => (
-                          <Card key={item.id} className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1 space-y-1">
-                                <h4 className="font-medium">{item.name}</h4>
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="font-medium">{item.name}</div>
                                 {item.substance?.chemical_name && (
-                                  <p className="text-sm text-muted-foreground">
+                                  <div className="text-xs text-muted-foreground truncate max-w-[200px]">
                                     {item.substance.chemical_name}
-                                  </p>
+                                  </div>
                                 )}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              {item.substance?.fema_number ? (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.substance.fema_number}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">
+                                  N/A
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="font-mono text-xs">
+                              {item.substance?.cas_number || (
+                                <span className="text-muted-foreground">
+                                  N/A
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {item.concentration}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="text-xs">
+                                {item.unit}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -571,7 +418,7 @@ export default function NewFlavourPage() {
                                       type="button"
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8 ml-2"
+                                      className="h-8 w-8"
                                       onClick={() => removeSubstance(item.id)}
                                     >
                                       <Trash2 className="h-4 w-4" />
@@ -582,195 +429,130 @@ export default function NewFlavourPage() {
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3 text-sm">
-                              <div>
-                                <Label className="text-xs text-muted-foreground">
-                                  FEMA #
-                                </Label>
-                                <div className="mt-1">
-                                  {item.substance?.fema_number ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {item.substance.fema_number}
-                                    </Badge>
-                                  ) : (
-                                    <span className="text-muted-foreground text-xs">
-                                      N/A
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div>
-                                <Label className="text-xs text-muted-foreground">
-                                  CAS #
-                                </Label>
-                                <div className="mt-1 font-mono text-xs">
-                                  {item.substance?.cas_number || (
-                                    <span className="text-muted-foreground">
-                                      N/A
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div>
-                                <Label className="text-xs text-muted-foreground">
-                                  Concentration
-                                </Label>
-                                <div className="mt-1 font-medium">
-                                  {item.concentration}
-                                </div>
-                              </div>
-
-                              <div>
-                                <Label className="text-xs text-muted-foreground">
-                                  Unit
-                                </Label>
-                                <div className="mt-1">
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    {item.unit}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                          </Card>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </div>
+                      </TableBody>
+                    </Table>
+                  </Card>
 
-                      {/* Summary Footer */}
-                      <Card className="p-3 bg-muted/50">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">
-                              {substances.length} substance
-                              {substances.length !== 1 ? "s" : ""}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-muted-foreground">
-                              Units:
-                            </span>
-                            {[...new Set(substances.map((s) => s.unit))].map(
-                              (unit) => (
-                                <Badge
-                                  key={unit}
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  {unit}
-                                </Badge>
-                              )
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {substances.map((item) => (
+                      <Card key={item.id} className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1 space-y-1">
+                            <h4 className="font-medium">{item.name}</h4>
+                            {item.substance?.chemical_name && (
+                              <p className="text-sm text-muted-foreground">
+                                {item.substance.chemical_name}
+                              </p>
                             )}
+                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 ml-2"
+                                  onClick={() => removeSubstance(item.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Remove substance</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">
+                              FEMA #
+                            </Label>
+                            <div className="mt-1">
+                              {item.substance?.fema_number ? (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.substance.fema_number}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">
+                                  N/A
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label className="text-xs text-muted-foreground">
+                              CAS #
+                            </Label>
+                            <div className="mt-1 font-mono text-xs">
+                              {item.substance?.cas_number || (
+                                <span className="text-muted-foreground">
+                                  N/A
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label className="text-xs text-muted-foreground">
+                              Concentration
+                            </Label>
+                            <div className="mt-1 font-medium">
+                              {item.concentration}
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label className="text-xs text-muted-foreground">
+                              Unit
+                            </Label>
+                            <div className="mt-1">
+                              <Badge variant="secondary" className="text-xs">
+                                {item.unit}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </Card>
-                    </div>
-                  )}{" "}
-                </div>
-              </Card>
-            </TabsContent>
-            <TabsContent value="ingredients" className="mt-4">
-              <Card className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Flavor Ingredients</h2>
-                  <Button type="button" onClick={addIngredient} size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Flavor
-                  </Button>
-                </div>
-
-                {ingredients.map((item) => (
-                  <div
-                    key={item.id}
-                    className="grid gap-4 sm:grid-cols-12 mb-4 pb-4 border-b last:border-b-0"
-                  >
-                    <div className="sm:col-span-5 space-y-2">
-                      <Label htmlFor={`ingredient-${item.id}`}>Flavor</Label>
-                      <Select
-                        value={item.flavour_id}
-                        onValueChange={(value) =>
-                          handleIngredientChange(item.id, "flavour_id", value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select flavor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableFlavors.map((flavor) => (
-                            <SelectItem
-                              key={flavor.id}
-                              value={flavor.id.toString()}
-                            >
-                              {flavor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="sm:col-span-3 space-y-2">
-                      <Label htmlFor={`ingredient-concentration-${item.id}`}>
-                        Concentration
-                      </Label>
-                      <Input
-                        id={`ingredient-concentration-${item.id}`}
-                        value={item.concentration}
-                        onChange={(e) =>
-                          handleIngredientChange(
-                            item.id,
-                            "concentration",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Amount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                    <div className="sm:col-span-3 space-y-2">
-                      <Label htmlFor={`ingredient-unit-${item.id}`}>Unit</Label>
-                      <Select
-                        value={item.unit}
-                        onValueChange={(value) =>
-                          handleIngredientChange(item.id, "unit", value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select unit" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="g/kg">g/kg</SelectItem>
-                          <SelectItem value="%(v/v)">%(v/v)</SelectItem>
-                          <SelectItem value="g/L">g/L</SelectItem>
-                          <SelectItem value="mL/L">mL/L</SelectItem>
-                          <SelectItem value="ppm">ppm</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="sm:col-span-1 flex items-end justify-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeIngredient(item.id)}
-                        disabled={ingredients.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </Card>
-            </TabsContent>
-          </Tabs>
+
+                  {/* Summary Footer */}
+                  <Card className="p-3 bg-muted/50">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {substances.length} substance
+                          {substances.length !== 1 ? "s" : ""}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Units:</span>
+                        {[...new Set(substances.map((s) => s.unit))].map(
+                          (unit) => (
+                            <Badge
+                              key={unit}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {unit}
+                            </Badge>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
+            </div>
+          </Card>
 
           <div className="flex justify-end gap-4">
             <Button
