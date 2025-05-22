@@ -179,11 +179,90 @@ export default function NewFlavourPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    //TODO: This is only a simulation, correct it!
-    setTimeout(() => {
-      toast("`${flavour.name} has been created successfully.");
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+      // First create the flavour
+      const flavourResponse = await fetch(`${API_URL}/api/flavours`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: flavour.name,
+          description: flavour.description,
+          is_public: flavour.isPublic,
+          category_id: parseInt(flavour.category),
+          status: flavour.status,
+          base_unit: flavour.baseUnit,
+          // The backend will handle user association through the auth token
+        }),
+        credentials: "include", // This ensures cookies are sent with the request
+      });
+
+      if (!flavourResponse.ok) {
+        const errorData = await flavourResponse.json();
+        throw new Error(errorData.error || "Failed to create flavour");
+      }
+
+      const createdFlavour = await flavourResponse.json();
+
+      // Then add all substances
+      const substancePromises = substances.map((substance, index) =>
+        fetch(
+          `${API_URL}/api/flavours/${createdFlavour.flavour_id}/substances`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fema_number: substance.substance?.fema_number,
+              concentration: parseFloat(substance.concentration),
+              unit: substance.unit,
+              order_index: index + 1,
+            }),
+            credentials: "include",
+          }
+        )
+      );
+
+      await Promise.all(substancePromises);
+
+      // Finally add all ingredients
+      const ingredientPromises = ingredients.map((ingredient, index) =>
+        fetch(
+          `${API_URL}/api/flavours/${createdFlavour.flavour_id}/ingredients`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              flavour_id: parseInt(ingredient.flavour_id),
+              concentration: parseFloat(ingredient.concentration),
+              unit: ingredient.unit,
+              order_index: index + 1,
+            }),
+            credentials: "include",
+          }
+        )
+      );
+
+      await Promise.all(ingredientPromises);
+
+      toast.success(`${flavour.name} has been created successfully.`);
       router.push("/flavours");
-    }, 1500);
+    } catch (error) {
+      console.error("Error creating flavour:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create flavour. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
