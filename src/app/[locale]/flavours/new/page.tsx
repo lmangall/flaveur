@@ -23,6 +23,8 @@ import {
 import { Switch } from "@/app/[locale]/components/ui/switch";
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { SubstanceSearchField } from "@/app/[locale]/components/substance-search-field";
+import type { Substance } from "@/app/type";
 
 export default function NewFlavourPage() {
   const router = useRouter();
@@ -55,15 +57,6 @@ export default function NewFlavourPage() {
     { id: 3, name: "Beverage" },
     { id: 4, name: "Spice" },
     { id: 5, name: "Savory" },
-  ];
-
-  // Mock substances for demo
-  const availableSubstances = [
-    { id: 1234, name: "Vanillin", fema_number: 1234 },
-    { id: 2345, name: "Ethyl maltol", fema_number: 2345 },
-    { id: 3456, name: "Benzaldehyde", fema_number: 3456 },
-    { id: 4567, name: "Diacetyl", fema_number: 4567 },
-    { id: 5678, name: "Citral", fema_number: 5678 },
   ];
 
   // Mock flavors for demo
@@ -107,20 +100,29 @@ export default function NewFlavourPage() {
     setSubstances(substances.filter((s) => s.id !== id));
   };
 
-  const handleSubstanceChange = (id: number, field: string, value: string) => {
+  const handleSubstanceSelect = (id: number, substance: Substance) => {
     setSubstances(
       substances.map((s) => {
         if (s.id === id) {
-          if (field === "substance_id") {
-            const selectedSubstance = availableSubstances.find(
-              (sub) => sub.id.toString() === value
-            );
-            return {
-              ...s,
-              [field]: value,
-              name: selectedSubstance ? selectedSubstance.name : "",
-            };
-          }
+          return {
+            ...s,
+            substance_id: substance.substance_id.toString(),
+            name: substance.common_name || "",
+          };
+        }
+        return s;
+      })
+    );
+  };
+
+  const handleSubstanceFieldChange = (
+    id: number,
+    field: string,
+    value: string
+  ) => {
+    setSubstances(
+      substances.map((s) => {
+        if (s.id === id) {
           return { ...s, [field]: value };
         }
         return s;
@@ -307,26 +309,11 @@ export default function NewFlavourPage() {
                   >
                     <div className="sm:col-span-5 space-y-2">
                       <Label htmlFor={`substance-${item.id}`}>Substance</Label>
-                      <Select
-                        value={item.substance_id}
-                        onValueChange={(value) =>
-                          handleSubstanceChange(item.id, "substance_id", value)
+                      <SubstanceSearchField
+                        onSelect={(substance) =>
+                          handleSubstanceSelect(item.id, substance)
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select substance" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableSubstances.map((substance) => (
-                            <SelectItem
-                              key={substance.id}
-                              value={substance.id.toString()}
-                            >
-                              {substance.name} (FEMA {substance.fema_number})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
                     <div className="sm:col-span-3 space-y-2">
                       <Label htmlFor={`concentration-${item.id}`}>
@@ -336,7 +323,7 @@ export default function NewFlavourPage() {
                         id={`concentration-${item.id}`}
                         value={item.concentration}
                         onChange={(e) =>
-                          handleSubstanceChange(
+                          handleSubstanceFieldChange(
                             item.id,
                             "concentration",
                             e.target.value
@@ -353,7 +340,7 @@ export default function NewFlavourPage() {
                       <Select
                         value={item.unit}
                         onValueChange={(value) =>
-                          handleSubstanceChange(item.id, "unit", value)
+                          handleSubstanceFieldChange(item.id, "unit", value)
                         }
                       >
                         <SelectTrigger>
