@@ -657,7 +657,7 @@ export default function NewFlavourPage() {
                               Units:
                             </span>
                             {[...new Set(substances.map((s) => s.unit))].map(
-                              (unit, index) => (
+                              (unit) => (
                                 <Badge
                                   key={unit}
                                   variant="secondary"

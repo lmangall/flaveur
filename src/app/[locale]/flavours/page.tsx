@@ -28,14 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/[locale]/components/ui/select";
-import {
-  PlusCircle,
-  Search,
-  MoreHorizontal,
-  Filter,
-  Star,
-  StarOff,
-} from "lucide-react";
+import { PlusCircle, Search, MoreHorizontal, Filter } from "lucide-react";
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import {
   ChartConfig,
@@ -44,6 +37,7 @@ import {
   ChartTooltipContent,
 } from "@/app/[locale]/components/ui/chart";
 import { Flavour } from "@/app/type";
+import { Badge } from "@/app/[locale]/components/ui/badge";
 
 // Flavor Profile Component
 type FlavorProfileData = {
@@ -161,7 +155,10 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">
-            <Link href={`/flavours/${flavour.id}`} className="hover:underline">
+            <Link
+              href={`/flavours/${flavour.flavour_id}`}
+              className="hover:underline"
+            >
               {flavour.name}
             </Link>
           </CardTitle>
@@ -187,28 +184,18 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
                 {flavour.status.charAt(0).toUpperCase() +
                   flavour.status.slice(1)}
               </span>
-              <span className="flex items-center gap-1 text-xs">
-                {flavour.isPublic ? (
-                  <>
-                    <Star className="h-3 w-3 text-amber-500" /> Public
-                  </>
-                ) : (
-                  <>
-                    <StarOff className="h-3 w-3 text-muted-foreground" />{" "}
-                    Private
-                  </>
-                )}
-              </span>
+              <Badge variant="outline">
+                {flavour.is_public ? "Public" : "Private"}
+              </Badge>
             </div>
           </div>
         )}
       </CardContent>
       <CardFooter className="flex justify-between">
-        <span className="text-sm text-muted-foreground">
-          {flavour.categoryId !== null
-            ? `Category ${flavour.categoryId}`
-            : "No Category"}
-        </span>
+        <div>
+          <span className="font-medium">Category:</span>{" "}
+          {flavour.category_id || "None"}
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -217,17 +204,21 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              onClick={() => router.push(`/flavours/${flavour.id}`)}
+              onClick={() => router.push(`/flavours/${flavour.flavour_id}`)}
             >
               View
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => router.push(`/flavours/${flavour.id}/edit`)}
+              onClick={() =>
+                router.push(`/flavours/${flavour.flavour_id}/edit`)
+              }
             >
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => router.push(`/flavours/${flavour.id}/duplicate`)}
+              onClick={() =>
+                router.push(`/flavours/${flavour.flavour_id}/duplicate`)
+              }
             >
               Duplicate
             </DropdownMenuItem>
@@ -290,7 +281,7 @@ export default function FlavoursPage() {
         const data = await response.json();
 
         // Map the API response to match our Flavour type
-        const processedFlavours: Flavour[] = data.map(
+        const transformedData = data.flavours.map(
           (item: {
             flavour_id: number;
             name: string;
@@ -302,25 +293,46 @@ export default function FlavoursPage() {
             category_id: number | null;
             created_at: string;
             updated_at: string;
-            user_id: string; // Add if available
-          }) => ({
-            id: item.flavour_id,
-            name: item.name || "Unnamed",
-            description: item.description || "",
-            substances: [], // Initialize with an empty array or map from the API if available
-            status: item.status || "draft",
-            isPublic: !!item.is_public,
-            version: item.version || null,
-            baseUnit: item.base_unit || "",
-            categoryId:
-              item.category_id !== null ? Number(item.category_id) : null,
-            createdAt: item.created_at || new Date().toISOString(),
-            updatedAt: item.updated_at || new Date().toISOString(),
-            userId: item.user_id || "Unknown", // Add user_id if available
-          })
+            user_id: string;
+            substances?: Array<{
+              substance_id: number;
+              concentration: number;
+              unit: string;
+              order_index: number;
+              substance?: {
+                substance_id: number;
+                fema_number: number;
+                common_name: string;
+                is_natural: boolean;
+                odor: string;
+                functional_groups: string;
+                flavor_profile: string;
+                taste?: string;
+                olfactory_taste_notes?: string;
+                description: string;
+                created_at: string;
+                updated_at: string;
+              };
+            }>;
+          }) =>
+            ({
+              flavour_id: item.flavour_id,
+              name: item.name || "Unnamed",
+              description: item.description || "",
+              substances: item.substances || [],
+              status: item.status || "draft",
+              is_public: Boolean(item.is_public),
+              version: item.version !== null ? Number(item.version) : null,
+              base_unit: item.base_unit || "",
+              category_id:
+                item.category_id !== null ? Number(item.category_id) : null,
+              created_at: item.created_at || new Date().toISOString(),
+              updated_at: item.updated_at || new Date().toISOString(),
+              user_id: item.user_id || "Unknown",
+            } as Flavour)
         );
 
-        setFlavours(processedFlavours);
+        setFlavours(transformedData);
       } catch (error) {
         console.error("Failed to fetch flavours:", error);
       } finally {
@@ -386,7 +398,7 @@ export default function FlavoursPage() {
       ) : filteredFlavours.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredFlavours.map((flavour) => (
-            <FlavourCard key={flavour.id} flavour={flavour} />
+            <FlavourCard key={flavour.flavour_id} flavour={flavour} />
           ))}
         </div>
       ) : (

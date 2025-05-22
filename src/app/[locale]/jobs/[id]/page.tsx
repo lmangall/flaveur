@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@clerk/nextjs";
@@ -71,31 +71,32 @@ export default function JobDetailPage() {
   const [showContact, setShowContact] = useState(false);
 
   // Track job interactions (viewed, applied, seen_contact)
-  const trackInteraction = async (
-    action: "viewed" | "applied" | "seen_contact"
-  ) => {
-    if (!isSignedIn) return;
+  const trackInteraction = useCallback(
+    async (action: "viewed" | "applied" | "seen_contact") => {
+      if (!isSignedIn || !id) return;
 
-    try {
-      const token = await getToken();
-      await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${id}/interactions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            action,
-            referrer: "job_detail",
-          }),
-        }
-      );
-    } catch (err) {
-      console.error("Error tracking job interaction:", err);
-    }
-  };
+      try {
+        const token = await getToken();
+        await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${id}/interactions`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              action,
+              referrer: "job_detail",
+            }),
+          }
+        );
+      } catch (err) {
+        console.error("Error tracking job interaction:", err);
+      }
+    },
+    [isSignedIn, getToken, id]
+  );
 
   useEffect(() => {
     async function fetchJobDetail() {
@@ -141,13 +142,7 @@ export default function JobDetailPage() {
     if (isLoaded && id) {
       fetchJobDetail();
     }
-  }, [isLoaded, isSignedIn, getToken, id, t]);
-
-  useEffect(() => {
-    if (job) {
-      trackInteraction("viewed");
-    }
-  }, [job, trackInteraction]);
+  }, [isLoaded, isSignedIn, getToken, id, t, trackInteraction]);
 
   // Handle contact info reveal
   const handleShowContact = () => {

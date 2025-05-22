@@ -41,14 +41,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
       olfactory_taste_notes: true,
       functional_groups: true,
       flavor_profile: true,
-      cas_id: true,
-      molecular_weight: false,
-      exact_mass: false,
-      smile: false,
-      iupac_name: false,
-      xlogp: false,
-      fema_flavor_profile: false,
-      pubchem_id: false,
+      cas_number: true,
     }
   );
 
@@ -57,17 +50,11 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
     { key: "fema_number", label: "FEMA #" },
     { key: "common_name", label: "Common Name" },
     { key: "is_natural", label: "Natural/Synthetic" },
-    { key: "olfactory_taste_notes", label: "Odor" },
+    { key: "odor", label: "Odor" },
+    { key: "olfactory_taste_notes", label: "Odor Notes" },
     { key: "functional_groups", label: "Functional Groups" },
     { key: "flavor_profile", label: "Flavor Profile" },
-    { key: "cas_id", label: "CAS ID" },
-    { key: "molecular_weight", label: "Molecular Weight" },
-    { key: "exact_mass", label: "Exact Mass" },
-    { key: "smile", label: "SMILE" },
-    { key: "iupac_name", label: "IUPAC Name" },
-    { key: "xlogp", label: "XLogP" },
-    { key: "fema_flavor_profile", label: "FEMA Flavor Profile" },
-    { key: "pubchem_id", label: "PubChem ID" },
+    { key: "cas_number", label: "CAS Number" },
   ];
 
   // Toggle column visibility
@@ -95,14 +82,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
       olfactory_taste_notes: true,
       functional_groups: false,
       flavor_profile: true,
-      cas_id: true,
-      molecular_weight: false,
-      exact_mass: false,
-      smile: false,
-      iupac_name: false,
-      xlogp: false,
-      fema_flavor_profile: false,
-      pubchem_id: false,
+      cas_number: true,
     });
   };
 
@@ -115,7 +95,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
     try {
       const token = await getToken();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavor.id}/substances`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavor.flavour_id}/substances`,
         {
           method: "POST",
           headers: {
@@ -126,7 +106,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
             fema_number: parseInt(femaNumberToAdd),
             concentration: parseFloat(concentration),
             unit,
-            order_index: flavor.substances.length,
+            order_index: flavor.substances?.length || 0,
           }),
         }
       );
@@ -145,7 +125,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
     try {
       const token = await getToken();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavor.id}/substances/${substanceId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavor.flavour_id}/substances/${substanceId}`,
         {
           method: "DELETE",
           headers: {
@@ -175,13 +155,13 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
             {flavor.status.charAt(0).toUpperCase() + flavor.status.slice(1)}
           </Badge>
           <Badge variant="outline">
-            {flavor.isPublic ? "Public" : "Private"}
+            {flavor.is_public ? "Public" : "Private"}
           </Badge>
           {flavor.version !== null && (
             <Badge variant="outline">v{flavor.version}</Badge>
           )}
-          {flavor.baseUnit && (
-            <Badge variant="outline">{flavor.baseUnit}</Badge>
+          {flavor.base_unit && (
+            <Badge variant="outline">{flavor.base_unit}</Badge>
           )}
         </div>
       </div>
@@ -195,24 +175,24 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
             <div className="space-y-2">
               <div>
                 <span className="font-medium">Created:</span>{" "}
-                {new Date(flavor.createdAt).toLocaleString()}
+                {new Date(flavor.created_at).toLocaleString()}
               </div>
               <div>
                 <span className="font-medium">Last Updated:</span>{" "}
-                {new Date(flavor.updatedAt).toLocaleString()}
+                {new Date(flavor.updated_at).toLocaleString()}
               </div>
               <div>
-                <span className="font-medium">User ID:</span> {flavor.userId}
+                <span className="font-medium">User ID:</span> {flavor.user_id}
               </div>
             </div>
             <div className="space-y-2">
               <div>
                 <span className="font-medium">Category ID:</span>{" "}
-                {flavor.categoryId || "None"}
+                {flavor.category_id || "None"}
               </div>
               <div>
                 <span className="font-medium">Base Unit:</span>{" "}
-                {flavor.baseUnit || "None"}
+                {flavor.base_unit || "None"}
               </div>
               <div>
                 <span className="font-medium">Version:</span>{" "}
@@ -225,7 +205,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Substances ({flavor.substances.length})</CardTitle>
+          <CardTitle>Substances ({flavor.substances?.length || 0})</CardTitle>
           <div className="flex items-center gap-2">
             <div className="flex gap-2">
               <input
@@ -299,7 +279,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
           </div>
         </CardHeader>
         <CardContent>
-          {flavor.substances.length === 0 ? (
+          {!flavor.substances || flavor.substances.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No substances added to this flavor yet.</p>
             </div>
@@ -318,66 +298,54 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {flavor.substances.map((substance) => (
-                    <TableRow key={substance.fema_number}>
+                  {flavor.substances?.map((substance) => (
+                    <TableRow key={substance.substance_id}>
                       {visibleColumns.fema_number && (
                         <TableCell className="font-medium">
-                          {substance.fema_number}
+                          {substance.substance?.fema_number}
                         </TableCell>
                       )}
                       {visibleColumns.common_name && (
-                        <TableCell>{substance.common_name}</TableCell>
+                        <TableCell>
+                          {substance.substance?.common_name}
+                        </TableCell>
                       )}
                       {visibleColumns.is_natural && (
                         <TableCell>
                           <Badge
                             variant="outline"
                             className={
-                              substance.is_natural
+                              substance.substance?.is_natural
                                 ? "bg-green-100 text-green-800 hover:bg-green-100"
                                 : "bg-purple-100 text-purple-800 hover:bg-purple-100"
                             }
                           >
-                            {substance.is_natural ? "Natural" : "Synthetic"}
+                            {substance.substance?.is_natural
+                              ? "Natural"
+                              : "Synthetic"}
                           </Badge>
                         </TableCell>
                       )}
+                      {visibleColumns.odor && (
+                        <TableCell>{substance.substance?.odor}</TableCell>
+                      )}
                       {visibleColumns.olfactory_taste_notes && (
-                        <TableCell>{substance.olfactory_taste_notes}</TableCell>
-                      )}
-                      {visibleColumns.functional_groups && (
-                        <TableCell>{substance.functional_groups}</TableCell>
-                      )}
-                      {visibleColumns.flavor_profile && (
-                        <TableCell>{substance.flavor_profile}</TableCell>
-                      )}
-                      {visibleColumns.cas_id && (
-                        <TableCell>{substance.cas_id}</TableCell>
-                      )}
-                      {visibleColumns.molecular_weight && (
-                        <TableCell>{substance.molecular_weight}</TableCell>
-                      )}
-                      {visibleColumns.exact_mass && (
-                        <TableCell>{substance.exact_mass}</TableCell>
-                      )}
-                      {visibleColumns.smile && (
                         <TableCell>
-                          <code className="bg-muted px-1 py-0.5 rounded text-xs">
-                            {substance.smile}
-                          </code>
+                          {substance.substance?.olfactory_taste_notes}
                         </TableCell>
                       )}
-                      {visibleColumns.iupac_name && (
-                        <TableCell>{substance.iupac_name}</TableCell>
+                      {visibleColumns.functional_groups && (
+                        <TableCell>
+                          {substance.substance?.functional_groups}
+                        </TableCell>
                       )}
-                      {visibleColumns.xlogp && (
-                        <TableCell>{substance.xlogp}</TableCell>
+                      {visibleColumns.flavor_profile && (
+                        <TableCell>
+                          {substance.substance?.flavor_profile}
+                        </TableCell>
                       )}
-                      {visibleColumns.fema_flavor_profile && (
-                        <TableCell>{substance.fema_flavor_profile}</TableCell>
-                      )}
-                      {visibleColumns.pubchem_id && (
-                        <TableCell>{substance.pubchem_id}</TableCell>
+                      {visibleColumns.cas_number && (
+                        <TableCell>{substance.substance?.cas_number}</TableCell>
                       )}
                       <TableCell className="text-right">
                         <Button
@@ -447,24 +415,24 @@ export default function FlavorDetailPage() {
         }
 
         const data = await response.json();
-        const transformedData: Flavour = {
-          id: Number(data.flavour.flavour_id),
+        const transformedData = {
+          flavour_id: Number(data.flavour.flavour_id),
           name: data.flavour.name || "Unnamed Flavor",
           description: data.flavour.description || "",
           substances: Array.isArray(data.substances) ? data.substances : [],
           status: data.flavour.status || "draft",
-          isPublic: Boolean(data.flavour.is_public),
+          is_public: Boolean(data.flavour.is_public),
           version:
             data.flavour.version !== null ? Number(data.flavour.version) : null,
-          baseUnit: data.flavour.base_unit || "",
-          categoryId:
+          base_unit: data.flavour.base_unit || "",
+          category_id:
             data.flavour.category_id !== null
               ? Number(data.flavour.category_id)
               : null,
-          createdAt: data.flavour.created_at || new Date().toISOString(),
-          updatedAt: data.flavour.updated_at || new Date().toISOString(),
-          userId: data.flavour.user_id || "Unknown",
-        };
+          created_at: data.flavour.created_at || new Date().toISOString(),
+          updated_at: data.flavour.updated_at || new Date().toISOString(),
+          user_id: data.flavour.user_id || "Unknown",
+        } as Flavour;
 
         setFlavor(transformedData);
         setError(null);
