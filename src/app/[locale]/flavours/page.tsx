@@ -281,7 +281,7 @@ export default function FlavoursPage() {
         const data = await response.json();
 
         // Map the API response to match our Flavour type
-        const transformedData = data.flavours.map(
+        const transformedData = data.map(
           (item: {
             flavour_id: number;
             name: string;
