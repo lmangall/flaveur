@@ -196,7 +196,7 @@ export default function NewFlavourPage() {
           name: flavour.name,
           description: flavour.description,
           is_public: flavour.isPublic,
-          category_id: parseInt(flavour.category),
+          // category_id: parseInt(flavour.category),
           status: flavour.status,
           base_unit: flavour.baseUnit,
         }),
