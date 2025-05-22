@@ -40,10 +40,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/[locale]/components/ui/tooltip";
+import { useAuth } from "@clerk/nextjs";
 
 export default function NewFlavourPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { getToken } = useAuth();
 
   // Form state
   const [flavour, setFlavour] = useState({
@@ -181,12 +183,14 @@ export default function NewFlavourPage() {
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+      const token = await getToken();
 
       // First create the flavour
       const flavourResponse = await fetch(`${API_URL}/api/flavours`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: flavour.name,
@@ -195,9 +199,7 @@ export default function NewFlavourPage() {
           category_id: parseInt(flavour.category),
           status: flavour.status,
           base_unit: flavour.baseUnit,
-          // The backend will handle user association through the auth token
         }),
-        credentials: "include", // This ensures cookies are sent with the request
       });
 
       if (!flavourResponse.ok) {
@@ -215,6 +217,7 @@ export default function NewFlavourPage() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               fema_number: substance.substance?.fema_number,
@@ -222,7 +225,6 @@ export default function NewFlavourPage() {
               unit: substance.unit,
               order_index: index + 1,
             }),
-            credentials: "include",
           }
         )
       );
@@ -237,6 +239,7 @@ export default function NewFlavourPage() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               flavour_id: parseInt(ingredient.flavour_id),
@@ -244,7 +247,6 @@ export default function NewFlavourPage() {
               unit: ingredient.unit,
               order_index: index + 1,
             }),
-            credentials: "include",
           }
         )
       );
