@@ -75,7 +75,7 @@ export function SubstanceSearchField({
 
   const handleSelect = (substance: Substance) => {
     onSelect?.(substance);
-    setSearchQuery("");
+    setSearchQuery(substance.common_name || "");
     setSearchResults([]);
   };
 
@@ -90,7 +90,10 @@ export function SubstanceSearchField({
           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
           onClick={() => onSelect(substance)}
         >
-          {substance.common_name} (FEMA {substance.fema_number})
+          <div className="font-medium">{substance.common_name}</div>
+          <div className="text-sm text-muted-foreground">
+            FEMA {substance.fema_number}
+          </div>
         </div>
       ))}
     </div>
