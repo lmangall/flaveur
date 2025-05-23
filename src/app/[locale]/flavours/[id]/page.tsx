@@ -27,11 +27,10 @@ import {
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Eye, EyeOff, ChevronDown, Trash2 } from "lucide-react";
-import { useAuth } from "@clerk/nextjs"; // Import useAuth
-import { Flavour } from "@/app/type"; // Adjust the path as necessary
+import { useAuth } from "@clerk/nextjs";
+import { Flavour } from "@/app/type";
 
 function FlavorContent({ flavor }: { flavor: Flavour }) {
-  // Move the table-related state and logic here
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
     {
       fema_number: true,
@@ -79,10 +78,11 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
       fema_number: true,
       common_name: true,
       is_natural: true,
+      odor: false,
       olfactory_taste_notes: true,
       functional_groups: false,
       flavor_profile: true,
-      cas_number: true,
+      cas_number: false,
     });
   };
 
@@ -210,7 +210,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Substance ID"
+                placeholder="FEMA Number"
                 className="px-2 py-1 border rounded"
                 value={femaNumberToAdd}
                 onChange={(e) => setfemaNumberToAdd(e.target.value)}
@@ -299,60 +299,67 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                 </TableHeader>
                 <TableBody>
                   {flavor.substances?.map((substance) => (
-                    <TableRow key={substance.substance_id}>
+                    <TableRow key={substance.substance_id || substance.db_id}>
                       {visibleColumns.fema_number && (
                         <TableCell className="font-medium">
-                          {substance.substance?.fema_number}
+                          {substance.fema_number !== null &&
+                          substance.fema_number !== undefined
+                            ? substance.fema_number
+                            : "N/A"}
                         </TableCell>
                       )}
                       {visibleColumns.common_name && (
-                        <TableCell>
-                          {substance.substance?.common_name}
-                        </TableCell>
+                        <TableCell>{substance.common_name || "N/A"}</TableCell>
                       )}
                       {visibleColumns.is_natural && (
                         <TableCell>
                           <Badge
                             variant="outline"
                             className={
-                              substance.substance?.is_natural
+                              substance.is_natural === true
                                 ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                : "bg-purple-100 text-purple-800 hover:bg-purple-100"
+                                : substance.is_natural === false
+                                ? "bg-purple-100 text-purple-800 hover:bg-purple-100"
+                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
                             }
                           >
-                            {substance.substance?.is_natural
+                            {substance.is_natural === true
                               ? "Natural"
-                              : "Synthetic"}
+                              : substance.is_natural === false
+                              ? "Synthetic"
+                              : "Unknown"}
                           </Badge>
                         </TableCell>
                       )}
                       {visibleColumns.odor && (
-                        <TableCell>{substance.substance?.odor}</TableCell>
+                        <TableCell>{substance.odor || "N/A"}</TableCell>
                       )}
                       {visibleColumns.olfactory_taste_notes && (
                         <TableCell>
-                          {substance.substance?.olfactory_taste_notes}
+                          {substance.olfactory_taste_notes || "N/A"}
                         </TableCell>
                       )}
                       {visibleColumns.functional_groups && (
                         <TableCell>
-                          {substance.substance?.functional_groups}
+                          {substance.functional_groups || "N/A"}
                         </TableCell>
                       )}
                       {visibleColumns.flavor_profile && (
                         <TableCell>
-                          {substance.substance?.flavor_profile}
+                          {substance.flavor_profile || "N/A"}
                         </TableCell>
                       )}
                       {visibleColumns.cas_number && (
-                        <TableCell>{substance.substance?.cas_number}</TableCell>
+                        <TableCell>{substance.cas_id || "N/A"}</TableCell>
                       )}
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() =>
-                            handleRemoveSubstance(substance.substance_id)
+                            handleRemoveSubstance(
+                              substance.substance_id || substance.db_id
+                            )
                           }
                         >
                           <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
@@ -415,10 +422,13 @@ export default function FlavorDetailPage() {
         }
 
         const data = await response.json();
+
+        // Transform the data to match your frontend expectations
         const transformedData = {
           flavour_id: Number(data.flavour.flavour_id),
           name: data.flavour.name || "Unnamed Flavor",
           description: data.flavour.description || "",
+          // Direct assignment since substances are returned directly from backend
           substances: Array.isArray(data.substances) ? data.substances : [],
           status: data.flavour.status || "draft",
           is_public: Boolean(data.flavour.is_public),
