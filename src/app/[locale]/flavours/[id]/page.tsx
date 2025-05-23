@@ -298,68 +298,72 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {flavor.substances?.map((substance) => (
-                    <TableRow key={substance.substance_id || substance.db_id}>
+                  {flavor.substances?.map((substance, index) => (
+                    <TableRow key={substance.substance_id || index}>
                       {visibleColumns.fema_number && (
                         <TableCell className="font-medium">
-                          {substance.fema_number !== null &&
-                          substance.fema_number !== undefined
-                            ? substance.fema_number
+                          {substance.substance?.fema_number !== null &&
+                          substance.substance?.fema_number !== undefined
+                            ? substance.substance.fema_number
                             : "N/A"}
                         </TableCell>
                       )}
                       {visibleColumns.common_name && (
-                        <TableCell>{substance.common_name || "N/A"}</TableCell>
+                        <TableCell>
+                          {substance.substance?.common_name || "N/A"}
+                        </TableCell>
                       )}
                       {visibleColumns.is_natural && (
                         <TableCell>
                           <Badge
                             variant="outline"
                             className={
-                              substance.is_natural === true
+                              substance.substance?.is_natural === true
                                 ? "bg-green-100 text-green-800 hover:bg-green-100"
-                                : substance.is_natural === false
+                                : substance.substance?.is_natural === false
                                 ? "bg-purple-100 text-purple-800 hover:bg-purple-100"
                                 : "bg-gray-100 text-gray-800 hover:bg-gray-100"
                             }
                           >
-                            {substance.is_natural === true
+                            {substance.substance?.is_natural === true
                               ? "Natural"
-                              : substance.is_natural === false
+                              : substance.substance?.is_natural === false
                               ? "Synthetic"
                               : "Unknown"}
                           </Badge>
                         </TableCell>
                       )}
                       {visibleColumns.odor && (
-                        <TableCell>{substance.odor || "N/A"}</TableCell>
+                        <TableCell>
+                          {substance.substance?.odor || "N/A"}
+                        </TableCell>
                       )}
                       {visibleColumns.olfactory_taste_notes && (
                         <TableCell>
-                          {substance.olfactory_taste_notes || "N/A"}
+                          {substance.substance?.olfactory_taste_notes || "N/A"}
                         </TableCell>
                       )}
                       {visibleColumns.functional_groups && (
                         <TableCell>
-                          {substance.functional_groups || "N/A"}
+                          {substance.substance?.functional_groups || "N/A"}
                         </TableCell>
                       )}
                       {visibleColumns.flavor_profile && (
                         <TableCell>
-                          {substance.flavor_profile || "N/A"}
+                          {substance.substance?.flavor_profile || "N/A"}
                         </TableCell>
                       )}
                       {visibleColumns.cas_number && (
-                        <TableCell>{substance.cas_id || "N/A"}</TableCell>
+                        <TableCell>
+                          {substance.substance?.cas_number || "N/A"}
+                        </TableCell>
                       )}
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() =>
-                            handleRemoveSubstance(
-                              substance.substance_id || substance.db_id
-                            )
+                            handleRemoveSubstance(substance.substance_id)
                           }
                         >
                           <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
@@ -428,8 +432,22 @@ export default function FlavorDetailPage() {
           flavour_id: Number(data.flavour.flavour_id),
           name: data.flavour.name || "Unnamed Flavor",
           description: data.flavour.description || "",
-          // Direct assignment since substances are returned directly from backend
-          substances: Array.isArray(data.substances) ? data.substances : [],
+          // Transform substances to match the expected nested structure
+          substances: Array.isArray(data.substances)
+            ? data.substances.map(
+                (
+                  substance: { substance_id?: number; db_id?: number },
+                  index: number
+                ) => ({
+                  substance_id:
+                    substance.substance_id || substance.db_id || index,
+                  concentration: 0, // Default values since not provided by API
+                  unit: "",
+                  order_index: index,
+                  substance: substance, // Nest the actual substance data
+                })
+              )
+            : [],
           status: data.flavour.status || "draft",
           is_public: Boolean(data.flavour.is_public),
           version:
