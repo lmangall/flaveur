@@ -46,9 +46,13 @@
 	  "testimonials": "Testimonials",
 	  "successStories": "Success Stories",
 	  "hearFromStudents": "Hear from Students Who've Succeeded",
-	  "readyToMaster": "Ready to Master Flavor Creation?",
-	  "joinOumamie": "Join thousands of students mastering the art of flavor creation.",
-	  "getStarted": "Get Started for Free",
+	  "readyToMaster": "Stay Updated with Flavor Creation",
+	  "joinOumamie": "Subscribe to our newsletter for the latest updates, tips, and opportunities in flavor creation.",
+	  "getStarted": "Subscribe",
+	  "emailPlaceholder": "Enter your email",
+	  "subscribeSuccess": "Thank you for subscribing!",
+	  "subscribeError": "Something went wrong. Please try again.",
+	  "subscribeLoading": "Subscribing...",
 	  "explorePlatform": "Explore the Platform"
 	},
 	"Jobs": {

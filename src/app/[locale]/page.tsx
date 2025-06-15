@@ -3,14 +3,16 @@ import Image from "next/image";
 import {
   ArrowRight,
   BookOpen,
-  BriefcaseBusiness,
+  HandCoins,
   ChevronRight,
-  Sparkles,
+  Lightbulb,
+  Handshake,
 } from "lucide-react";
 import { Metadata } from "next";
 
 import { Button } from "@/app/[locale]/components/ui/button";
 import { useTranslations } from "next-intl";
+import { NewsletterSignup } from "@/app/[locale]/components/NewsletterSignup";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -33,8 +35,8 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    {t("headline")} {/* Dynamic translation for headline */}
-                    {t("masterFlavor")} {/* Translation for master flavor */}
+                    {t("headline")} <br />
+                    {t("masterFlavor")}
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
                     {t("learnCreateShowcase")}{" "}
@@ -108,24 +110,20 @@ export default function Home() {
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
                 <div className="rounded-full bg-primary/10 p-3">
-                  <Sparkles className="h-6 w-6 text-primary" />
+                  <Lightbulb className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold">{t("create")}</h3>{" "}
-                {/* Translation for Create */}
                 <p className="text-center text-muted-foreground">
                   {t("createDescription")}{" "}
-                  {/* Translation for Create description */}
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
                 <div className="rounded-full bg-primary/10 p-3">
-                  <BriefcaseBusiness className="h-6 w-6 text-primary" />
+                  <HandCoins className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold">{t("showcase")}</h3>{" "}
-                {/* Translation for Showcase */}
                 <p className="text-center text-muted-foreground">
                   {t("showcaseDescription")}{" "}
-                  {/* Translation for Showcase description */}
                 </p>
               </div>
             </div>
@@ -164,7 +162,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Jobs Section */}
+        {/* Jobs Section - Commented Out */}
         <section
           id="jobs"
           className="w-full py-12 md:py-24 lg:py-32 bg-muted/50"
@@ -173,32 +171,20 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                  {t("jobsSection")}{" "}
-                  {/* Translation for 'Find Your Next Job' */}
+                  {t("jobsSection")}
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  {t("discoverCareer")}{" "}
-                  {/* Translation for 'Discover Careers in the Flavor Industry' */}
+                  {t("discoverCareer")}
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  {t("findJobDescription")}{" "}
-                  {/* Translation for job search description */}
+                  {t("findJobDescription")}
                 </p>
               </div>
             </div>
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-3">
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2">
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
                 <div className="rounded-full bg-primary/10 p-3">
-                  <BriefcaseBusiness className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold">{t("jobListings")}</h3>
-                <p className="text-center text-muted-foreground">
-                  {t("jobListingsDescription")}
-                </p>
-              </div>
-              <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
-                <div className="rounded-full bg-primary/10 p-3">
-                  <Sparkles className="h-6 w-6 text-primary" />
+                  <Handshake className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold">{t("careerGrowth")}</h3>
                 <p className="text-center text-muted-foreground">
@@ -206,6 +192,15 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
+                <div className="rounded-full bg-primary/10 p-3">
+                  <HandCoins className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold">{t("jobListings")}</h3>
+                <p className="text-center text-muted-foreground">
+                  {t("jobListingsDescription")}
+                </p>
+              </div>
+              {/* <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
                 <div className="rounded-full bg-primary/10 p-3">
                   <BookOpen className="h-6 w-6 text-primary" />
                 </div>
@@ -215,21 +210,21 @@ export default function Home() {
                 <p className="text-center text-muted-foreground">
                   {t("industryConnectionsDescription")}
                 </p>
-              </div>
+              </div> */}
             </div>
-            <div className="flex justify-center">
+            {/* <div className="flex justify-center">
               <Button size="lg" asChild>
                 <Link href="/jobs">
-                  {t("browseJobs")} {/* Translation for 'Browse Jobs' */}
+                  {t("browseJobs")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-            </div>
+            </div> */}
           </div>
         </section>
 
         {/* Student Benefits Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/50">
+        {/* <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/50">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex items-center justify-center">
@@ -245,15 +240,13 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                    {t("forStudents")} {/* Translation for For Students */}
+                    {t("forStudents")}
                   </div>
                   <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
                     {t("launchFlavorCareer")}{" "}
-                    {/* Translation for Launch Your Flavor Career */}
                   </h2>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed">
                     {t("studentDescription")}{" "}
-                    {/* Translation for description */}
                   </p>
                 </div>
                 <ul className="grid gap-3">
@@ -261,42 +254,31 @@ export default function Home() {
                     <div className="rounded-full bg-primary/10 p-1">
                       <ChevronRight className="h-4 w-4 text-primary" />
                     </div>
-                    <span>
-                      {t("buildPortfolio")}{" "}
-                      {/* Translation for Build a professional portfolio */}
-                    </span>
+                    <span>{t("buildPortfolio")} </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="rounded-full bg-primary/10 p-1">
                       <ChevronRight className="h-4 w-4 text-primary" />
                     </div>
-                    <span>
-                      {t("learnMethodologies")}{" "}
-                      {/* Translation for Learn from industry-standard methodologies */}
-                    </span>
+                    <span>{t("learnMethodologies")} </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="rounded-full bg-primary/10 p-1">
                       <ChevronRight className="h-4 w-4 text-primary" />
                     </div>
-                    <span>
-                      {t("connectEmployers")}{" "}
-                      {/* Translation for Connect with potential employers */}
-                    </span>
+                    <span>{t("connectEmployers")} </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="rounded-full bg-primary/10 p-1">
                       <ChevronRight className="h-4 w-4 text-primary" />
                     </div>
                     <span>{t("receiveFeedback")}</span>{" "}
-                    {/* Translation for Receive feedback */}
                   </li>
                 </ul>
                 <div>
                   <Button size="lg" asChild>
                     <Link href="/signup">
                       {t("startJourney")}{" "}
-                      {/* Translation for Start Your Journey */}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -304,22 +286,21 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Testimonials Section */}
-        <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32">
+        {/* <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                  {t("testimonials")} {/* Translation for Testimonials */}
+                  {t("testimonials")}
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  {t("successStories")} {/* Translation for Success Stories */}
+                  {t("successStories")}
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   {t("hearFromStudents")}{" "}
-                  {/* Translation for Hear from students */}
                 </p>
               </div>
             </div>
@@ -369,39 +350,12 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* CTA Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  {t("readyToMaster")}{" "}
-                  {/* Translation for Ready to Master Flavor Creation */}
-                </h2>
-                <p className="max-w-[600px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  {t("joinOumamie")}{" "}
-                  {/* Translation for Join thousands of students */}
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Button size="lg" variant="secondary" asChild>
-                  <Link href="/signup">
-                    {t("getStarted")}{" "}
-                    {/* Translation for Get Started for Free */}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/explore">
-                    {t("explorePlatform")}{" "}
-                    {/* Translation for Explore the Platform */}
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
+            <NewsletterSignup />
           </div>
         </section>
       </main>
