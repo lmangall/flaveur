@@ -291,7 +291,7 @@ export default function SubstancesPage() {
                 <TableRow>
                   <TableHead>FEMA #</TableHead>
                   <TableHead>CAS ID</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead>Taste</TableHead>
                   <TableHead>Olfactory Notes</TableHead>
                   <TableHead>Flavor Profile</TableHead>
