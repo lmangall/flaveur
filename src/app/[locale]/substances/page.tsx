@@ -52,9 +52,9 @@ export default function SubstancesPage() {
   const router = useRouter();
   const [substances, setSubstances] = useState<Substance[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState<"all" | "name" | "profile">(
-    "all"
-  );
+  const [searchType, setSearchType] = useState<
+    "all" | "name" | "profile" | "cas_id" | "fema_number"
+  >("all");
   const [isLoading, setIsLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
