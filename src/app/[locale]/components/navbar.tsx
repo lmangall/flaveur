@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 
 // Routes for authenticated users
 const authRoutes = [
-  { href: "/dashboard", label: "Dashboard" },
+  // { href: "/dashboard", label: "Dashboard" },
   { href: "/flavours", label: "My Flavors" },
   { href: "/substances", label: "Substances" },
   { href: "/jobs", label: "Jobs" },
