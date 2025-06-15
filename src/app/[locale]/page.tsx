@@ -353,9 +353,20 @@ export default function Home() {
         </section> */}
 
         {/* CTA Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground">
+        <section
+          id="newsletter"
+          className="w-full py-12 md:py-24 lg:py-32 bg-primary text-primary-foreground"
+        >
           <div className="container px-4 md:px-6">
-            <NewsletterSignup />
+            <div className="flex flex-col items-center justify-center space-y-6 text-center max-w-3xl mx-auto">
+              <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+                {t("NewsletterTitle")}
+              </h2>
+              <p className="text-lg md:text-xl text-primary-foreground/90">
+                {t("NewsletterDescription")}
+              </p>
+              <NewsletterSignup />
+            </div>
           </div>
         </section>
       </main>

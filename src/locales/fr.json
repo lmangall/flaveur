@@ -48,7 +48,9 @@
 	  "subscribeError": "Une erreur est survenue. Veuillez réessayer.",
 	  "subscribeLoading": "Inscription en cours...",
 	  "explorePlatform": "Explorer la Plateforme",
-	  "exploreSubstances": "Explorez les Substances"
+	  "exploreSubstances": "Explorez les Substances",
+	  "NewsletterDescription": "Prochaine étape: l'IA Oumamie",
+	  "NewsletterTitle": "Oumamie est en plein développement, inscrivez vous pour suivre les nouveautés"
 	},
 	"Jobs": {
 		"jobListingHeading": "Offres d'Emploi",
