@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { useLocale } from "next-intl"; // Import useLocale to get current locale
+import { useLocale, useTranslations } from "next-intl"; // Import useTranslations
 import { UserButton, useUser } from "@clerk/nextjs";
 import { MenuIcon } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
@@ -16,14 +16,15 @@ import { useRouter } from "next/navigation";
 // Routes for authenticated users
 const authRoutes = [
   // { href: "/dashboard", label: "Dashboard" },
-  { href: "/flavours", label: "My Flavors" },
-  { href: "/substances", label: "Substances" },
-  { href: "/jobs", label: "Jobs" },
-  { href: "/about", label: "About" },
+  { href: "/flavours", label: "myFlavours" },
+  { href: "/substances", label: "substances" },
+  { href: "/jobs", label: "jobs" },
+  { href: "/about", label: "about" },
 ];
 
 export default function Navbar() {
   const locale = useLocale(); // Get current locale
+  const t = useTranslations("Navbar"); // Initialize translations with Navbar namespace
   const { isSignedIn, isLoaded } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -70,7 +71,7 @@ export default function Navbar() {
                 handleRouteClick(route.href);
               }}
             >
-              {route.label}
+              {t(route.label)}
             </Link>
           ))}
         </nav>
@@ -128,7 +129,7 @@ export default function Navbar() {
                       setIsOpen(false);
                     }}
                   >
-                    {route.label}
+                    {t(route.label)}
                   </Link>
                 ))}
 

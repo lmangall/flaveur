@@ -50,16 +50,14 @@ export default function Home() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Button size="lg" asChild>
-                    <Link href="/create">
+                    <Link href="/flavours">
                       {t("createFlavor")}{" "}
-                      {/* Translation for Create Your First Flavor */}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button size="lg" variant="outline" asChild>
-                    <Link href="/explore">
+                    <Link href="/substances">
                       {t("exploreSubstances")}{" "}
-                      {/* Translation for Explore Substances */}
                       <ChevronRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>

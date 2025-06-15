@@ -1,14 +1,14 @@
 {
 	"Home": {
-	  "headline": "Formulez vos arômes. ",
+	  "headline": "Formule tes propres arômes. ",
 	  "heroDescription": "Apprenez, créez et montrez vos compositions de saveurs. La plateforme ultime pour les futurs scientifiques des saveurs.",
 	  "createButton": "Créez Votre Première Saveur",
 	  "exploreButton": "Explorez les Substances Disponibles",
 	  "features": "",
-	  "everythingYouNeed": "Ce qu'il faut pour réussir",
-	  "platformDescription": "Notre plateforme fournit des outils nécessaires pour apprendre, créer et surtout démontrer vos compétences.",
-	  "learnCreateShowcase": "Apprenez, Créez et Présentez",
-	  "masterFlavor": "Développez votre talent.",
+	  "everythingYouNeed": "Ce qu'il faut pour percer",
+	  "platformDescription": "Notre plateforme fournit des outils nécessaires pour apprendre, créer et surtout montrer ce que vous savez faire.",
+	  "learnCreateShowcase": "Oumamie est l'outil de l'année 2025 pour les futurs aromaticiens",
+	  "masterFlavor": "Développe ton talent.",
 	  "createFlavor": "Créez Votre Premier Arôme",
 	  "learn": "Explorez",
 	  "learnDescription": "Accédez à notre base de données de substances (environ 500 substances).",
@@ -165,6 +165,12 @@
 		"allRightsReserved": "Tous droits réservés.",
 		"privacyPolicy": "Politique de confidentialité",
 		"termsOfService": "Conditions d'utilisation"
+	  },
+	  "Navbar": {
+		"myFlavours": "Mes arômes",
+		"substances": "Substances",
+		"jobs": "Jobs",
+		"about": "About"
 	  }
   }
   
