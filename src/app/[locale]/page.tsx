@@ -87,15 +87,13 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                  {t("features")} {/* Translation for Features */}
+                  {t("features")}
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
                   {t("everythingYouNeed")}{" "}
-                  {/* Translation for Everything You Need to Succeed */}
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   {t("platformDescription")}{" "}
-                  {/* Translation for platform description */}
                 </p>
               </div>
             </div>
@@ -104,63 +102,77 @@ export default function Home() {
                 <div className="rounded-full bg-primary/10 p-3">
                   <BookOpen className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">{t("learn")}</h3>{" "}
-                {/* Translation for Learn */}
+                <h3 className="text-xl font-bold">{t("learn")}</h3>
                 <p className="text-center text-muted-foreground">
-                  {t("learnDescription")}{" "}
-                  {/* Translation for Learn description */}
+                  {t("learnDescription")}
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
                 <div className="rounded-full bg-primary/10 p-3">
                   <Lightbulb className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">{t("create")}</h3>{" "}
+                <h3 className="text-xl font-bold">{t("create")}</h3>
                 <p className="text-center text-muted-foreground">
-                  {t("createDescription")}{" "}
+                  {t("createDescription")}
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">
                 <div className="rounded-full bg-primary/10 p-3">
                   <HandCoins className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold">{t("showcase")}</h3>{" "}
+                <h3 className="text-xl font-bold">{t("showcase")}</h3>
                 <p className="text-center text-muted-foreground">
-                  {t("showcaseDescription")}{" "}
+                  {t("showcaseDescription")}
                 </p>
               </div>
             </div>
           </div>
         </section>
-        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 py-12 md:grid-cols-4">
-          {[ISIPCA, Mane, UniversiteMontpellier, UniversiteLeHavre].map(
-            (logo, i) => {
-              let sizeClasses =
-                "relative h-36 w-32 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0";
 
-              if (logo === UniversiteMontpellier) {
-                sizeClasses =
-                  "relative h-32 w-20 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0"; // smaller
-              } else if (logo === Mane || logo === UniversiteLeHavre) {
-                sizeClasses =
-                  "relative h-44 w-40 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0"; // bigger
-              }
+        {/* Trusted By Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
+                  {t("trustedBy")}
+                </h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  {t("platformRecognition")}
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 py-12 md:grid-cols-4">
+              {[ISIPCA, Mane, UniversiteMontpellier, UniversiteLeHavre].map(
+                (logo, i) => {
+                  let sizeClasses =
+                    "relative h-36 w-32 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0";
 
-              return (
-                <div key={i} className="flex items-center justify-center">
-                  <div className={sizeClasses}>
-                    <Image
-                      src={logo}
-                      alt={`School Logo ${i + 1}`}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                </div>
-              );
-            }
-          )}
-        </div>
+                  if (logo === UniversiteMontpellier) {
+                    sizeClasses =
+                      "relative h-32 w-20 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0";
+                  } else if (logo === Mane || logo === UniversiteLeHavre) {
+                    sizeClasses =
+                      "relative h-44 w-40 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0";
+                  }
+
+                  return (
+                    <div key={i} className="flex items-center justify-center">
+                      <div className={sizeClasses}>
+                        <Image
+                          src={logo}
+                          alt={`School Logo ${i + 1}`}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* Jobs Section - Commented Out */}
         <section
