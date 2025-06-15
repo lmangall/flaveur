@@ -14,6 +14,11 @@ import { Button } from "@/app/[locale]/components/ui/button";
 import { useTranslations } from "next-intl";
 import { NewsletterSignup } from "@/app/[locale]/components/NewsletterSignup";
 
+const ISIPCA = "/school_logo/ISIPCA.png";
+const Mane = "/school_logo/mane.png";
+const UniversiteMontpellier = "/school_logo/Universite_monptellier.png";
+const UniversiteLeHavre = "/school_logo/universite_le_havre.jpg";
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Home",
@@ -129,38 +134,35 @@ export default function Home() {
             </div>
           </div>
         </section>
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 py-12 md:grid-cols-4">
+          {[ISIPCA, Mane, UniversiteMontpellier, UniversiteLeHavre].map(
+            (logo, i) => {
+              let sizeClasses =
+                "relative h-36 w-32 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0";
 
-        {/* Trusted By Section */}
-        <section id="trusted" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  {t("trustedBy")}
-                </h2>{" "}
-                {/* Translation for Trusted By Industry Leaders */}
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  {t("platformRecognition")}{" "}
-                  {/* Translation for platform recognition */}
-                </p>
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 py-12 md:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
+              if (logo === UniversiteMontpellier) {
+                sizeClasses =
+                  "relative h-32 w-20 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0"; // smaller
+              } else if (logo === Mane || logo === UniversiteLeHavre) {
+                sizeClasses =
+                  "relative h-44 w-40 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0"; // bigger
+              }
+
+              return (
                 <div key={i} className="flex items-center justify-center">
-                  <div className="relative h-12 w-32 opacity-70 grayscale transition-all hover:opacity-100 hover:grayscale-0">
+                  <div className={sizeClasses}>
                     <Image
-                      src={`https://source.unsplash.com/128x48/?business,logo&sig=${i}`}
-                      alt={`Company ${i}`}
+                      src={logo}
+                      alt={`School Logo ${i + 1}`}
                       fill
                       className="object-contain"
                     />
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
+              );
+            }
+          )}
+        </div>
 
         {/* Jobs Section - Commented Out */}
         <section
