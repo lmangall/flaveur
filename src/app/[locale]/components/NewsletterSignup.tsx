@@ -8,38 +8,39 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 export function NewsletterSignup() {
-  const t = useTranslations("Home"); // Localized strings for messages and labels
-  const [email, setEmail] = useState(""); // Tracks user input
-  const [isLoading, setIsLoading] = useState(false); // Indicates form submission status
+  const t = useTranslations("Home");
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form behavior
-    setIsLoading(true); // Show loading state
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
-      // Attempt to send the email to the Google Apps Script endpoint
       await fetch(
-        "https://script.google.com/macros/s/AKfycbxoWGdT4DyZBj31zV_2F9xZ7i2Oap5lDZoVXwfbBS7o0d3f21Jwin4UHEK80MI4fqu6/exec",
+        "https://script.google.com/macros/s/AKfycbyoHonbBsRmyMkwTMsKVP4xZooJNBIrH-eYfM0Rezt7WX5mhINSym6-aMHWSLmkPcs/exec",
         {
           method: "POST",
-          mode: "no-cors", // Prevent CORS errors by making response opaque
+          mode: "no-cors", // Prevents CORS errors but makes response opaque
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: new URLSearchParams({ email }).toString(), // Format body as URL-encoded
+          body: new URLSearchParams({ email }).toString(),
         }
       );
 
-      // Since we can't read the response due to "no-cors", assume it worked
+      // Since we can't read the response with no-cors mode, assume success
+      // The script is working as confirmed by your testing
       toast.success(t("subscribeSuccess"));
-      setEmail(""); // Reset input field
-    } catch {
-      // This block only runs if there's a network-level error (e.g., no internet)
-      // Even in this case, we show success toast (force success)
-      toast.success(t("subscribeSuccess"));
-      setEmail(""); // Reset input field
+      setEmail("");
+    } catch (error) {
+      // Only network-level errors (like no internet) will reach here
+      console.error("Network error:", error);
+      toast.error(
+        t("subscribeError") || "Something went wrong. Please try again."
+      );
     } finally {
-      setIsLoading(false); // Remove loading state
+      setIsLoading(false);
     }
   };
 
@@ -48,7 +49,6 @@ export function NewsletterSignup() {
       onSubmit={handleSubscribe}
       className="flex w-full max-w-sm flex-col gap-2 min-[400px]:flex-row"
     >
-      {/* Email input field */}
       <Input
         type="email"
         placeholder="name@gmail.com"
@@ -58,7 +58,6 @@ export function NewsletterSignup() {
         className="flex-1"
       />
 
-      {/* Submit button with loading state and icon */}
       <Button type="submit" size="lg" variant="secondary" disabled={isLoading}>
         {isLoading ? t("subscribeLoading") : t("getStarted")}
         {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
