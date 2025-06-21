@@ -298,8 +298,8 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {flavor.substances?.map((substance, index) => (
-                    <TableRow key={substance.substance_id || index}>
+                  {flavor.substances?.map((substance) => (
+                    <TableRow key={substance.substance_id}>
                       {visibleColumns.fema_number && (
                         <TableCell className="font-medium">
                           {substance.substance?.fema_number !== null &&
@@ -435,12 +435,8 @@ export default function FlavorDetailPage() {
           // Transform substances to match the expected nested structure
           substances: Array.isArray(data.substances)
             ? data.substances.map(
-                (
-                  substance: { substance_id?: number; db_id?: number },
-                  index: number
-                ) => ({
-                  substance_id:
-                    substance.substance_id || substance.db_id || index,
+                (substance: { substance_id: number }, index: number) => ({
+                  substance_id: substance.substance_id,
                   concentration: 0, // Default values since not provided by API
                   unit: "",
                   order_index: index,

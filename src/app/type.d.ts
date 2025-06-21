@@ -1,5 +1,4 @@
 export type Substance = {
-  db_id: number;
   fema_number: number | null;
   common_name: string | null;
   synthetic: boolean | null;
