@@ -67,6 +67,9 @@ export default function SubstancesPage() {
     functional_groups: "",
     flavor_profile: "",
   });
+  const [viewDetailsSubstance, setViewDetailsSubstance] =
+    useState<Substance | null>(null);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const ITEMS_PER_PAGE = 10;
@@ -174,6 +177,12 @@ export default function SubstancesPage() {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+  };
+
+  // Open the details modal
+  const openDetailsModal = (substance: Substance) => {
+    setViewDetailsSubstance(substance);
+    setIsViewDetailsOpen(true);
   };
 
   return (
@@ -320,11 +329,7 @@ export default function SubstancesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() =>
-                              router.push(
-                                `/substances/${substance.fema_number}`
-                              )
-                            }
+                            onClick={() => openDetailsModal(substance)} // Open the details modal
                           >
                             View Details
                           </DropdownMenuItem>
@@ -370,6 +375,62 @@ export default function SubstancesPage() {
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
+
+          {/* Detail modal */}
+          <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Substance Details</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                {viewDetailsSubstance && (
+                  <>
+                    <p>
+                      <strong>FEMA Number:</strong>{" "}
+                      {viewDetailsSubstance.fema_number}
+                    </p>
+                    <p>
+                      <strong>CAS ID:</strong> {viewDetailsSubstance.cas_id}
+                    </p>
+                    <p>
+                      <strong>Common Name:</strong>{" "}
+                      {viewDetailsSubstance.common_name}
+                    </p>
+                    <p>
+                      <strong>Odor:</strong> {viewDetailsSubstance.odor}
+                    </p>
+                    <p>
+                      <strong>Functional Groups:</strong>{" "}
+                      {viewDetailsSubstance.functional_groups}
+                    </p>
+                    <p>
+                      <strong>Flavor Profile:</strong>{" "}
+                      {viewDetailsSubstance.flavor_profile}
+                    </p>
+                    {viewDetailsSubstance.taste && (
+                      <p>
+                        <strong>Taste:</strong> {viewDetailsSubstance.taste}
+                      </p>
+                    )}
+                    {viewDetailsSubstance.olfactory_taste_notes && (
+                      <p>
+                        <strong>Olfactory Notes:</strong>{" "}
+                        {viewDetailsSubstance.olfactory_taste_notes}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsViewDetailsOpen(false)}
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       ) : (
         <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted/30">
