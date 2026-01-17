@@ -3,12 +3,12 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: [
-      "via.placeholder.com",
-      "source.unsplash.com",
-      "picsum.photos",
-      "i.pravatar.cc",
-      "placehold.co",
+    remotePatterns: [
+      { protocol: "https", hostname: "via.placeholder.com" },
+      { protocol: "https", hostname: "source.unsplash.com" },
+      { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "https", hostname: "i.pravatar.cc" },
+      { protocol: "https", hostname: "placehold.co" },
     ],
   },
 };
