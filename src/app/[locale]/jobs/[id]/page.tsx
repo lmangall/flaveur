@@ -33,6 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/app/[locale]/components/ui/tabs";
+import { getJobById, addJobInteraction } from "@/actions/jobs";
 
 // Define more detailed JobOffer type
 interface JobOffer {
@@ -64,7 +65,7 @@ export default function JobDetailPage() {
   const t = useTranslations("JobDetail");
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const [job, setJob] = useState<JobOffer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,55 +77,20 @@ export default function JobDetailPage() {
       if (!isSignedIn || !id) return;
 
       try {
-        const token = await getToken();
-        await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${id}/interactions`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              action,
-              referrer: "job_detail",
-            }),
-          }
-        );
+        await addJobInteraction(parseInt(id), action, "job_detail");
       } catch (err) {
         console.error("Error tracking job interaction:", err);
       }
     },
-    [isSignedIn, getToken, id]
+    [isSignedIn, id]
   );
 
   useEffect(() => {
     async function fetchJobDetail() {
       try {
         setIsLoading(true);
-
-        // Get auth token if user is signed in
-        let headers = {};
-        if (isLoaded && isSignedIn) {
-          const token = await getToken();
-          headers = {
-            Authorization: `Bearer ${token}`,
-          };
-        }
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${id}`,
-          {
-            headers,
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setJob(data);
+        const data = await getJobById(parseInt(id));
+        setJob(data as JobOffer);
 
         // Record interaction
         if (isSignedIn) {
@@ -142,7 +108,7 @@ export default function JobDetailPage() {
     if (isLoaded && id) {
       fetchJobDetail();
     }
-  }, [isLoaded, isSignedIn, getToken, id, t, trackInteraction]);
+  }, [isLoaded, isSignedIn, id, t, trackInteraction]);
 
   // Handle contact info reveal
   const handleShowContact = () => {

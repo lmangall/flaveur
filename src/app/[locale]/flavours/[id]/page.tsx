@@ -27,8 +27,12 @@ import {
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Eye, EyeOff, ChevronDown, Trash2 } from "lucide-react";
-import { useAuth } from "@clerk/nextjs";
 import { Flavour } from "@/app/type";
+import {
+  getFlavourById,
+  addSubstanceToFlavour,
+  removeSubstanceFromFlavour,
+} from "@/actions/flavours";
 
 function FlavorContent({ flavor }: { flavor: Flavour }) {
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
@@ -86,34 +90,18 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
     });
   };
 
-  const { getToken } = useAuth();
   const [femaNumberToAdd, setfemaNumberToAdd] = useState("");
   const [concentration, setConcentration] = useState("");
   const [unit, setUnit] = useState("");
 
   const handleAddSubstance = async () => {
     try {
-      const token = await getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavor.flavour_id}/substances`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fema_number: parseInt(femaNumberToAdd),
-            concentration: parseFloat(concentration),
-            unit,
-            order_index: flavor.substances?.length || 0,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to add substance");
-      }
+      await addSubstanceToFlavour(flavor.flavour_id, {
+        fema_number: parseInt(femaNumberToAdd),
+        concentration: parseFloat(concentration),
+        unit,
+        order_index: flavor.substances?.length || 0,
+      });
 
       window.location.reload();
     } catch (error) {
@@ -123,22 +111,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
 
   const handleRemoveSubstance = async (substanceId: number) => {
     try {
-      const token = await getToken();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavor.flavour_id}/substances/${substanceId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to remove substance");
-      }
-
+      await removeSubstanceFromFlavour(flavor.flavour_id, substanceId);
       window.location.reload();
     } catch (error) {
       console.error("Error removing substance:", error);
@@ -399,7 +372,6 @@ export default function FlavorDetailPage() {
   const [flavor, setFlavor] = useState<Flavour | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { getToken } = useAuth();
 
   useEffect(() => {
     async function fetchFlavorData() {
@@ -411,21 +383,7 @@ export default function FlavorDetailPage() {
 
       try {
         setIsLoading(true);
-        const token = await getToken();
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavorId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await getFlavourById(flavorId);
 
         // Transform the data to match your frontend expectations
         const transformedData = {
@@ -435,8 +393,8 @@ export default function FlavorDetailPage() {
           // Transform substances to match the expected nested structure
           substances: Array.isArray(data.substances)
             ? data.substances.map(
-                (substance: { substance_id: number }, index: number) => ({
-                  substance_id: substance.substance_id,
+                (substance, index: number) => ({
+                  substance_id: (substance as { substance_id: number }).substance_id,
                   concentration: 0, // Default values since not provided by API
                   unit: "",
                   order_index: index,
@@ -469,7 +427,7 @@ export default function FlavorDetailPage() {
     }
 
     fetchFlavorData();
-  }, [flavorId, getToken]);
+  }, [flavorId]);
 
   if (error) {
     return (

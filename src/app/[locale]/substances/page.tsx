@@ -35,6 +35,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
+import {
+  getSubstances,
+  searchSubstances,
+  getSubstanceByFemaNumber,
+} from "@/actions/substances";
+import { addSubstanceToFlavour } from "@/actions/flavours";
 
 type Substance = {
   fema_number: number;
@@ -71,44 +77,28 @@ export default function SubstancesPage() {
     useState<Substance | null>(null);
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const ITEMS_PER_PAGE = 10;
 
-  const fetchSubstances = useCallback(() => {
+  const fetchSubstancesData = useCallback(async () => {
     setIsLoading(true);
-    const searchParams = new URLSearchParams();
-
-    if (searchQuery) {
-      searchParams.append("query", searchQuery);
-      searchParams.append("type", searchType);
-    } else {
-      searchParams.append("page", currentPage.toString());
+    try {
+      if (searchQuery) {
+        const data = await searchSubstances(searchQuery, searchType, currentPage);
+        setSubstances(data.results as Substance[]);
+      } else {
+        const data = await getSubstances(currentPage);
+        setSubstances(data as Substance[]);
+      }
+    } catch (error) {
+      console.error("Error fetching substances:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    const url = `${API_URL}/api/substances${
-      searchParams.toString() ? `?${searchParams.toString()}` : ""
-    }`;
-
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Network response was not ok: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setSubstances(Array.isArray(data) ? data : data.results || []);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching substances:", error);
-        setIsLoading(false);
-      });
-  }, [currentPage, API_URL, searchQuery, searchType]);
+  }, [currentPage, searchQuery, searchType]);
 
   useEffect(() => {
-    fetchSubstances();
-  }, [currentPage, fetchSubstances]);
+    fetchSubstancesData();
+  }, [currentPage, fetchSubstancesData]);
 
   // Remove the local filtering since we're now using backend search
   const filteredSubstances = substances;
@@ -128,35 +118,25 @@ export default function SubstancesPage() {
         return;
       }
 
-      // Step 1: Fetch Substance ID based on FEMA Number
-      const res = await fetch(`${API_URL}/api/substances/${femaNumber}`);
-      if (!res.ok) throw new Error("Failed to fetch substance");
-
-      const foundSubstance = await res.json();
+      // Step 1: Fetch Substance using server action
+      const foundSubstance = await getSubstanceByFemaNumber(femaNumber);
 
       if (!foundSubstance) {
         alert("Substance not found in database.");
         return;
       }
 
-      // Step 2: Add the substance to the flavour
-      const addRes = await fetch(`${API_URL}/api/flavours/6/substances`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          substance_id: foundSubstance.substance_id, // Use the correct ID
-          concentration: 10.5, // Example concentration
-          unit: "g/kg",
-          order_index: 1,
-        }),
+      // Step 2: Add the substance to a flavour using server action
+      // Note: This is a placeholder - you should pass the actual flavour ID
+      await addSubstanceToFlavour(6, {
+        fema_number: femaNumber,
+        concentration: 10.5, // Example concentration
+        unit: "g/kg",
+        order_index: 1,
       });
 
-      if (!addRes.ok) throw new Error("Failed to add substance to flavour");
-
       // Step 3: Update UI with the newly added substance
-      fetchSubstances(); // Refresh the list after adding
+      fetchSubstancesData(); // Refresh the list after adding
       setOpenDialog(false);
 
       // Reset form

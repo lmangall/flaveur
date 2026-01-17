@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
 import type { Substance } from "@/app/type";
+import { searchSubstances } from "@/actions/substances";
 
 interface PaginationInfo {
   total: number;
@@ -59,7 +60,7 @@ export function SubstanceSearchField({
     }
   };
 
-  const fetchSubstances = useCallback(
+  const fetchSubstancesData = useCallback(
     async (
       query: string,
       type: "all" | "name" | "profile" | "cas_id" | "fema_number",
@@ -75,23 +76,13 @@ export function SubstanceSearchField({
 
       setIsSearching(true);
       try {
-        const searchParams = new URLSearchParams();
-        searchParams.append("query", query);
-        searchParams.append("type", type);
-        searchParams.append("page", page.toString());
-
-        const url = `${
-          process.env.NEXT_PUBLIC_BACKEND_URL
-        }/api/substances?${searchParams.toString()}`;
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setSearchResponse(data);
-        onSearch?.(data);
+        const data = await searchSubstances(query, type, page);
+        const response = {
+          results: data.results as Substance[],
+          pagination: data.pagination,
+        };
+        setSearchResponse(response);
+        onSearch?.(response);
       } catch (error) {
         console.error("Error fetching substances:", error);
         setSearchResponse({
@@ -111,7 +102,7 @@ export function SubstanceSearchField({
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      fetchSubstances(searchQuery, searchType, searchResponse.pagination.page);
+      fetchSubstancesData(searchQuery, searchType, searchResponse.pagination.page);
     }, 300);
 
     return () => clearTimeout(debounceTimer);
@@ -119,7 +110,7 @@ export function SubstanceSearchField({
     searchQuery,
     searchType,
     searchResponse.pagination.page,
-    fetchSubstances,
+    fetchSubstancesData,
   ]);
 
   const handleSelect = (substance: Substance) => {
@@ -132,7 +123,7 @@ export function SubstanceSearchField({
   };
 
   const handlePageChange = (page: number) => {
-    fetchSubstances(searchQuery, searchType, page);
+    fetchSubstancesData(searchQuery, searchType, page);
   };
 
   const defaultRenderResults = (

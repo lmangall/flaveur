@@ -34,12 +34,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/[locale]/components/ui/tooltip";
-import { useAuth } from "@clerk/nextjs";
+import { createFlavour } from "@/actions/flavours";
 
 export default function NewFlavourPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { getToken } = useAuth();
 
   // Form state
   const [flavour, setFlavour] = useState({
@@ -124,41 +123,26 @@ export default function NewFlavourPage() {
     setIsSubmitting(true);
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-      const token = await getToken();
+      // Prepare substances data for the server action
+      const substancesData = substances
+        .filter((substance) => substance.substance?.fema_number !== undefined)
+        .map((substance, index) => ({
+          fema_number: substance.substance!.fema_number,
+          concentration: parseFloat(substance.concentration),
+          unit: substance.unit,
+          order_index: index + 1,
+        }));
 
-      // Prepare substances data for the API
-      const substancesData = substances.map((substance, index) => ({
-        fema_number: substance.substance?.fema_number,
-        concentration: parseFloat(substance.concentration),
-        unit: substance.unit,
-        order_index: index + 1,
-      }));
-
-      // Create the flavour with substances in a single API call
-      const flavourResponse = await fetch(`${API_URL}/api/flavours`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: flavour.name,
-          description: flavour.description,
-          is_public: flavour.isPublic,
-          // category_id: parseInt(flavour.category),
-          status: flavour.status,
-          base_unit: flavour.baseUnit,
-          substances: substancesData, // Include substances in the main request
-        }),
+      // Create the flavour with substances using server action
+      await createFlavour({
+        name: flavour.name,
+        description: flavour.description,
+        is_public: flavour.isPublic,
+        category_id: flavour.category ? parseInt(flavour.category) : null,
+        status: flavour.status,
+        base_unit: flavour.baseUnit,
+        substances: substancesData,
       });
-
-      if (!flavourResponse.ok) {
-        const errorData = await flavourResponse.json();
-        throw new Error(errorData.error || "Failed to create flavour");
-      }
-
-      await flavourResponse.json();
 
       toast.success(`${flavour.name} has been created successfully.`);
       router.push("/flavours");

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUser, useAuth } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
 import {
@@ -38,6 +38,7 @@ import {
 } from "@/app/[locale]/components/ui/chart";
 import { Flavour } from "@/app/type";
 import { Badge } from "@/app/[locale]/components/ui/badge";
+import { getFlavours } from "@/actions/flavours";
 
 // Flavor Profile Component
 type FlavorProfileData = {
@@ -253,7 +254,6 @@ export default function FlavoursPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
-  const { getToken } = useAuth();
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -261,60 +261,32 @@ export default function FlavoursPage() {
       return;
     }
 
-    // Fetch flavours from the API
-    const fetchFlavours = async () => {
+    // Fetch flavours using server action
+    const fetchFlavoursData = async () => {
       try {
-        const token = await getToken();
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const data = await response.json();
+        const data = await getFlavours();
 
         // Map the API response to match our Flavour type
-        const transformedData = data.map(
-          (item: {
-            flavour_id: number;
-            name: string;
-            description: string;
-            status: string;
-            is_public: boolean;
-            version: number | null;
-            base_unit: string;
-            category_id: number | null;
-            created_at: string;
-            updated_at: string;
-            user_id: string;
-            substances?: Array<{
-              substance_id: number;
-              concentration: number;
-              unit: string;
-              order_index: number;
-              substance?: {
-                substance_id: number;
-                fema_number: number;
-                common_name: string;
-                is_natural: boolean;
-                odor: string;
-                functional_groups: string;
-                flavor_profile: string;
-                taste?: string;
-                olfactory_taste_notes?: string;
-                description: string;
-                created_at: string;
-                updated_at: string;
-              };
-            }>;
-          }) =>
+        const transformedData = (data as Array<{
+          flavour_id: number;
+          name: string;
+          description: string;
+          status: string;
+          is_public: boolean;
+          version: number | null;
+          base_unit: string;
+          category_id: number | null;
+          created_at: string;
+          updated_at: string;
+          user_id: string;
+          substances?: Array<{
+            substance_id: number;
+            concentration: number;
+            unit: string;
+            order_index: number;
+          }>;
+        }>).map(
+          (item) =>
             ({
               flavour_id: item.flavour_id,
               name: item.name || "Unnamed",
@@ -340,8 +312,8 @@ export default function FlavoursPage() {
       }
     };
 
-    fetchFlavours();
-  }, [isSignedIn, router, getToken]);
+    fetchFlavoursData();
+  }, [isSignedIn, router]);
 
   const filteredFlavours = flavours.filter((flavour) => {
     const matchesSearch = flavour.name

@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { getJobs, addJobInteraction } from "@/actions/jobs";
 
 // Define JobOffer type based on your backend
 interface JobOffer {
@@ -39,39 +40,17 @@ interface JobOffer {
 
 export default function JobsPage() {
   const t = useTranslations("Jobs");
-  const { isLoaded, isSignedIn, getToken } = useAuth();
-  //   const { user } = useUser();
+  const { isLoaded, isSignedIn } = useAuth();
   const [jobs, setJobs] = useState<JobOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchJobs() {
+    async function fetchJobsData() {
       try {
         setIsLoading(true);
-
-        // Get auth token if the user is signed in
-        let headers = {};
-        if (isLoaded && isSignedIn) {
-          const token = await getToken();
-          headers = {
-            Authorization: `Bearer ${token}`,
-          };
-        }
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs`,
-          {
-            headers,
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setJobs(data);
+        const data = await getJobs();
+        setJobs(data as JobOffer[]);
         setError(null);
       } catch (err) {
         console.error("Error fetching jobs:", err);
@@ -83,9 +62,9 @@ export default function JobsPage() {
 
     // Only fetch if auth is loaded
     if (isLoaded) {
-      fetchJobs();
+      fetchJobsData();
     }
-  }, [isLoaded, isSignedIn, getToken, t]);
+  }, [isLoaded, t]);
 
   // Format date in a localized way
   const formatDate = (dateString: string) => {
@@ -103,21 +82,7 @@ export default function JobsPage() {
     if (!isSignedIn) return;
 
     try {
-      const token = await getToken();
-      await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/jobs/${jobId}/interactions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            action: "viewed",
-            referrer: "jobs_listing",
-          }),
-        }
-      );
+      await addJobInteraction(parseInt(jobId), "viewed", "jobs_listing");
     } catch (err) {
       console.error("Error tracking job view:", err);
     }

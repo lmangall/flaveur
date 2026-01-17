@@ -20,8 +20,11 @@
     ],
     "baseUrl": ".",  // This is correct, as src is at the root level
     "paths": {
-      "@/app/*": ["src/app/*"],  // Correct mapping
-      "@/components/*": ["src/app/[locale]/components/*"],  // Correct mapping based on your structure
+      "@/*": ["src/*"],
+      "@/app/*": ["src/app/*"],
+      "@/components/*": ["src/app/[locale]/components/*"],
+      "@/lib/*": ["src/lib/*"],
+      "@/actions/*": ["src/actions/*"],
       "@/styles/*": ["src/styles/*"]
     }
   },
