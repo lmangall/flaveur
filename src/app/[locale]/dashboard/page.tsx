@@ -43,7 +43,7 @@ type DashboardData = {
 };
 
 export default function Dashboard() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
   const [recentFlavors, setRecentFlavors] = useState<Flavor[]>([]);
   const [stats, setStats] = useState<DashboardData>({
@@ -66,9 +66,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (!isSignedIn) {
+    if (isLoaded && !isSignedIn) {
       router.push("/");
-    } else {
+    } else if (isLoaded && isSignedIn) {
       // Fetch data here in a real app
       setRecentFlavors([
         {
@@ -99,9 +99,9 @@ export default function Dashboard() {
         updatedAt: "30 days ago",
       });
     }
-  }, [isSignedIn, router]);
+  }, [isSignedIn, isLoaded, router]);
 
-  if (!isSignedIn) return null;
+  if (!isLoaded || !isSignedIn) return null;
 
   return (
     <div
