@@ -159,7 +159,7 @@ export default function NewFlavourPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center">
         <Button variant="ghost" onClick={() => router.back()} className="mr-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -272,12 +272,13 @@ export default function NewFlavourPage() {
               {/* Search and Add Section */}
               <div className="grid gap-4 sm:grid-cols-12 p-4 border rounded-lg bg-muted/30">
                 <div className="sm:col-span-5 space-y-2">
+                  <Label htmlFor="substance-search">Search Substance</Label>
                   <SubstanceSearchField
                     onSelect={(substance) => {
                       setCurrentSubstance(substance);
                       // Enable the concentration input when a substance is selected
-                      const concentrationInput = document.querySelector(
-                        'input[type="number"]'
+                      const concentrationInput = document.getElementById(
+                        "concentration-input"
                       ) as HTMLInputElement;
                       if (concentrationInput) {
                         concentrationInput.focus();
@@ -286,7 +287,9 @@ export default function NewFlavourPage() {
                   />
                 </div>
                 <div className="sm:col-span-3 space-y-2">
+                  <Label htmlFor="concentration-input">Concentration</Label>
                   <Input
+                    id="concentration-input"
                     value={currentConcentration}
                     onChange={(e) => setCurrentConcentration(e.target.value)}
                     placeholder="Amount"
@@ -294,15 +297,17 @@ export default function NewFlavourPage() {
                     min="0"
                     step="0.01"
                     disabled={!currentSubstance}
+                    aria-describedby="concentration-hint"
                   />
                 </div>
                 <div className="sm:col-span-3 space-y-2">
+                  <Label htmlFor="unit-select">Unit</Label>
                   <Select
                     value={currentUnit}
                     onValueChange={setCurrentUnit}
                     disabled={!currentSubstance}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="unit-select">
                       <SelectValue placeholder="Select unit" />
                     </SelectTrigger>
                     <SelectContent>
@@ -321,6 +326,7 @@ export default function NewFlavourPage() {
                     onClick={handleAddSubstance}
                     disabled={!currentSubstance || !currentConcentration}
                     className="w-full"
+                    aria-label="Add substance"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>

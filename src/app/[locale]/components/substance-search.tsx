@@ -26,7 +26,7 @@ export function SubstanceSearch({
   placeholder = "Search substances...",
 }: SubstanceSearchProps) {
   return (
-    <div className="flex gap-2 w-full sm:w-96">
+    <div className="flex gap-2 w-full">
       <div className="relative flex-1">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input

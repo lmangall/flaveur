@@ -170,6 +170,12 @@
 		"allRightsReserved": "All rights reserved.",
 		"privacyPolicy": "Privacy Policy",
 		"termsOfService": "Terms of Service"
+	  },
+	  "Navbar": {
+		"myFlavours": "My Flavours",
+		"substances": "Substances",
+		"jobs": "Jobs",
+		"about": "About"
 	  }
   }
   

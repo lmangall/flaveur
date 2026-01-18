@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
+import { Badge } from "@/app/[locale]/components/ui/badge";
 import { PlusCircle, FlaskConical, FolderTree, Clock } from "lucide-react";
 import {
   Tabs,
@@ -25,7 +26,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/app/[locale]/components/ui/tooltip";
-import { toast } from "sonner";
 
 type Flavor = {
   id: number;
@@ -54,16 +54,6 @@ export default function Dashboard() {
     updatedAt: "",
   });
 
-  // Show toast on any click on the page
-  const handlePageClick = () => {
-    toast("This feature is under development", {
-      // description: "Sorry for the inconvenience",
-      style: {
-        background: "white", // red background
-        color: "red", // white text
-      },
-    });
-  };
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -104,10 +94,7 @@ export default function Dashboard() {
   if (!isLoaded || !isSignedIn) return null;
 
   return (
-    <div
-      className="space-y-8 opacity-50"
-      onClick={handlePageClick} // Attach click handler for the entire page
-    >
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <Button onClick={() => router.push("/flavours/new")}>
@@ -198,16 +185,13 @@ export default function Dashboard() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="p-4 pt-0 flex justify-between">
-                        <span
-                          className={`px-2 py-1 rounded text-xs ${
-                            flavor.status === "published"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
+                        <Badge
+                          variant={flavor.status === "published" ? "default" : "secondary"}
                         >
+                          {flavor.status === "published" ? "✓ " : "○ "}
                           {flavor.status.charAt(0).toUpperCase() +
                             flavor.status.slice(1)}
-                        </span>
+                        </Badge>
                       </CardContent>
                     </TooltipTrigger>
                     <CardFooter className="p-4 border-t bg-muted/50">
@@ -259,7 +243,7 @@ export default function Dashboard() {
         <TabsContent value="public">
           <Card className="p-8 text-center">
             <p className="text-muted-foreground">
-              You &apos;t have any public flavors.
+              You don&apos;t have any public flavors.
             </p>
             <Button onClick={() => router.push("/flavours")} className="mt-4">
               Manage your flavors

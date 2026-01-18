@@ -11,7 +11,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/app/[locale]/components/ui/sheet";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 // Routes for authenticated users
 const authRoutes = [
@@ -28,6 +28,13 @@ export default function Navbar() {
   const { isSignedIn, isLoaded } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Check if a route is active (handles locale prefix)
+  const isActiveRoute = (href: string) => {
+    const fullPath = `/${locale}${href}`;
+    return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
+  };
 
   // Always show the same routes, but handle auth redirects in the click handler
   const routes = authRoutes;
@@ -61,19 +68,25 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6 mx-6">
-          {routes.map((route) => (
-            <Link
-              key={route.href}
-              href={`/${locale}${route.href}`}
-              className="text-sm font-medium transition-colors hover:text-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                handleRouteClick(route.href);
-              }}
-            >
-              {t(route.label)}
-            </Link>
-          ))}
+          {routes.map((route) => {
+            const isActive = isActiveRoute(route.href);
+            return (
+              <Link
+                key={route.href}
+                href={`/${locale}${route.href}`}
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  isActive ? "text-primary font-semibold" : "text-muted-foreground"
+                }`}
+                aria-current={isActive ? "page" : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleRouteClick(route.href);
+                }}
+              >
+                {t(route.label)}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="ml-auto flex items-center space-x-4">
@@ -118,20 +131,26 @@ export default function Navbar() {
                 <span className="font-bold text-lg">Oumamie</span>
               </Link>
               <nav className="flex flex-col space-y-4">
-                {routes.map((route) => (
-                  <Link
-                    key={route.href}
-                    href={`/${locale}${route.href}`}
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleRouteClick(route.href);
-                      setIsOpen(false);
-                    }}
-                  >
-                    {t(route.label)}
-                  </Link>
-                ))}
+                {routes.map((route) => {
+                  const isActive = isActiveRoute(route.href);
+                  return (
+                    <Link
+                      key={route.href}
+                      href={`/${locale}${route.href}`}
+                      className={`text-sm font-medium transition-colors hover:text-primary ${
+                        isActive ? "text-primary font-semibold" : "text-muted-foreground"
+                      }`}
+                      aria-current={isActive ? "page" : undefined}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleRouteClick(route.href);
+                        setIsOpen(false);
+                      }}
+                    >
+                      {t(route.label)}
+                    </Link>
+                  );
+                })}
 
                 {!isSignedIn && (
                   <>
