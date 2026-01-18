@@ -5,9 +5,11 @@ import { sql } from "@/lib/db";
 
 export async function getFlavours() {
   const { userId } = await auth();
+  console.log("[DEBUG getFlavours] userId from auth:", userId);
   if (!userId) throw new Error("Unauthorized");
 
   const result = await sql`SELECT * FROM flavour WHERE user_id = ${userId}`;
+  console.log("[DEBUG getFlavours] Found", result.length, "flavours for user", userId);
   return result;
 }
 

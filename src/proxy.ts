@@ -1,8 +1,23 @@
-import createMiddleware from "next-intl/middleware";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 import { NextRequest, NextResponse } from "next/server";
 
-export default function middleware(req: NextRequest) {
+// Create the intl middleware
+const intlMiddleware = createIntlMiddleware(routing);
+
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/:locale",
+  "/:locale/about",
+  "/:locale/privacy-policy",
+  "/:locale/terms-of-service",
+  "/:locale/auth/(.*)",
+  "/api/webhooks/clerk",
+]);
+
+export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { pathname } = req.nextUrl;
 
   // Handle root path redirect
@@ -25,13 +40,21 @@ export default function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Protect non-public routes
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
+
   // Use the next-intl middleware for all other routes
-  return createMiddleware(routing)(req);
-}
+  return intlMiddleware(req);
+});
 
 export const config = {
   // Match all pathnames except for
-  // - … if they start with `/api`, `/trpc`, `/_next` or `/_vercel`
+  // - … if they start with `/_next` or `/_vercel`
   // - … the ones containing a dot (e.g. `favicon.ico`)
-  matcher: "/((?!api|trpc|_next|_vercel|.*\\..*).*)",
+  matcher: [
+    "/((?!_next|_vercel|.*\\..*).*)",
+    "/(api|trpc)(.*)",
+  ],
 };

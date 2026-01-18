@@ -179,11 +179,11 @@ function FlavourCard({ flavour }: { flavour: Flavour }) {
             <div className="flex gap-2">
               <span
                 className={`px-2 py-1 rounded text-xs ${getStatusBadgeClasses(
-                  flavour.status
+                  flavour.status || "draft"
                 )}`}
               >
-                {flavour.status.charAt(0).toUpperCase() +
-                  flavour.status.slice(1)}
+                {(flavour.status || "draft").charAt(0).toUpperCase() +
+                  (flavour.status || "draft").slice(1)}
               </span>
               <Badge variant="outline">
                 {flavour.is_public ? "Public" : "Private"}
@@ -248,14 +248,16 @@ const getStatusBadgeClasses = (status: string) => {
 
 // Main Page Component
 export default function FlavoursPage() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
   const [flavours, setFlavours] = useState<Flavour[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isLoaded) return; // Wait for auth to load
     if (!isSignedIn) {
       router.push("/");
       return;
@@ -264,7 +266,9 @@ export default function FlavoursPage() {
     // Fetch flavours using server action
     const fetchFlavoursData = async () => {
       try {
+        console.log("[DEBUG] Fetching flavours...");
         const data = await getFlavours();
+        console.log("[DEBUG] Raw data from getFlavours:", data);
 
         // Map the API response to match our Flavour type
         const transformedData = (data as Array<{
@@ -305,15 +309,16 @@ export default function FlavoursPage() {
         );
 
         setFlavours(transformedData);
-      } catch (error) {
-        console.error("Failed to fetch flavours:", error);
+      } catch (err) {
+        console.error("Failed to fetch flavours:", err);
+        setError(err instanceof Error ? err.message : "Failed to load flavours");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchFlavoursData();
-  }, [isSignedIn, router]);
+  }, [isLoaded, isSignedIn, router]);
 
   const filteredFlavours = flavours.filter((flavour) => {
     const matchesSearch = flavour.name
@@ -324,7 +329,7 @@ export default function FlavoursPage() {
     return matchesSearch && matchesStatus;
   });
 
-  if (!isSignedIn) return null;
+  if (!isLoaded || !isSignedIn) return null;
 
   return (
     <div className="space-y-6">
@@ -363,7 +368,12 @@ export default function FlavoursPage() {
         </div>
       </div>
 
-      {isLoading ? (
+      {error ? (
+        <div className="p-4 border border-red-300 bg-red-50 rounded-lg text-red-800">
+          <p className="font-medium">Error loading flavours</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      ) : isLoading ? (
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
