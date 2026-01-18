@@ -2,6 +2,13 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { sql } from "@/lib/db";
+import {
+  type JobInteractionValue,
+  type EmploymentTypeValue,
+  type ExperienceLevelValue,
+  type ContactPerson,
+  isValidJobInteraction,
+} from "@/constants";
 
 export async function getJobs() {
   const { userId } = await auth();
@@ -45,16 +52,20 @@ export async function createJob(data: {
   source_website?: string;
   source_url?: string;
   location?: string;
-  employment_type?: string;
+  employment_type?: EmploymentTypeValue;
   salary?: string;
   requirements?: string;
   tags?: string[];
   industry?: string;
-  experience_level?: string;
-  contact_person?: string;
+  experience_level?: ExperienceLevelValue;
+  contact_person?: ContactPerson;
   posted_at?: string;
   expires_at?: string;
 }) {
+  const contactPersonJson = data.contact_person
+    ? JSON.stringify(data.contact_person)
+    : null;
+
   const result = await sql`
     INSERT INTO public.job_offers (
       title, description, company_name, original_company_name,
@@ -70,7 +81,7 @@ export async function createJob(data: {
       ${data.salary ?? null}, ${data.requirements ?? null},
       ${data.tags ?? null}, ${data.posted_at ?? null},
       ${data.expires_at ?? null}, ${data.industry ?? null},
-      ${data.experience_level ?? null}, ${data.contact_person ?? null}
+      ${data.experience_level ?? null}, ${contactPersonJson}
     )
     RETURNING *
   `;
@@ -80,14 +91,13 @@ export async function createJob(data: {
 
 export async function addJobInteraction(
   jobId: number,
-  action: "viewed" | "applied" | "seen_contact",
+  action: JobInteractionValue,
   referrer?: string
 ) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const validActions = ["viewed", "applied", "seen_contact"];
-  if (!validActions.includes(action)) {
+  if (!isValidJobInteraction(action)) {
     throw new Error("Invalid action");
   }
 

@@ -2,6 +2,12 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { sql } from "@/lib/db";
+import {
+  type FlavourStatusValue,
+  isValidFlavourStatus,
+  DEFAULT_FLAVOUR_STATUS,
+  DEFAULT_BASE_UNIT,
+} from "@/constants";
 
 export async function getFlavours() {
   const { userId } = await auth();
@@ -67,8 +73,8 @@ export async function createFlavour(data: {
     description,
     is_public = false,
     category_id = null,
-    status = "draft",
-    base_unit = "",
+    status = DEFAULT_FLAVOUR_STATUS,
+    base_unit = DEFAULT_BASE_UNIT,
     substances = [],
   } = data;
 
@@ -188,18 +194,15 @@ export async function removeSubstanceFromFlavour(
   return { success: true };
 }
 
-const VALID_STATUSES = ["draft", "published", "archived"] as const;
-type FlavourStatus = (typeof VALID_STATUSES)[number];
-
 export async function updateFlavourStatus(
   flavourId: number,
-  status: FlavourStatus
+  status: FlavourStatusValue
 ) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
   // Validate status
-  if (!VALID_STATUSES.includes(status)) {
+  if (!isValidFlavourStatus(status)) {
     throw new Error(`Invalid status: ${status}`);
   }
 
