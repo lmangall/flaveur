@@ -187,3 +187,37 @@ export async function removeSubstanceFromFlavour(
 
   return { success: true };
 }
+
+const VALID_STATUSES = ["draft", "published", "archived"] as const;
+type FlavourStatus = (typeof VALID_STATUSES)[number];
+
+export async function updateFlavourStatus(
+  flavourId: number,
+  status: FlavourStatus
+) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  // Validate status
+  if (!VALID_STATUSES.includes(status)) {
+    throw new Error(`Invalid status: ${status}`);
+  }
+
+  // Check flavour belongs to user
+  const flavourCheck = await sql`
+    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  `;
+
+  if (flavourCheck.length === 0) {
+    throw new Error("Flavour not found or access denied");
+  }
+
+  const result = await sql`
+    UPDATE public.flavour
+    SET status = ${status}, updated_at = CURRENT_TIMESTAMP
+    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+    RETURNING *
+  `;
+
+  return result[0];
+}

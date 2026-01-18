@@ -32,9 +32,30 @@ import {
   getFlavourById,
   addSubstanceToFlavour,
   removeSubstanceFromFlavour,
+  updateFlavourStatus,
 } from "@/actions/flavours";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/[locale]/components/ui/select";
+
+const STATUS_OPTIONS = [
+  { value: "draft", label: "Draft", className: "bg-amber-100 text-amber-800" },
+  { value: "published", label: "Published", className: "bg-green-100 text-green-800" },
+  { value: "archived", label: "Archived", className: "bg-gray-100 text-gray-800" },
+] as const;
+
+type StatusValue = (typeof STATUS_OPTIONS)[number]["value"];
 
 function FlavorContent({ flavor }: { flavor: Flavour }) {
+  const [currentStatus, setCurrentStatus] = useState<StatusValue>(
+    (flavor.status as StatusValue) || "draft"
+  );
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
     {
       fema_number: true,
@@ -118,15 +139,49 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
     }
   };
 
+  const handleStatusChange = async (newStatus: StatusValue) => {
+    if (newStatus === currentStatus) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      await updateFlavourStatus(flavor.flavour_id, newStatus);
+      setCurrentStatus(newStatus);
+    } catch (error) {
+      console.error("Error updating status:", error);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const getStatusClassName = (status: StatusValue) => {
+    const option = STATUS_OPTIONS.find((opt) => opt.value === status);
+    return option?.className || "bg-gray-100 text-gray-800";
+  };
+
   return (
     <div className="container py-8 space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">{flavor.name}</h1>
         <p className="text-muted-foreground">{flavor.description}</p>
-        <div className="flex gap-2 text-sm text-muted-foreground">
-          <Badge variant="outline">
-            {flavor.status.charAt(0).toUpperCase() + flavor.status.slice(1)}
-          </Badge>
+        <div className="flex gap-2 text-sm text-muted-foreground items-center">
+          <Select
+            value={currentStatus}
+            onValueChange={(value) => handleStatusChange(value as StatusValue)}
+            disabled={isUpdatingStatus}
+          >
+            <SelectTrigger className={`w-[130px] h-8 ${getStatusClassName(currentStatus)}`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <span className={`px-1 py-0.5 rounded ${option.className}`}>
+                    {option.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Badge variant="outline">
             {flavor.is_public ? "Public" : "Private"}
           </Badge>
