@@ -341,3 +341,43 @@ export async function deleteFlavour(flavourId: number) {
 
   return { success: true };
 }
+
+export async function updateFlavorProfile(
+  flavourId: number,
+  flavorProfile: Array<{ attribute: string; value: number }>
+) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  // Validate the flavor profile structure
+  if (!Array.isArray(flavorProfile)) {
+    throw new Error("Flavor profile must be an array");
+  }
+
+  for (const item of flavorProfile) {
+    if (typeof item.attribute !== "string" || item.attribute.trim() === "") {
+      throw new Error("Each attribute must have a non-empty name");
+    }
+    if (typeof item.value !== "number" || item.value < 0 || item.value > 100) {
+      throw new Error("Each value must be a number between 0 and 100");
+    }
+  }
+
+  // Check flavour exists and belongs to user
+  const flavourCheck = await sql`
+    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  `;
+
+  if (flavourCheck.length === 0) {
+    throw new Error("Flavour not found or access denied");
+  }
+
+  const result = await sql`
+    UPDATE public.flavour
+    SET flavor_profile = ${JSON.stringify(flavorProfile)}::jsonb, updated_at = CURRENT_TIMESTAMP
+    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+    RETURNING *
+  `;
+
+  return result[0];
+}

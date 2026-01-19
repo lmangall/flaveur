@@ -1,3 +1,13 @@
+# Git Conventions
+
+- Use conventional one-line commit messages: `type: description`
+- Types: feat, fix, refactor, docs, chore, style, test
+- Never mention Claude in commits
+- Never add "Co-Authored-By" lines
+- Keep commit messages concise and descriptive
+
+---
+
 # Phase 2 Plan
 
 ## 2.0 Deploy Phase 1

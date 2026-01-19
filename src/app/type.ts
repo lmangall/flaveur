@@ -60,6 +60,11 @@ export type Substance = {
 // ===========================================
 // FLAVOUR
 // ===========================================
+export type FlavorProfileAttribute = {
+  attribute: string;
+  value: number;
+};
+
 export type Flavour = {
   flavour_id: number;
   name: string;
@@ -70,6 +75,7 @@ export type Flavour = {
   status: FlavourStatusValue;
   version: number;
   base_unit: ConcentrationUnitValue;
+  flavor_profile: FlavorProfileAttribute[] | null;
   created_at: string;
   updated_at: string;
 

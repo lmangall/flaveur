@@ -26,8 +26,8 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft } from "lucide-react";
-import { Flavour, Substance } from "@/app/type";
+import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save } from "lucide-react";
+import { Flavour, Substance, FlavorProfileAttribute } from "@/app/type";
 import {
   getFlavourById,
   addSubstanceToFlavour,
@@ -35,7 +35,10 @@ import {
   updateFlavourStatus,
   deleteFlavour,
   duplicateFlavour,
+  updateFlavorProfile,
 } from "@/actions/flavours";
+import { Slider } from "@/app/[locale]/components/ui/slider";
+import { Input } from "@/app/[locale]/components/ui/input";
 import { getCategoryById } from "@/actions/categories";
 import {
   AlertDialog,
@@ -76,7 +79,7 @@ const STATUS_OPTIONS = [
 type StatusValue = (typeof STATUS_OPTIONS)[number]["value"];
 
 // Default flavor profile data for radar chart
-const defaultFlavorProfile = [
+const DEFAULT_FLAVOR_PROFILE: FlavorProfileAttribute[] = [
   { attribute: "Sweetness", value: 50 },
   { attribute: "Sourness", value: 30 },
   { attribute: "Bitterness", value: 20 },
@@ -91,29 +94,166 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function FlavorProfileChart() {
+interface FlavorProfileChartProps {
+  flavourId: number;
+  initialProfile: FlavorProfileAttribute[] | null;
+}
+
+function FlavorProfileChart({ flavourId, initialProfile }: FlavorProfileChartProps) {
+  const [profile, setProfile] = useState<FlavorProfileAttribute[]>(
+    initialProfile && initialProfile.length > 0 ? initialProfile : DEFAULT_FLAVOR_PROFILE
+  );
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newAttribute, setNewAttribute] = useState("");
+  const [isAddingAttribute, setIsAddingAttribute] = useState(false);
+
+  const handleValueChange = (index: number, newValue: number) => {
+    setProfile((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, value: newValue } : item))
+    );
+    setHasChanges(true);
+  };
+
+  const handleAttributeNameChange = (index: number, newName: string) => {
+    setProfile((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, attribute: newName } : item))
+    );
+    setHasChanges(true);
+  };
+
+  const handleAddAttribute = () => {
+    if (newAttribute.trim()) {
+      setProfile((prev) => [...prev, { attribute: newAttribute.trim(), value: 50 }]);
+      setNewAttribute("");
+      setIsAddingAttribute(false);
+      setHasChanges(true);
+    }
+  };
+
+  const handleRemoveAttribute = (index: number) => {
+    if (profile.length > 3) {
+      setProfile((prev) => prev.filter((_, i) => i !== index));
+      setHasChanges(true);
+    } else {
+      toast.error("Minimum 3 attributes required");
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateFlavorProfile(flavourId, profile);
+      toast.success("Flavor profile saved");
+      setHasChanges(false);
+    } catch (error) {
+      console.error("Error saving flavor profile:", error);
+      toast.error("Failed to save flavor profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center">
-      <ChartContainer config={chartConfig} className="h-[250px] w-[300px]">
-        <RadarChart data={defaultFlavorProfile}>
-          <ChartTooltip
-            cursor={false}
-            content={<ChartTooltipContent hideLabel />}
-          />
-          <PolarGrid />
-          <PolarAngleAxis dataKey="attribute" />
-          <Radar
-            dataKey="value"
-            fill="hsl(var(--primary))"
-            fillOpacity={0.5}
-            stroke="hsl(var(--primary))"
-            dot={{ r: 4, fillOpacity: 1 }}
-          />
-        </RadarChart>
-      </ChartContainer>
-      <p className="text-sm text-muted-foreground mt-2">
-        Flavor profile based on taste attributes
-      </p>
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Radar Chart */}
+        <div className="flex-shrink-0">
+          <ChartContainer config={chartConfig} className="h-[250px] w-[300px]">
+            <RadarChart data={profile}>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <PolarGrid />
+              <PolarAngleAxis dataKey="attribute" />
+              <Radar
+                dataKey="value"
+                fill="hsl(var(--primary))"
+                fillOpacity={0.5}
+                stroke="hsl(var(--primary))"
+                dot={{ r: 4, fillOpacity: 1 }}
+              />
+            </RadarChart>
+          </ChartContainer>
+        </div>
+
+        {/* Attribute Controls */}
+        <div className="flex-1 space-y-3">
+          {profile.map((item, index) => (
+            <div key={index} className="flex items-center gap-3">
+              <Input
+                value={item.attribute}
+                onChange={(e) => handleAttributeNameChange(index, e.target.value)}
+                className="w-28 h-8 text-sm"
+              />
+              <Slider
+                value={[item.value]}
+                onValueChange={(values) => handleValueChange(index, values[0])}
+                max={100}
+                step={1}
+                className="flex-1"
+              />
+              <span className="w-8 text-sm text-right">{item.value}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleRemoveAttribute(index)}
+                disabled={profile.length <= 3}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+
+          {/* Add Attribute */}
+          {isAddingAttribute ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={newAttribute}
+                onChange={(e) => setNewAttribute(e.target.value)}
+                placeholder="New attribute name"
+                className="flex-1 h-8"
+                onKeyDown={(e) => e.key === "Enter" && handleAddAttribute()}
+              />
+              <Button size="sm" onClick={handleAddAttribute}>
+                Add
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setIsAddingAttribute(false);
+                  setNewAttribute("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddingAttribute(true)}
+              className="mt-2"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Attribute
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Save Button */}
+      {hasChanges && (
+        <div className="flex justify-end pt-2 border-t">
+          <Button onClick={handleSave} disabled={isSaving}>
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? "Saving..." : "Save Profile"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -404,7 +544,10 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
           <CardTitle>Flavor Profile</CardTitle>
         </CardHeader>
         <CardContent>
-          <FlavorProfileChart />
+          <FlavorProfileChart
+            flavourId={flavor.flavour_id}
+            initialProfile={flavor.flavor_profile}
+          />
         </CardContent>
       </Card>
 
@@ -643,6 +786,7 @@ export default function FlavorDetailPage() {
             data.flavour.category_id !== null
               ? Number(data.flavour.category_id)
               : null,
+          flavor_profile: data.flavour.flavor_profile || null,
           created_at: data.flavour.created_at || new Date().toISOString(),
           updated_at: data.flavour.updated_at || new Date().toISOString(),
           user_id: data.flavour.user_id || "Unknown",
