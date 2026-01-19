@@ -4,14 +4,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Slider } from "@/app/[locale]/components/ui/slider";
 import { Label } from "@/app/[locale]/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/app/[locale]/components/ui/card";
 import { Input } from "@/app/[locale]/components/ui/input";
 import { Separator } from "@/app/[locale]/components/ui/separator";
 import { Badge } from "@/app/[locale]/components/ui/badge";
@@ -75,7 +67,7 @@ const PriceBadge = ({
       ) : (
         <Badge
           variant="outline"
-          className="font-mono cursor-pointer hover:bg-gray-100"
+          className="font-mono cursor-pointer hover:bg-muted"
         >
           {value.toFixed(2)}€/kg
         </Badge>
@@ -289,24 +281,17 @@ const FlavoringCalculator = () => {
   }, [sendEmail]);
 
   return (
-    <Card className="w-full max-w-lg shadow-md">
-      <CardHeader className="flex justify-between items-center">
-        <CardTitle className="text-2xl">Calculateur de Préparations</CardTitle>
-        <Label className="p-2 text-xs text-muted-foreground">
-          Options Avancées:
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Label className="flex items-center gap-2 text-sm text-muted-foreground">
           <Switch
             checked={advancedOptions}
             onCheckedChange={handleAdvancedOptionsToggle}
           />
+          Options avancées
         </Label>
-        <div className="flex items-center">
-          <CardDescription>
-            Calculez les ratios précis de vos composés pour les formulations de
-            saveurs
-          </CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
+      </div>
+      <div>
         {/* Fix: Ensure the Tabs container takes full width and the content expands properly */}
         <Tabs defaultValue="ingredients" className="w-full">
           <TabsList className="mb-6 w-full grid grid-cols-3">
@@ -506,9 +491,9 @@ const FlavoringCalculator = () => {
               maintenir vos cibles.
             </p>
             {advancedOptions && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+              <div className="mt-4 p-4 bg-muted rounded-md border">
                 <h5 className="text-md font-medium mb-2">Options Avancées</h5>
-                <p>
+                <p className="text-muted-foreground">
                   Les options avancées vous permettent de définir les prix par
                   kilogramme de chaque ingrédient pour calculer le coût total de
                   votre préparation. Vous pouvez modifier les prix en cliquant
@@ -530,42 +515,42 @@ const FlavoringCalculator = () => {
           </p>
           <div className="relative mt-4">
             {/* Bars representing ingredient percentages - always visible */}
-            <div className="flex mb-2">
+            <div className="flex mb-2 rounded-md overflow-hidden">
               <div
-                className="h-6 bg-amber-400"
+                className="h-8 bg-amber-400 dark:bg-amber-500 transition-all"
                 style={{ width: `${result.syrupPercent}%` }}
               ></div>
               <div
-                className="h-6 bg-purple-400"
+                className="h-8 bg-purple-400 dark:bg-purple-500 transition-all"
                 style={{ width: `${result.infusionPercent}%` }}
               ></div>
               <div
-                className="h-6 bg-red-400"
+                className="h-8 bg-rose-400 dark:bg-rose-500 transition-all"
                 style={{ width: `${result.alcoholPercent}%` }}
               ></div>
               <div
-                className="h-6 bg-blue-400"
+                className="h-8 bg-sky-400 dark:bg-sky-500 transition-all"
                 style={{ width: `${result.waterPercent}%` }}
               ></div>
-              {!result.isValid && (
-                <div className="h-6 inset-0 flex items-center justify-center">
-                  <p className="text-red-500 font-medium px-4 py-2 rounded">
-                    Aucune solution valide possible avec ces paramètres
-                  </p>
-                </div>
-              )}
             </div>
+            {!result.isValid && (
+              <div className="text-center py-2">
+                <p className="text-destructive font-medium text-sm">
+                  Aucune solution valide possible avec ces paramètres
+                </p>
+              </div>
+            )}
             {/* Ingredients section with relative positioning for the error overlay */}
             <div className="relative">
               {/* Ingredient values that get blurred */}
               <div
-                className={`grid grid-cols-4 gap-4 mt-4 transition-all duration-300 ${
-                  !result.isValid ? "blur-xs" : ""
+                className={`grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 transition-all duration-300 ${
+                  !result.isValid ? "blur-sm opacity-50" : ""
                 }`}
               >
-                <div className="bg-amber-100 p-4 rounded-md border border-amber-200">
-                  <div className="text-xs uppercase font-semibold">Sirop</div>
-                  <div className="text-lg font-medium font-mono">
+                <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <div className="text-xs uppercase font-semibold text-amber-700 dark:text-amber-400">Sirop</div>
+                  <div className="text-lg font-medium font-mono mt-1">
                     {result.syrup}
                   </div>
                   {advancedOptions && (
@@ -579,11 +564,11 @@ const FlavoringCalculator = () => {
                     </div>
                   )}
                 </div>
-                <div className="bg-purple-100 p-4 rounded-md border border-purple-200">
-                  <div className="text-xs uppercase font-semibold">
+                <div className="bg-purple-50 dark:bg-purple-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <div className="text-xs uppercase font-semibold text-purple-700 dark:text-purple-400">
                     Infusion
                   </div>
-                  <div className="text-lg font-medium font-mono">
+                  <div className="text-lg font-medium font-mono mt-1">
                     {result.infusion}
                   </div>
                   {advancedOptions && (
@@ -597,9 +582,9 @@ const FlavoringCalculator = () => {
                     </div>
                   )}
                 </div>
-                <div className="bg-red-100 p-4 rounded-md border border-red-200">
-                  <div className="text-xs uppercase font-semibold">Alcool</div>
-                  <div className="text-lg font-medium font-mono">
+                <div className="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-lg border border-rose-200 dark:border-rose-800">
+                  <div className="text-xs uppercase font-semibold text-rose-700 dark:text-rose-400">Alcool</div>
+                  <div className="text-lg font-medium font-mono mt-1">
                     {result.alcohol}
                   </div>
                   {advancedOptions && (
@@ -613,9 +598,9 @@ const FlavoringCalculator = () => {
                     </div>
                   )}
                 </div>
-                <div className="bg-blue-100 p-4 rounded-md border border-blue-200">
-                  <div className="text-xs uppercase font-semibold">Eau</div>
-                  <div className="text-lg font-medium font-mono">
+                <div className="bg-sky-50 dark:bg-sky-950/30 p-4 rounded-lg border border-sky-200 dark:border-sky-800">
+                  <div className="text-xs uppercase font-semibold text-sky-700 dark:text-sky-400">Eau</div>
+                  <div className="text-lg font-medium font-mono mt-1">
                     {result.water}
                   </div>
                   {advancedOptions && (
@@ -633,14 +618,14 @@ const FlavoringCalculator = () => {
             </div>
             {/* Total Cost Display - only visible with advanced options */}
             {advancedOptions && (
-              <div className="mt-6 p-4 bg-green-50 rounded-md border border-green-200">
+              <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
                 <div className="flex justify-between items-center">
                   <h4 className="text-md font-medium">Coût Total:</h4>
-                  <div className="text-xl font-semibold font-mono text-green-700">
+                  <div className="text-xl font-semibold font-mono text-emerald-700 dark:text-emerald-400">
                     {result.totalCost.toFixed(2)}€ / kg
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   Basé sur le volume calculé et les prix par kilogramme indiqués
                 </div>
               </div>
@@ -665,8 +650,8 @@ const FlavoringCalculator = () => {
             </Button>
           </div>
         )}
-      </CardContent>
-      <CardFooter className="bg-gray-50 border-t p-4 flex justify-end">
+      </div>
+      <div className="flex justify-end pt-4 border-t">
         <Button
           onClick={() => {
             setParams({
@@ -691,8 +676,8 @@ const FlavoringCalculator = () => {
         >
           Réinitialiser aux valeurs d'exemple
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
 export default FlavoringCalculator;
