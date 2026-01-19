@@ -30,7 +30,8 @@ export function SmilesDrawerRenderer({
         setError(null);
 
         // Dynamic import of SmilesDrawer
-        const SmilesDrawer = (await import("smiles-drawer")).default;
+        const SmilesDrawerModule = await import("smiles-drawer");
+        const SmilesDrawer = SmilesDrawerModule.default || SmilesDrawerModule;
 
         if (!mounted) return;
 
@@ -38,12 +39,13 @@ export function SmilesDrawerRenderer({
           width,
           height,
           bondThickness: 1.5,
-          bondLength: 20,
-          shortBondLength: 0.8,
+          bondLength: 15,
+          shortBondLength: 0.85,
           isomeric: true,
-          debug: false,
           terminalCarbons: false,
           explicitHydrogens: false,
+          compactDrawing: false,
+          atomVisualization: "default" as const,
           themes: {
             light: {
               C: "#222",
@@ -78,19 +80,21 @@ export function SmilesDrawerRenderer({
           },
         };
 
-        const drawer = new SmilesDrawer.Drawer(options);
+        // SmilesDrawer v2.x API
+        const drawer = new SmilesDrawer.SmiDrawer(options);
 
-        SmilesDrawer.parse(
+        drawer.draw(
           smiles,
-          (tree: unknown) => {
+          canvasRef.current,
+          theme,
+          () => {
             if (!mounted) return;
-            drawer.draw(tree, canvasRef.current, theme);
             setLoading(false);
           },
           (err: Error) => {
             if (!mounted) return;
-            console.error("SmilesDrawer parse error:", err);
-            setError(`Parse error: ${err.message}`);
+            console.error("SmilesDrawer error:", err);
+            setError(`Draw error: ${err?.message || "Unknown error"}`);
             setLoading(false);
           }
         );
