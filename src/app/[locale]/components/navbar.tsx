@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl"; // Import useTranslations
 import { UserButton, useUser } from "@clerk/nextjs";
-import { MenuIcon } from "lucide-react";
+import { MenuIcon, Settings } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Sheet,
@@ -92,7 +92,15 @@ export default function Navbar() {
         <div className="ml-auto flex items-center space-x-4">
           {isLoaded ? (
             isSignedIn ? (
-              <UserButton afterSignOutUrl={`/${locale}`} />
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href={`/${locale}/settings`}>
+                    <Settings className="h-5 w-5" />
+                    <span className="sr-only">Settings</span>
+                  </Link>
+                </Button>
+                <UserButton afterSignOutUrl={`/${locale}`} />
+              </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <Button variant="ghost" size="sm" asChild>
@@ -151,6 +159,22 @@ export default function Navbar() {
                     </Link>
                   );
                 })}
+
+                {isSignedIn && (
+                  <>
+                    <div className="h-px bg-border my-2" />
+                    <Link
+                      href={`/${locale}/settings`}
+                      className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
+                        isActiveRoute("/settings") ? "text-primary font-semibold" : "text-muted-foreground"
+                      }`}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Link>
+                  </>
+                )}
 
                 {!isSignedIn && (
                   <>

@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/app/[locale]/components/ui/tooltip";
 import { cn } from "src/app/lib/utils";
 import { getLocale } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
+import { ThemeProvider } from "next-themes";
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -120,27 +121,34 @@ export default async function RootLayout({
   return (
     <ClerkProvider>
       <TooltipProvider>
-        <html lang={locale}>
+        <html lang={locale} suppressHydrationWarning>
           <body
             className={cn(
               "min-h-screen bg-background font-sans antialiased",
               fontSans.variable
             )}
           >
-            <NextIntlClientProvider locale={locale} messages={messages}>
-              <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-100 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                Skip to main content
-              </a>
-              <Navbar />
-              <main id="main-content" className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
-                {children}
-              </main>
-              <Footer />
-              <Toaster />
-            </NextIntlClientProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <NextIntlClientProvider locale={locale} messages={messages}>
+                <a
+                  href="#main-content"
+                  className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-100 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  Skip to main content
+                </a>
+                <Navbar />
+                <main id="main-content" className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
+                  {children}
+                </main>
+                <Footer />
+                <Toaster />
+              </NextIntlClientProvider>
+            </ThemeProvider>
           </body>
         </html>
       </TooltipProvider>

@@ -46,3 +46,15 @@ export interface ContactPerson {
   email?: string;
   phone?: string;
 }
+
+// Job alert frequency options
+export const JOB_ALERT_FREQUENCY_OPTIONS = [
+  { value: "instant", label: "Instant" },
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+] as const;
+
+export type JobAlertFrequencyValue = (typeof JOB_ALERT_FREQUENCY_OPTIONS)[number]["value"];
+
+export const isValidJobAlertFrequency = (value: string): value is JobAlertFrequencyValue =>
+  JOB_ALERT_FREQUENCY_OPTIONS.some((f) => f.value === value);

@@ -2,3 +2,4 @@
 export * from "./flavour";
 export * from "./category";
 export * from "./newsletter";
+export * from "./job-alerts";

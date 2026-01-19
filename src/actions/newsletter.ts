@@ -1,7 +1,7 @@
 "use server";
 
 import { sql } from "@/lib/db";
-import { sendConfirmationEmail, sendWelcomeEmail, sendUnsubscribeConfirmationEmail } from "@/lib/email/resend";
+import { sendWelcomeEmail, sendUnsubscribeConfirmationEmail, sendNewSubscriberNotification } from "@/lib/email/resend";
 import { newsletterSubscribeSchema, confirmationTokenSchema } from "@/lib/validations/newsletter";
 
 export async function subscribeToNewsletter(email: string, source: string, locale: string) {
@@ -23,50 +23,45 @@ export async function subscribeToNewsletter(email: string, source: string, local
   if (existingSubscriber.length > 0) {
     const subscriber = existingSubscriber[0];
 
-    // If already confirmed and not unsubscribed, return already subscribed
+    // If already subscribed and not unsubscribed, return already subscribed
     if (subscriber.confirmed_at && !subscriber.unsubscribed_at) {
       return { success: false, error: "already_subscribed" };
     }
 
     // If unsubscribed, allow resubscription
     if (subscriber.unsubscribed_at) {
-      const newToken = crypto.randomUUID();
       await sql`
         UPDATE newsletter_subscribers
         SET unsubscribed_at = NULL,
-            confirmed_at = NULL,
-            confirmation_token = ${newToken}::uuid,
+            confirmed_at = NOW(),
             subscribed_at = NOW(),
             source = ${source},
             locale = ${locale}
         WHERE email = ${normalizedEmail}
-        RETURNING confirmation_token
       `;
 
-      await sendConfirmationEmail(normalizedEmail, newToken, locale);
-      return { success: true, message: "confirmation_sent" };
-    }
-
-    // If not confirmed yet, resend confirmation email
-    if (!subscriber.confirmed_at) {
-      await sendConfirmationEmail(normalizedEmail, subscriber.confirmation_token as string, locale);
-      return { success: true, message: "confirmation_resent" };
+      // Send welcome email to subscriber and notification to dev
+      await Promise.all([
+        sendWelcomeEmail(normalizedEmail, locale),
+        sendNewSubscriberNotification(normalizedEmail, source, locale),
+      ]);
+      return { success: true, message: "subscribed" };
     }
   }
 
-  // Create new subscription
-  const result = await sql`
-    INSERT INTO newsletter_subscribers (email, source, locale)
-    VALUES (${normalizedEmail}, ${source}, ${locale})
-    RETURNING confirmation_token
+  // Create new subscription (single opt-in: confirmed immediately)
+  await sql`
+    INSERT INTO newsletter_subscribers (email, source, locale, confirmed_at)
+    VALUES (${normalizedEmail}, ${source}, ${locale}, NOW())
   `;
 
-  const token = result[0].confirmation_token as string;
+  // Send welcome email to subscriber and notification to dev
+  await Promise.all([
+    sendWelcomeEmail(normalizedEmail, locale),
+    sendNewSubscriberNotification(normalizedEmail, source, locale),
+  ]);
 
-  // Send confirmation email
-  await sendConfirmationEmail(normalizedEmail, token, locale);
-
-  return { success: true, message: "confirmation_sent" };
+  return { success: true, message: "subscribed" };
 }
 
 export async function confirmSubscription(token: string) {

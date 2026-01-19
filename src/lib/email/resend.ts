@@ -44,6 +44,31 @@ export async function sendWelcomeEmail(email: string, locale: string) {
   });
 }
 
+const DEV_EMAIL = 'l.mangallon@gmail.com';
+
+export async function sendNewSubscriberNotification(subscriberEmail: string, source: string, locale: string) {
+  await resend.emails.send({
+    from: 'Oumamie <newsletter@oumamie.xyz>',
+    to: DEV_EMAIL,
+    subject: `New newsletter subscriber: ${subscriberEmail}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+  <h2>New Newsletter Subscriber</h2>
+  <p><strong>Email:</strong> ${subscriberEmail}</p>
+  <p><strong>Source:</strong> ${source}</p>
+  <p><strong>Locale:</strong> ${locale}</p>
+  <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+</body>
+</html>
+    `,
+  });
+}
+
 export async function sendUnsubscribeConfirmationEmail(email: string, locale: string) {
   const subject = locale === 'fr'
     ? 'Vous êtes désinscrit de la newsletter Oumamie'
@@ -263,6 +288,114 @@ function getUnsubscribeEmailEn(): string {
 
   <div style="text-align: center; color: #999; font-size: 12px;">
     <p>Oumamie - The flavorist platform</p>
+  </div>
+</body>
+</html>
+  `;
+}
+
+// Job Alert Email Types
+export interface JobAlertJob {
+  id: number;
+  title: string;
+  company: string;
+  location: string;
+  employmentType: string;
+  url: string;
+}
+
+export async function sendJobAlertEmail(
+  email: string,
+  jobs: JobAlertJob[],
+  locale: string,
+  unsubscribeUrl: string
+) {
+  const subject = locale === 'fr'
+    ? `${jobs.length} nouvelle${jobs.length > 1 ? 's' : ''} offre${jobs.length > 1 ? 's' : ''} d'emploi correspond${jobs.length > 1 ? 'ent' : ''} à vos critères`
+    : `${jobs.length} new job${jobs.length > 1 ? 's' : ''} match${jobs.length === 1 ? 'es' : ''} your criteria`;
+
+  const html = locale === 'fr'
+    ? getJobAlertEmailFr(jobs, unsubscribeUrl)
+    : getJobAlertEmailEn(jobs, unsubscribeUrl);
+
+  await resend.emails.send({
+    from: 'Oumamie <jobs@oumamie.xyz>',
+    to: email,
+    subject,
+    html,
+  });
+}
+
+function getJobAlertEmailFr(jobs: JobAlertJob[], unsubscribeUrl: string): string {
+  const jobsHtml = jobs.map(job => `
+    <div style="background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+      <h3 style="color: #111; font-size: 18px; margin: 0 0 10px 0;">${job.title}</h3>
+      <p style="color: #666; margin: 0 0 5px 0;"><strong>${job.company}</strong></p>
+      <p style="color: #888; font-size: 14px; margin: 0 0 15px 0;">${job.location} • ${job.employmentType}</p>
+      <a href="${job.url}" style="display: inline-block; background: #111; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px;">Voir l'offre</a>
+    </div>
+  `).join('');
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouvelles offres d'emploi</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
+  </div>
+
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 20px;">🎯 Nouvelles offres correspondant à vos critères</h2>
+    ${jobsHtml}
+  </div>
+
+  <div style="text-align: center; color: #999; font-size: 12px;">
+    <p>Oumamie - La plateforme des aromaticiens</p>
+    <p><a href="${unsubscribeUrl}" style="color: #999;">Gérer mes alertes emploi</a></p>
+  </div>
+</body>
+</html>
+  `;
+}
+
+function getJobAlertEmailEn(jobs: JobAlertJob[], unsubscribeUrl: string): string {
+  const jobsHtml = jobs.map(job => `
+    <div style="background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+      <h3 style="color: #111; font-size: 18px; margin: 0 0 10px 0;">${job.title}</h3>
+      <p style="color: #666; margin: 0 0 5px 0;"><strong>${job.company}</strong></p>
+      <p style="color: #888; font-size: 14px; margin: 0 0 15px 0;">${job.location} • ${job.employmentType}</p>
+      <a href="${job.url}" style="display: inline-block; background: #111; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px;">View Job</a>
+    </div>
+  `).join('');
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New job opportunities</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
+  </div>
+
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 20px;">🎯 New jobs matching your criteria</h2>
+    ${jobsHtml}
+  </div>
+
+  <div style="text-align: center; color: #999; font-size: 12px;">
+    <p>Oumamie - The flavorist platform</p>
+    <p><a href="${unsubscribeUrl}" style="color: #999;">Manage my job alerts</a></p>
   </div>
 </body>
 </html>

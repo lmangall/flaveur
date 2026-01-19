@@ -26,11 +26,7 @@ export function NewsletterSignup({ source = "homepage" }: NewsletterSignupProps)
       const result = await subscribeToNewsletter(email, source, locale);
 
       if (result.success) {
-        if (result.message === "confirmation_resent") {
-          toast.success(t("confirmationResent"));
-        } else {
-          toast.success(t("subscribeSuccess"));
-        }
+        toast.success(t("subscribeSuccess"));
         setEmail("");
       } else {
         if (result.error === "already_subscribed") {
