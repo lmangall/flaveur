@@ -45,14 +45,13 @@ export function MoleculeImage({
         </div>
       )}
       <img
-        src={`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${pubchemCid}/PNG?image_size=${size}x${size}`}
+        src={`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${pubchemCid}/PNG`}
         alt={name ?? `Molecule ${pubchemCid}`}
         className={cn(
-          "rounded-lg border bg-white",
+          "rounded-lg border bg-white object-contain",
           loading && "opacity-0"
         )}
-        width={size}
-        height={size}
+        style={{ width: size, height: size }}
         onLoad={() => setLoading(false)}
         onError={() => {
           setError(true);
