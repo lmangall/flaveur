@@ -6,7 +6,7 @@ if (!process.env.RESEND_API_KEY) {
 
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://oumamie.xyz';
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.oumamie.xyz';
 const LOGO_URL = `${BASE_URL}/logo_transparent_bg.png`;
 
 export async function sendConfirmationEmail(email: string, token: string, locale: string) {
