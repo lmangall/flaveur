@@ -282,6 +282,7 @@ export default function SubstancesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[60px]">Structure</TableHead>
                   <TableHead>FEMA #</TableHead>
                   <TableHead>CAS ID</TableHead>
                   <TableHead>Name</TableHead>
@@ -294,6 +295,19 @@ export default function SubstancesPage() {
               <TableBody>
                 {filteredSubstances.map((substance, index) => (
                   <TableRow key={`substance-${index}`}>
+                    <TableCell>
+                      <button
+                        onClick={() => openDetailsModal(substance)}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        <MoleculeImage
+                          pubchemCid={substance.pubchem_cid}
+                          formula={substance.molecular_formula}
+                          name={substance.common_name}
+                          size={48}
+                        />
+                      </button>
+                    </TableCell>
                     <TableCell className="font-medium">
                       {substance.fema_number}
                     </TableCell>
@@ -313,7 +327,7 @@ export default function SubstancesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => openDetailsModal(substance)} // Open the details modal
+                            onClick={() => openDetailsModal(substance)}
                           >
                             View Details
                           </DropdownMenuItem>
