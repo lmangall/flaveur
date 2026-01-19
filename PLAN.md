@@ -5,14 +5,14 @@
 - Run newsletter migration on database
 - Add RESEND_API_KEY to environment
 
-## 2.1 Job Detail Page
+## 2.1 Job Detail Page ✅
 - Polish `/jobs/[id]` page layout
 - Show full description, requirements, salary
 - Display contact person info (reveal on click, track interaction)
 - Add "Apply" button with external link tracking
 - Back to listings navigation
 
-## 2.2 Flavour Detail View
+## 2.2 Flavour Detail View ✅
 - Improve `/flavours/[id]` page
 - Show substances list with concentrations
 - Display radar chart for flavor profile

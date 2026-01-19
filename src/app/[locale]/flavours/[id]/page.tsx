@@ -26,14 +26,32 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { Eye, EyeOff, ChevronDown, Trash2 } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft } from "lucide-react";
 import { Flavour, Substance } from "@/app/type";
 import {
   getFlavourById,
   addSubstanceToFlavour,
   removeSubstanceFromFlavour,
   updateFlavourStatus,
+  deleteFlavour,
+  duplicateFlavour,
 } from "@/actions/flavours";
+import { getCategoryById } from "@/actions/categories";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/app/[locale]/components/ui/alert-dialog";
+import { toast } from "sonner";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import {
   Select,
   SelectContent,
@@ -41,6 +59,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/[locale]/components/ui/select";
+import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/app/[locale]/components/ui/chart";
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "Draft", className: "bg-amber-100 text-amber-800" },
@@ -50,11 +75,76 @@ const STATUS_OPTIONS = [
 
 type StatusValue = (typeof STATUS_OPTIONS)[number]["value"];
 
+// Default flavor profile data for radar chart
+const defaultFlavorProfile = [
+  { attribute: "Sweetness", value: 50 },
+  { attribute: "Sourness", value: 30 },
+  { attribute: "Bitterness", value: 20 },
+  { attribute: "Umami", value: 40 },
+  { attribute: "Saltiness", value: 25 },
+];
+
+const chartConfig = {
+  value: {
+    label: "Intensity",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig;
+
+function FlavorProfileChart() {
+  return (
+    <div className="flex flex-col items-center">
+      <ChartContainer config={chartConfig} className="h-[250px] w-[300px]">
+        <RadarChart data={defaultFlavorProfile}>
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel />}
+          />
+          <PolarGrid />
+          <PolarAngleAxis dataKey="attribute" />
+          <Radar
+            dataKey="value"
+            fill="hsl(var(--primary))"
+            fillOpacity={0.5}
+            stroke="hsl(var(--primary))"
+            dot={{ r: 4, fillOpacity: 1 }}
+          />
+        </RadarChart>
+      </ChartContainer>
+      <p className="text-sm text-muted-foreground mt-2">
+        Flavor profile based on taste attributes
+      </p>
+    </div>
+  );
+}
+
 function FlavorContent({ flavor }: { flavor: Flavour }) {
+  const router = useRouter();
+  const locale = useLocale();
   const [currentStatus, setCurrentStatus] = useState<StatusValue>(
     (flavor.status as StatusValue) || "draft"
   );
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [categoryName, setCategoryName] = useState<string | null>(null);
+
+  // Fetch category name if category_id exists
+  useEffect(() => {
+    async function fetchCategory() {
+      if (flavor.category_id) {
+        try {
+          const category = await getCategoryById(flavor.category_id);
+          if (category) {
+            setCategoryName(category.name);
+          }
+        } catch (error) {
+          console.error("Error fetching category:", error);
+        }
+      }
+    }
+    fetchCategory();
+  }, [flavor.category_id]);
 
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
     {
@@ -158,10 +248,88 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
     return option?.className || "bg-gray-100 text-gray-800";
   };
 
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    try {
+      const newFlavour = await duplicateFlavour(flavor.flavour_id);
+      toast.success("Flavour duplicated");
+      router.push(`/${locale}/flavours/${newFlavour.flavour_id}`);
+    } catch (error) {
+      console.error("Error duplicating flavour:", error);
+      toast.error("Failed to duplicate flavour");
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteFlavour(flavor.flavour_id);
+      toast.success("Flavour deleted");
+      router.push(`/${locale}/flavours`);
+    } catch (error) {
+      console.error("Error deleting flavour:", error);
+      toast.error("Failed to delete flavour");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="container py-8 space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href={`/${locale}/flavours`}>
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <h1 className="text-3xl font-bold tracking-tight flex-1">{flavor.name}</h1>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/${locale}/flavours/${flavor.flavour_id}/edit`}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDuplicate}
+            disabled={isDuplicating}
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            {isDuplicating ? "Duplicating..." : "Duplicate"}
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Flavour</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete &quot;{flavor.name}&quot;? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">{flavor.name}</h1>
         <p className="text-muted-foreground">{flavor.description}</p>
         <div className="flex gap-2 text-sm text-muted-foreground items-center">
           <Select
@@ -215,8 +383,8 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
             </div>
             <div className="space-y-2">
               <div>
-                <span className="font-medium">Category ID:</span>{" "}
-                {flavor.category_id || "None"}
+                <span className="font-medium">Category:</span>{" "}
+                {categoryName || (flavor.category_id ? "Loading..." : "None")}
               </div>
               <div>
                 <span className="font-medium">Base Unit:</span>{" "}
@@ -228,6 +396,15 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Flavor Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FlavorProfileChart />
         </CardContent>
       </Card>
 

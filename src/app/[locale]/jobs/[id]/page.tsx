@@ -372,13 +372,30 @@ export default function JobDetailPage() {
                 </p>
               )}
 
-              <Button
-                variant="default"
-                className="w-full"
-                onClick={() => trackInteraction("applied")}
-              >
-                {t("applyNow")}
-              </Button>
+              {job.source_url ? (
+                <Button
+                  variant="default"
+                  className="w-full"
+                  asChild
+                  onClick={() => trackInteraction("applied")}
+                >
+                  <a
+                    href={job.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t("applyNow")}
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  className="w-full"
+                  onClick={() => trackInteraction("applied")}
+                >
+                  {t("applyNow")}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
