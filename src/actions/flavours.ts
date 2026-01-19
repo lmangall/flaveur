@@ -22,15 +22,32 @@ export async function getFlavourById(flavourId: number) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const flavourResult = await sql`
-    SELECT * FROM flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  // Check if user is owner OR has shared access
+  const accessCheck = await sql`
+    SELECT
+      f.*,
+      CASE WHEN f.user_id = ${userId} THEN true ELSE false END as is_owner,
+      CASE WHEN fs.share_id IS NOT NULL THEN true ELSE false END as is_shared_with_me,
+      sharer.username as shared_by_username,
+      sharer.email as shared_by_email
+    FROM flavour f
+    LEFT JOIN flavour_shares fs ON f.flavour_id = fs.flavour_id
+      AND fs.shared_with_user_id = ${userId}
+    LEFT JOIN users sharer ON fs.shared_by_user_id = sharer.user_id
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR fs.share_id IS NOT NULL)
   `;
 
-  if (flavourResult.length === 0) {
+  if (accessCheck.length === 0) {
     throw new Error("Forbidden: You do not have access to this flavour");
   }
 
-  const flavour = flavourResult[0];
+  const flavourData = accessCheck[0];
+  const isOwner = Boolean(flavourData.is_owner);
+  const isSharedWithMe = Boolean(flavourData.is_shared_with_me);
+
+  // Extract flavour fields (without the computed fields)
+  const { is_owner, is_shared_with_me, shared_by_username, shared_by_email, ...flavour } = flavourData;
 
   const substanceLinks = await sql`
     SELECT substance_id FROM substance_flavour WHERE flavour_id = ${flavourId}
@@ -47,7 +64,16 @@ export async function getFlavourById(flavourId: number) {
     `;
   }
 
-  return { flavour, substances };
+  return {
+    flavour,
+    substances,
+    isOwner,
+    isSharedWithMe,
+    sharedBy: isSharedWithMe ? {
+      username: shared_by_username,
+      email: shared_by_email,
+    } : null,
+  };
 }
 
 export async function createFlavour(data: {

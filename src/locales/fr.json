@@ -426,6 +426,46 @@
 		"searchUsers": "Rechercher des utilisateurs...",
 		"newsletterSubscribers": "Newsletter",
 		"confirmedSubscribers": "Abonnés confirmés"
+	  },
+	  "Calculator": {
+		"title": "Calculateur de Quantités",
+		"description": "Calculez les quantités précises pour vos formulations d'arômes. Déterminez les bonnes proportions de sirop, d'infusion, d'alcool et d'eau pour atteindre vos objectifs de Brix et d'alcool."
+	  },
+	  "Sharing": {
+		"share": "Partager",
+		"shareTitle": "Partager l'arôme",
+		"shareDescription": "Partagez \"{name}\" avec d'autres utilisateurs. Ils auront un accès en lecture seule.",
+		"enterEmail": "Entrez une adresse email...",
+		"sharedWith": "Partagé avec",
+		"pendingInvites": "Invitations en attente",
+		"pending": "En attente",
+		"viewOnly": "Lecture seule",
+		"noSharesYet": "Pas encore partagé",
+		"done": "Terminé",
+		"shareSuccess": "Arôme partagé avec succès",
+		"inviteSent": "Invitation envoyée ! Ils auront accès après inscription.",
+		"shareError": "Échec du partage",
+		"loadSharesError": "Échec du chargement des partages",
+		"revokeSuccess": "Accès révoqué",
+		"inviteCancelled": "Invitation annulée",
+		"revokeError": "Échec de la révocation",
+		"sharedWithYouBy": "Partagé avec vous par {name}",
+		"invalidInvite": "Invitation invalide",
+		"invalidInviteDescription": "Ce lien d'invitation est invalide ou manquant.",
+		"inviteNotFound": "Invitation introuvable",
+		"inviteNotFoundDescription": "Cette invitation a peut-être expiré ou été annulée.",
+		"inviteAlreadyAccepted": "Invitation déjà acceptée",
+		"inviteAlreadyAcceptedDescription": "Vous avez déjà accès à cet arôme.",
+		"viewFlavour": "Voir l'arôme",
+		"inviteError": "Impossible d'accepter l'invitation",
+		"goToDashboard": "Aller au tableau de bord",
+		"youreInvited": "Vous êtes invité(e) !",
+		"invitedYouToView": "vous invite à découvrir",
+		"signUpToAccess": "Créez un compte gratuit pour voir cet arôme et commencer votre parcours d'aromaticien.",
+		"createAccount": "Créer un compte",
+		"signInExisting": "Se connecter à un compte existant",
+		"inviteSentTo": "Cette invitation a été envoyée à",
+		"backToHome": "Retour à l'accueil"
 	  }
   }
   

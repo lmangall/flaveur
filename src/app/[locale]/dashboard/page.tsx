@@ -22,6 +22,7 @@ import {
   Clock,
   Database,
   Globe,
+  Users,
 } from "lucide-react";
 import {
   Tabs,
@@ -37,6 +38,7 @@ import {
   type DashboardStats,
   type RecentFlavor,
 } from "@/actions/dashboard";
+import { getFlavoursSharedWithMe, type SharedFlavour } from "@/actions/shares";
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -123,6 +125,33 @@ function FlavorCard({ flavor }: { flavor: RecentFlavor }) {
   );
 }
 
+function SharedFlavorCard({ flavor }: { flavor: SharedFlavour }) {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="p-4">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-lg truncate">{flavor.name}</CardTitle>
+          <Users className="h-4 w-4 text-blue-500 flex-shrink-0 ml-2" />
+        </div>
+        <CardDescription>
+          Shared by {flavor.shared_by.username || flavor.shared_by.email}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-4 pt-0 flex items-center justify-between">
+        <Badge variant="secondary">View only</Badge>
+        <span className="text-xs text-muted-foreground">
+          {flavor.substance_count} substance{flavor.substance_count !== 1 ? "s" : ""}
+        </span>
+      </CardContent>
+      <CardFooter className="p-4 border-t bg-muted/50">
+        <Button variant="ghost" size="sm" asChild className="ml-auto">
+          <Link href={`/flavours/${flavor.flavour_id}`}>View Details</Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
 function EmptyState({ message, buttonText, onButtonClick }: {
   message: string;
   buttonText: string;
@@ -145,6 +174,7 @@ export default function Dashboard() {
   const [recentFlavors, setRecentFlavors] = useState<RecentFlavor[]>([]);
   const [favoriteFlavors, setFavoriteFlavors] = useState<RecentFlavor[]>([]);
   const [publicFlavors, setPublicFlavorsState] = useState<RecentFlavor[]>([]);
+  const [sharedWithMe, setSharedWithMe] = useState<SharedFlavour[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [isLoadingFlavors, setIsLoadingFlavors] = useState(true);
   const [activeTab, setActiveTab] = useState("recent");
@@ -184,8 +214,15 @@ export default function Dashboard() {
       } catch (error) {
         console.error("Error fetching public flavors:", error);
       }
+    } else if (tab === "shared" && sharedWithMe.length === 0) {
+      try {
+        const data = await getFlavoursSharedWithMe();
+        setSharedWithMe(data);
+      } catch (error) {
+        console.error("Error fetching shared flavors:", error);
+      }
     }
-  }, [favoriteFlavors.length, publicFlavors.length]);
+  }, [favoriteFlavors.length, publicFlavors.length, sharedWithMe.length]);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -294,6 +331,10 @@ export default function Dashboard() {
             <Globe className="mr-2 h-4 w-4" />
             Public
           </TabsTrigger>
+          <TabsTrigger value="shared">
+            <Users className="mr-2 h-4 w-4" />
+            Shared with me
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="recent" className="space-y-4">
@@ -345,6 +386,22 @@ export default function Dashboard() {
                 message="You don't have any public flavors. Make a flavor public to share it!"
                 buttonText="Manage your flavors"
                 onButtonClick={() => router.push("/flavours")}
+              />
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="shared" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {sharedWithMe.length > 0 ? (
+              sharedWithMe.map((flavor) => (
+                <SharedFlavorCard key={flavor.flavour_id} flavor={flavor} />
+              ))
+            ) : (
+              <EmptyState
+                message="No one has shared any flavors with you yet."
+                buttonText="Explore community"
+                onButtonClick={() => router.push("/community")}
               />
             )}
           </div>

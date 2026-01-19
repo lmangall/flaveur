@@ -26,7 +26,7 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save, Share2 } from "lucide-react";
 import { Flavour, Substance, FlavorProfileAttribute } from "@/app/type";
 import {
   getFlavourById,
@@ -69,6 +69,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/app/[locale]/components/ui/chart";
+import { ShareFlavourDialog } from "@/app/[locale]/components/share-flavour-dialog";
+import { useTranslations } from "next-intl";
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "Draft", className: "bg-amber-100 text-amber-800" },
@@ -97,9 +99,10 @@ const chartConfig = {
 interface FlavorProfileChartProps {
   flavourId: number;
   initialProfile: FlavorProfileAttribute[] | null;
+  readOnly?: boolean;
 }
 
-function FlavorProfileChart({ flavourId, initialProfile }: FlavorProfileChartProps) {
+function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: FlavorProfileChartProps) {
   const [profile, setProfile] = useState<FlavorProfileAttribute[]>(
     initialProfile && initialProfile.length > 0 ? initialProfile : DEFAULT_FLAVOR_PROFILE
   );
@@ -182,71 +185,82 @@ function FlavorProfileChart({ flavourId, initialProfile }: FlavorProfileChartPro
         <div className="flex-1 space-y-3">
           {profile.map((item, index) => (
             <div key={index} className="flex items-center gap-3">
-              <Input
-                value={item.attribute}
-                onChange={(e) => handleAttributeNameChange(index, e.target.value)}
-                className="w-28 h-8 text-sm"
-              />
+              {readOnly ? (
+                <span className="w-28 text-sm font-medium">{item.attribute}</span>
+              ) : (
+                <Input
+                  value={item.attribute}
+                  onChange={(e) => handleAttributeNameChange(index, e.target.value)}
+                  className="w-28 h-8 text-sm"
+                />
+              )}
               <Slider
                 value={[item.value]}
-                onValueChange={(values) => handleValueChange(index, values[0])}
+                onValueChange={(values) => !readOnly && handleValueChange(index, values[0])}
                 max={100}
                 step={1}
                 className="flex-1"
+                disabled={readOnly}
               />
               <span className="w-8 text-sm text-right">{item.value}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => handleRemoveAttribute(index)}
-                disabled={profile.length <= 3}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              {!readOnly && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handleRemoveAttribute(index)}
+                  disabled={profile.length <= 3}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           ))}
 
-          {/* Add Attribute */}
-          {isAddingAttribute ? (
-            <div className="flex items-center gap-2">
-              <Input
-                value={newAttribute}
-                onChange={(e) => setNewAttribute(e.target.value)}
-                placeholder="New attribute name"
-                className="flex-1 h-8"
-                onKeyDown={(e) => e.key === "Enter" && handleAddAttribute()}
-              />
-              <Button size="sm" onClick={handleAddAttribute}>
-                Add
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setIsAddingAttribute(false);
-                  setNewAttribute("");
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAddingAttribute(true)}
-              className="mt-2"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Attribute
-            </Button>
+          {/* Add Attribute - only for owners */}
+          {!readOnly && (
+            <>
+              {isAddingAttribute ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newAttribute}
+                    onChange={(e) => setNewAttribute(e.target.value)}
+                    placeholder="New attribute name"
+                    className="flex-1 h-8"
+                    onKeyDown={(e) => e.key === "Enter" && handleAddAttribute()}
+                  />
+                  <Button size="sm" onClick={handleAddAttribute}>
+                    Add
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setIsAddingAttribute(false);
+                      setNewAttribute("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddingAttribute(true)}
+                  className="mt-2"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Attribute
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Save Button */}
-      {hasChanges && (
+      {/* Save Button - only for owners */}
+      {!readOnly && hasChanges && (
         <div className="flex justify-end pt-2 border-t">
           <Button onClick={handleSave} disabled={isSaving}>
             <Save className="h-4 w-4 mr-2" />
@@ -258,9 +272,17 @@ function FlavorProfileChart({ flavourId, initialProfile }: FlavorProfileChartPro
   );
 }
 
-function FlavorContent({ flavor }: { flavor: Flavour }) {
+interface FlavorContentProps {
+  flavor: Flavour;
+  isOwner: boolean;
+  isSharedWithMe: boolean;
+  sharedBy?: { username: string | null; email: string } | null;
+}
+
+function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorContentProps) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("Sharing");
   const [currentStatus, setCurrentStatus] = useState<StatusValue>(
     (flavor.status as StatusValue) || "draft"
   );
@@ -418,6 +440,17 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
 
   return (
     <div className="container py-8 space-y-6">
+      {/* Shared with you banner */}
+      {isSharedWithMe && sharedBy && (
+        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-center gap-2">
+          <Share2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <span className="text-sm text-blue-800 dark:text-blue-200">
+            {t("sharedWithYouBy", { name: sharedBy.username || sharedBy.email })}
+          </span>
+          <Badge variant="secondary" className="ml-auto">{t("viewOnly")}</Badge>
+        </div>
+      )}
+
       <div className="flex items-center gap-4 mb-2">
         <Button variant="ghost" size="icon" asChild>
           <Link href={`/${locale}/flavours`}>
@@ -426,47 +459,56 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
         </Button>
         <h1 className="text-3xl font-bold tracking-tight flex-1">{flavor.name}</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/${locale}/flavours/${flavor.flavour_id}/edit`}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
-            </Link>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDuplicate}
-            disabled={isDuplicating}
-          >
-            <Copy className="h-4 w-4 mr-2" />
-            {isDuplicating ? "Duplicating..." : "Duplicate"}
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+          {/* Owner-only actions */}
+          {isOwner && (
+            <>
+              <ShareFlavourDialog
+                flavourId={flavor.flavour_id}
+                flavourName={flavor.name}
+              />
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/${locale}/flavours/${flavor.flavour_id}/edit`}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </Link>
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Flavour</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete &quot;{flavor.name}&quot;? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDuplicate}
+                disabled={isDuplicating}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                {isDuplicating ? "Duplicating..." : "Duplicate"}
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Flavour</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete &quot;{flavor.name}&quot;? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
         </div>
       </div>
       <div className="flex flex-col gap-2">
@@ -547,6 +589,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
           <FlavorProfileChart
             flavourId={flavor.flavour_id}
             initialProfile={flavor.flavor_profile}
+            readOnly={!isOwner}
           />
         </CardContent>
       </Card>
@@ -555,37 +598,40 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Substances ({flavor.substances?.length || 0})</CardTitle>
           <div className="flex items-center gap-2">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="FEMA Number"
-                className="px-2 py-1 border rounded"
-                value={femaNumberToAdd}
-                onChange={(e) => setfemaNumberToAdd(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Concentration"
-                className="px-2 py-1 border rounded"
-                value={concentration}
-                onChange={(e) => setConcentration(e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Unit"
-                className="px-2 py-1 border rounded"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddSubstance}
-                disabled={!femaNumberToAdd || !concentration || !unit}
-              >
-                Add Substance
-              </Button>
-            </div>
+            {/* Add substance form - only for owners */}
+            {isOwner && (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="FEMA Number"
+                  className="px-2 py-1 border rounded"
+                  value={femaNumberToAdd}
+                  onChange={(e) => setfemaNumberToAdd(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Concentration"
+                  className="px-2 py-1 border rounded"
+                  value={concentration}
+                  onChange={(e) => setConcentration(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Unit"
+                  className="px-2 py-1 border rounded"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddSubstance}
+                  disabled={!femaNumberToAdd || !concentration || !unit}
+                >
+                  Add Substance
+                </Button>
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -642,7 +688,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                           <TableHead key={column.key}>{column.label}</TableHead>
                         )
                     )}
-                    <TableHead className="text-right">Actions</TableHead>
+                    {isOwner && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -706,17 +752,19 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                           {substance.substance?.cas_id || "N/A"}
                         </TableCell>
                       )}
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            handleRemoveSubstance(substance.substance_id)
-                          }
-                        >
-                          <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                        </Button>
-                      </TableCell>
+                      {isOwner && (
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              handleRemoveSubstance(substance.substance_id)
+                            }
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -747,6 +795,9 @@ export default function FlavorDetailPage() {
   const [flavor, setFlavor] = useState<Flavour | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(true);
+  const [isSharedWithMe, setIsSharedWithMe] = useState(false);
+  const [sharedBy, setSharedBy] = useState<{ username: string | null; email: string } | null>(null);
 
   useEffect(() => {
     async function fetchFlavorData() {
@@ -793,6 +844,9 @@ export default function FlavorDetailPage() {
         } as Flavour;
 
         setFlavor(transformedData);
+        setIsOwner(data.isOwner ?? true);
+        setIsSharedWithMe(data.isSharedWithMe ?? false);
+        setSharedBy(data.sharedBy ?? null);
         setError(null);
       } catch (err) {
         console.error("Error fetching flavor:", err);
@@ -845,7 +899,12 @@ export default function FlavorDetailPage() {
 
   return (
     <Suspense fallback={<LoadingState />}>
-      <FlavorContent flavor={flavor} />
+      <FlavorContent
+        flavor={flavor}
+        isOwner={isOwner}
+        isSharedWithMe={isSharedWithMe}
+        sharedBy={sharedBy}
+      />
     </Suspense>
   );
 }

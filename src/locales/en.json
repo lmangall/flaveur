@@ -431,6 +431,46 @@
 		"searchUsers": "Search users...",
 		"newsletterSubscribers": "Newsletter",
 		"confirmedSubscribers": "Confirmed subscribers"
+	  },
+	  "Calculator": {
+		"title": "Quantity Calculator",
+		"description": "Calculate precise quantities for your flavor formulations. Determine the right proportions of syrup, infusion, alcohol, and water to achieve your target Brix and alcohol levels."
+	  },
+	  "Sharing": {
+		"share": "Share",
+		"shareTitle": "Share Flavor",
+		"shareDescription": "Share \"{name}\" with other users. They will have read-only access.",
+		"enterEmail": "Enter email address...",
+		"sharedWith": "Shared with",
+		"pendingInvites": "Pending invites",
+		"pending": "Pending",
+		"viewOnly": "View only",
+		"noSharesYet": "Not shared with anyone yet",
+		"done": "Done",
+		"shareSuccess": "Flavor shared successfully",
+		"inviteSent": "Invitation sent! They will get access when they sign up.",
+		"shareError": "Failed to share flavor",
+		"loadSharesError": "Failed to load shares",
+		"revokeSuccess": "Access revoked",
+		"inviteCancelled": "Invitation cancelled",
+		"revokeError": "Failed to revoke access",
+		"sharedWithYouBy": "Shared with you by {name}",
+		"invalidInvite": "Invalid Invitation",
+		"invalidInviteDescription": "This invitation link is invalid or missing.",
+		"inviteNotFound": "Invitation Not Found",
+		"inviteNotFoundDescription": "This invitation may have expired or been cancelled.",
+		"inviteAlreadyAccepted": "Invitation Already Accepted",
+		"inviteAlreadyAcceptedDescription": "You already have access to this flavor.",
+		"viewFlavour": "View Flavor",
+		"inviteError": "Could Not Accept Invitation",
+		"goToDashboard": "Go to Dashboard",
+		"youreInvited": "You're Invited!",
+		"invitedYouToView": "invited you to view",
+		"signUpToAccess": "Create a free account to view this flavor and start your flavorist journey.",
+		"createAccount": "Create Account",
+		"signInExisting": "Sign in to existing account",
+		"inviteSentTo": "This invitation was sent to",
+		"backToHome": "Back to Home"
 	  }
   }
   

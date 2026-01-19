@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   "/:locale/privacy-policy",
   "/:locale/terms-of-service",
   "/:locale/auth/(.*)",
+  "/:locale/invite",
   "/api/webhooks/clerk",
 ]);
 

@@ -294,6 +294,204 @@ function getUnsubscribeEmailEn(): string {
   `;
 }
 
+// ============================================
+// FLAVOUR SHARING EMAILS
+// ============================================
+
+/**
+ * Send invitation email to non-users
+ */
+export async function sendFlavourInviteEmail(
+  email: string,
+  inviterName: string,
+  flavourName: string,
+  inviteToken: string,
+  locale: string
+) {
+  const inviteUrl = `${BASE_URL}/${locale}/invite?token=${inviteToken}`;
+
+  const subject = locale === 'fr'
+    ? `${inviterName} vous invite à découvrir un arôme sur Oumamie`
+    : `${inviterName} invited you to view a flavor on Oumamie`;
+
+  const html = locale === 'fr'
+    ? getFlavourInviteEmailFr(inviterName, flavourName, inviteUrl)
+    : getFlavourInviteEmailEn(inviterName, flavourName, inviteUrl);
+
+  await resend.emails.send({
+    from: 'Oumamie <hello@oumamie.xyz>',
+    to: email,
+    subject,
+    html,
+  });
+}
+
+/**
+ * Send notification email to existing users when a flavor is shared with them
+ */
+export async function sendFlavourShareNotification(
+  email: string,
+  inviterName: string,
+  flavourName: string,
+  flavourId: number,
+  locale: string
+) {
+  const flavourUrl = `${BASE_URL}/${locale}/flavours/${flavourId}`;
+
+  const subject = locale === 'fr'
+    ? `${inviterName} a partagé un arôme avec vous`
+    : `${inviterName} shared a flavor with you`;
+
+  const html = locale === 'fr'
+    ? getFlavourShareNotificationFr(inviterName, flavourName, flavourUrl)
+    : getFlavourShareNotificationEn(inviterName, flavourName, flavourUrl);
+
+  await resend.emails.send({
+    from: 'Oumamie <hello@oumamie.xyz>',
+    to: email,
+    subject,
+    html,
+  });
+}
+
+function getFlavourInviteEmailFr(inviterName: string, flavourName: string, inviteUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation à découvrir un arôme</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
+  </div>
+
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">Vous êtes invité(e) !</h2>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> vous invite à découvrir l'arôme <strong>"${flavourName}"</strong> sur Oumamie.</p>
+
+    <p style="margin-bottom: 20px;">Oumamie est la plateforme de référence pour les créateurs d'arômes. Rejoignez notre communauté pour explorer et créer des compositions aromatiques.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${inviteUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Voir l'arôme</a>
+    </div>
+
+    <p style="color: #666; font-size: 13px;">En cliquant sur le bouton, vous serez invité(e) à créer un compte gratuit pour accéder à l'arôme partagé.</p>
+  </div>
+
+  <div style="text-align: center; color: #999; font-size: 12px;">
+    <p>Oumamie - La plateforme des aromaticiens</p>
+    <p>Si le bouton ne fonctionne pas, copiez ce lien: ${inviteUrl}</p>
+  </div>
+</body>
+</html>
+  `;
+}
+
+function getFlavourInviteEmailEn(inviterName: string, flavourName: string, inviteUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation to view a flavor</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
+  </div>
+
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">You're invited!</h2>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> invited you to view the flavor <strong>"${flavourName}"</strong> on Oumamie.</p>
+
+    <p style="margin-bottom: 20px;">Oumamie is the go-to platform for flavor creators. Join our community to explore and create aromatic compositions.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${inviteUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Flavor</a>
+    </div>
+
+    <p style="color: #666; font-size: 13px;">By clicking the button, you'll be prompted to create a free account to access the shared flavor.</p>
+  </div>
+
+  <div style="text-align: center; color: #999; font-size: 12px;">
+    <p>Oumamie - The flavorist platform</p>
+    <p>If the button doesn't work, copy this link: ${inviteUrl}</p>
+  </div>
+</body>
+</html>
+  `;
+}
+
+function getFlavourShareNotificationFr(inviterName: string, flavourName: string, flavourUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arôme partagé avec vous</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
+  </div>
+
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">Nouvel arôme partagé</h2>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> a partagé l'arôme <strong>"${flavourName}"</strong> avec vous.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${flavourUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Voir l'arôme</a>
+    </div>
+  </div>
+
+  <div style="text-align: center; color: #999; font-size: 12px;">
+    <p>Oumamie - La plateforme des aromaticiens</p>
+  </div>
+</body>
+</html>
+  `;
+}
+
+function getFlavourShareNotificationEn(inviterName: string, flavourName: string, flavourUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flavor shared with you</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
+  </div>
+
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">New flavor shared</h2>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> shared the flavor <strong>"${flavourName}"</strong> with you.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${flavourUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Flavor</a>
+    </div>
+  </div>
+
+  <div style="text-align: center; color: #999; font-size: 12px;">
+    <p>Oumamie - The flavorist platform</p>
+  </div>
+</body>
+</html>
+  `;
+}
+
 // Job Alert Email Types
 export interface JobAlertJob {
   id: number;

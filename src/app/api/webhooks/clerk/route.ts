@@ -2,6 +2,7 @@ import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { sql } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { convertPendingInvites } from "@/actions/shares";
 
 export async function POST(req: Request) {
   const secret = process.env.SVIX_SECRET;
@@ -69,6 +70,20 @@ export async function POST(req: Request) {
         RETURNING *
       `;
       console.log("[Webhook] User saved:", result[0]);
+
+      // Convert any pending flavour invites for this email
+      if (email) {
+        try {
+          const { converted } = await convertPendingInvites(email, clerkUserId);
+          if (converted > 0) {
+            console.log(`[Webhook] Converted ${converted} pending invites for ${email}`);
+          }
+        } catch (inviteErr) {
+          console.error("[Webhook] Error converting invites:", inviteErr);
+          // Don't fail user creation if invite conversion fails
+        }
+      }
+
       return NextResponse.json(result[0], { status: 201 });
     } catch (dbErr) {
       console.error("[Webhook] DB error:", dbErr);
