@@ -263,15 +263,28 @@ export async function updateFlavour(
     throw new Error("Flavour not found or access denied");
   }
 
+  const existing = flavourCheck[0];
+
+  // Merge validated data with existing values
+  // undefined = keep existing, null = clear, value = update
+  const finalData = {
+    name: validatedData.name ?? existing.name,
+    description: validatedData.description !== undefined ? validatedData.description : existing.description,
+    is_public: validatedData.is_public ?? existing.is_public,
+    category_id: validatedData.category_id !== undefined ? validatedData.category_id : existing.category_id,
+    status: validatedData.status ?? existing.status,
+    base_unit: validatedData.base_unit ?? existing.base_unit,
+  };
+
   const result = await sql`
     UPDATE public.flavour
     SET
-      name = COALESCE(${validatedData.name ?? null}, name),
-      description = COALESCE(${validatedData.description ?? null}, description),
-      is_public = COALESCE(${validatedData.is_public ?? null}, is_public),
-      category_id = ${validatedData.category_id ?? null},
-      status = COALESCE(${validatedData.status ?? null}, status),
-      base_unit = COALESCE(${validatedData.base_unit ?? null}, base_unit),
+      name = ${finalData.name},
+      description = ${finalData.description},
+      is_public = ${finalData.is_public},
+      category_id = ${finalData.category_id},
+      status = ${finalData.status},
+      base_unit = ${finalData.base_unit},
       updated_at = CURRENT_TIMESTAMP
     WHERE flavour_id = ${flavourId} AND user_id = ${userId}
     RETURNING *

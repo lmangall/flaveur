@@ -194,16 +194,16 @@ export default function EditFlavourPage() {
               <div className="space-y-2">
                 <Label htmlFor="category">{t("category")}</Label>
                 <Select
-                  value={flavour.category}
+                  value={flavour.category || "none"}
                   onValueChange={(value) =>
-                    handleSelectChange("category", value)
+                    handleSelectChange("category", value === "none" ? "" : value)
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={t("selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {categories.map((category) => (
                       <SelectItem
                         key={category.category_id}
