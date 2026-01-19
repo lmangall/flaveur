@@ -43,3 +43,38 @@
 - Store preferences in database
 - Email when new jobs match criteria
 - Unsubscribe from alerts
+
+---
+
+# Phase 3 Plan
+
+## 3.0 Deploy Phase 2
+- Push commits to remote
+- Run migration 003_add_job_alert_preferences.sql on database
+- Add CRON_SECRET to Vercel environment
+
+## 3.1 Admin Route Protection ✅
+- Create admin middleware helper
+- Check Clerk user metadata for admin role
+- Protect /admin routes
+- Show admin link in navbar for admins
+
+## 3.2 Admin Jobs Listing ✅
+- Create `/admin/jobs` page
+- List all jobs with status badges
+- Search and filter functionality
+- Bulk actions (activate/deactivate)
+- Links to edit/delete individual jobs
+
+## 3.3 Job Create/Edit Form ✅
+- Create `/admin/jobs/new` page
+- Create `/admin/jobs/[id]/edit` page
+- Form with all job fields
+- Zod validation
+- Preview mode before save
+
+## 3.4 Job Management Actions ✅
+- updateJob server action
+- deleteJob server action
+- toggleJobStatus server action
+- Job analytics (views, applications)

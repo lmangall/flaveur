@@ -2,9 +2,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { useLocale, useTranslations } from "next-intl"; // Import useTranslations
+import { useLocale, useTranslations } from "next-intl";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { MenuIcon, Settings } from "lucide-react";
+import { MenuIcon, Settings, Shield } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Sheet,
@@ -12,6 +12,9 @@ import {
   SheetTrigger,
 } from "@/app/[locale]/components/ui/sheet";
 import { useRouter, usePathname } from "next/navigation";
+
+// Admin emails - must match the server-side list in src/lib/admin.ts
+const ADMIN_EMAILS = ["l.mangallon@gmail.com"];
 
 // Routes for authenticated users
 const authRoutes = [
@@ -23,12 +26,17 @@ const authRoutes = [
 ];
 
 export default function Navbar() {
-  const locale = useLocale(); // Get current locale
-  const t = useTranslations("Navbar"); // Initialize translations with Navbar namespace
-  const { isSignedIn, isLoaded } = useUser();
+  const locale = useLocale();
+  const t = useTranslations("Navbar");
+  const tAdmin = useTranslations("Admin");
+  const { isSignedIn, isLoaded, user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Check if user is admin
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
+  const isAdmin = userEmail ? ADMIN_EMAILS.includes(userEmail) : false;
 
   // Check if a route is active (handles locale prefix)
   const isActiveRoute = (href: string) => {
@@ -93,6 +101,14 @@ export default function Navbar() {
           {isLoaded ? (
             isSignedIn ? (
               <div className="flex items-center space-x-2">
+                {isAdmin && (
+                  <Button variant="ghost" size="icon" asChild title={tAdmin("admin")}>
+                    <Link href={`/${locale}/admin`}>
+                      <Shield className="h-5 w-5" />
+                      <span className="sr-only">{tAdmin("admin")}</span>
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" asChild>
                   <Link href={`/${locale}/settings`}>
                     <Settings className="h-5 w-5" />
@@ -163,6 +179,18 @@ export default function Navbar() {
                 {isSignedIn && (
                   <>
                     <div className="h-px bg-border my-2" />
+                    {isAdmin && (
+                      <Link
+                        href={`/${locale}/admin`}
+                        className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
+                          isActiveRoute("/admin") ? "text-primary font-semibold" : "text-muted-foreground"
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Shield className="h-4 w-4" />
+                        {tAdmin("admin")}
+                      </Link>
+                    )}
                     <Link
                       href={`/${locale}/settings`}
                       className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
