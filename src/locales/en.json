@@ -89,7 +89,8 @@
 		"mainText": "Oumamie is the modern platform designed for all flavor students. We noticed there was no digital tool adapted to your needs, leaving you stuck with paper tables... something that hasn't really changed in 50 years, seriously!",
 		"mainText2": "Here, no headaches: a simple, stylish interface, and most importantly, a professional and super complete database. Our goal? To prepare you to enter the job market like pros. Like chefs in the kitchen, flavorists are hired for their skills and know-how. So instead of just saying you know how to do it, really show it with a solid portfolio from your first interviews. No need to wait until you have 10 years of experience to start building it, right?",
 		"mainText3": "Oumamie is still brand new, we're working hard to bring you more cool features. By the way, tell us what you're missing, we're all ears!",
-		"contactUs": "Write to us"
+		"contactUs": "Write to us",
+		"tryIt": "Try it"
 	},
 	"Jobs": {
 		"jobListingHeading": "Job Listings",

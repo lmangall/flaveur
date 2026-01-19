@@ -84,7 +84,8 @@
 		"mainText": "Oumamie, c'est la plateforme moderne pensée pour tous les étudiants en arômes. Parce qu'on a remarqué qu'il n'existait aucun outil numérique adapté à vos besoins, vous êtes encore coincés avec des tableaux en papier… un truc qui n'a quasiment pas bougé depuis 50 ans !",
 		"mainText2": "Ici, pas de prise de tête : une interface simple, stylée, et surtout une base de données pro et super complète. Notre but ? Vous préparer à débarquer sur le marché du travail comme des pros. Un peu comme les chefs en cuisine, les aromaticiens sont recrutés pour leurs skills et leur savoir-faire. Alors au lieu de juste dire que vous savez faire, montrez-le avec un portfolio béton dès vos premiers entretiens. Pas besoin d'attendre d'avoir 10 ans d'expérience pour commencer à le construire, non ?",
 		"mainText3": "Oumamie, c'est encore tout neuf, on bosse dur pour vous offrir toujours plus de fonctionnalités cool. D'ailleurs, dites-nous ce qui vous manque, on est à l'écoute !",
-		"contactUs": "Écrivez-nous"
+		"contactUs": "Écrivez-nous",
+		"tryIt": "Essayer"
 	},
 	"Jobs": {
 		"jobListingHeading": "Offres d'Emploi",
