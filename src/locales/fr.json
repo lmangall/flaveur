@@ -467,6 +467,22 @@
 		"signInExisting": "Se connecter à un compte existant",
 		"inviteSentTo": "Cette invitation a été envoyée à",
 		"backToHome": "Retour à l'accueil"
+	  },
+	  "FAQ": {
+		"title": "Questions Fréquentes",
+		"subtitle": "Tout ce que vous devez savoir sur Oumamie",
+		"sharingQuestion": "Que se passe-t-il quand je partage un arôme ?",
+		"sharingAnswer": "Lorsque vous partagez un arôme, le destinataire obtient un accès en lecture seule à votre composition originale. Il peut consulter tous les détails mais ne peut pas la modifier. Vos modifications seront visibles en temps réel.",
+		"editSharedQuestion": "Le destinataire peut-il modifier mon arôme ?",
+		"editSharedAnswer": "Non, les arômes partagés sont en lecture seule. Seul le propriétaire original peut modifier la composition. C'est une mesure de protection pour votre travail.",
+		"duplicateQuestion": "Comment le destinataire peut-il créer sa propre version ?",
+		"duplicateAnswer": "Le destinataire peut dupliquer l'arôme partagé dans son espace personnel en utilisant le bouton 'Dupliquer'. Cela crée une copie indépendante qu'il peut modifier librement sans affecter votre original.",
+		"revokeQuestion": "Puis-je retirer l'accès après avoir partagé ?",
+		"revokeAnswer": "Oui, vous pouvez révoquer l'accès à tout moment depuis la page de votre arôme. Le destinataire perdra immédiatement l'accès, mais s'il a fait une copie, celle-ci lui appartient.",
+		"freeQuestion": "Oumamie est-il gratuit ?",
+		"freeAnswer": "Oui, Oumamie est entièrement gratuit pour tous les utilisateurs. Notre mission est de fournir aux futurs aromaticiens les outils dont ils ont besoin pour développer leurs compétences.",
+		"dataQuestion": "Mes données sont-elles en sécurité ?",
+		"dataAnswer": "Vos compositions sont privées par défaut et ne sont visibles que par vous. Vous contrôlez avec qui vous partagez vos arômes, et vous pouvez révoquer l'accès à tout moment."
 	  }
   }
   

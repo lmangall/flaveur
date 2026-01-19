@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { Viewport } from "next";
 import "@/app/globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/app/[locale]/components/ui/sonner";
@@ -35,7 +36,6 @@ export const metadata = {
   creator: "Oumamie Team",
   publisher: "Oumamie",
   manifest: "/manifest.json",
-  themeColor: "#8B4513",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -93,6 +93,10 @@ export const metadata = {
       "max-snippet": -1,
     },
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#8B4513",
 };
 
 type TranslationValue = string | { [key: string]: TranslationValue };

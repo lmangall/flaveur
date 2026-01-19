@@ -374,7 +374,7 @@ function getFlavourInviteEmailFr(inviterName: string, flavourName: string, invit
     <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">Vous êtes invité(e) !</h2>
     <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> vous invite à découvrir l'arôme <strong>"${flavourName}"</strong> sur Oumamie.</p>
 
-    <p style="margin-bottom: 20px;">Oumamie est la plateforme de référence pour les créateurs d'arômes. Rejoignez notre communauté pour explorer et créer des compositions aromatiques.</p>
+    <p style="margin-bottom: 20px;">Vous pourrez consulter la composition complète de cet arôme et le dupliquer dans votre espace personnel si vous souhaitez le modifier.</p>
 
     <div style="text-align: center; margin: 30px 0;">
       <a href="${inviteUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Voir l'arôme</a>
@@ -411,7 +411,7 @@ function getFlavourInviteEmailEn(inviterName: string, flavourName: string, invit
     <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">You're invited!</h2>
     <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> invited you to view the flavor <strong>"${flavourName}"</strong> on Oumamie.</p>
 
-    <p style="margin-bottom: 20px;">Oumamie is the go-to platform for flavor creators. Join our community to explore and create aromatic compositions.</p>
+    <p style="margin-bottom: 20px;">You'll be able to view the full composition and duplicate it to your personal space if you want to modify it.</p>
 
     <div style="text-align: center; margin: 30px 0;">
       <a href="${inviteUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Flavor</a>
@@ -447,6 +447,7 @@ function getFlavourShareNotificationFr(inviterName: string, flavourName: string,
   <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
     <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">Nouvel arôme partagé</h2>
     <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> a partagé l'arôme <strong>"${flavourName}"</strong> avec vous.</p>
+    <p style="margin-bottom: 20px; color: #666; font-size: 14px;">Vous pouvez consulter sa composition et le dupliquer dans votre espace si vous souhaitez le modifier.</p>
 
     <div style="text-align: center; margin: 30px 0;">
       <a href="${flavourUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Voir l'arôme</a>
@@ -479,6 +480,7 @@ function getFlavourShareNotificationEn(inviterName: string, flavourName: string,
   <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
     <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">New flavor shared</h2>
     <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> shared the flavor <strong>"${flavourName}"</strong> with you.</p>
+    <p style="margin-bottom: 20px; color: #666; font-size: 14px;">You can view its composition and duplicate it to your space if you want to modify it.</p>
 
     <div style="text-align: center; margin: 30px 0;">
       <a href="${flavourUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Flavor</a>

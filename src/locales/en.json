@@ -472,6 +472,22 @@
 		"signInExisting": "Sign in to existing account",
 		"inviteSentTo": "This invitation was sent to",
 		"backToHome": "Back to Home"
+	  },
+	  "FAQ": {
+		"title": "Frequently Asked Questions",
+		"subtitle": "Everything you need to know about Oumamie",
+		"sharingQuestion": "What happens when I share a flavor?",
+		"sharingAnswer": "When you share a flavor, the recipient gets read-only access to your original composition. They can view all the details but cannot modify it. Your changes will be visible to them in real-time.",
+		"editSharedQuestion": "Can the recipient edit my flavor?",
+		"editSharedAnswer": "No, shared flavors are read-only. Only the original owner can modify the composition. This protects your work.",
+		"duplicateQuestion": "How can the recipient create their own version?",
+		"duplicateAnswer": "The recipient can duplicate the shared flavor to their personal space using the 'Duplicate' button. This creates an independent copy they can freely modify without affecting your original.",
+		"revokeQuestion": "Can I remove access after sharing?",
+		"revokeAnswer": "Yes, you can revoke access at any time from your flavor's page. The recipient will immediately lose access, but if they made a copy, that copy belongs to them.",
+		"freeQuestion": "Is Oumamie free?",
+		"freeAnswer": "Yes, Oumamie is completely free for all users. Our mission is to provide aspiring flavorists with the tools they need to develop their skills.",
+		"dataQuestion": "Is my data secure?",
+		"dataAnswer": "Your compositions are private by default and only visible to you. You control who you share your flavors with, and you can revoke access at any time."
 	  }
   }
   

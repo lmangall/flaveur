@@ -14,6 +14,12 @@ export default function Footer() {
         </div>
         <div className="flex gap-4">
           <Link
+            href="/faq"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            FAQ
+          </Link>
+          <Link
             href="/privacy-policy"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
