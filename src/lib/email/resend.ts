@@ -311,13 +311,13 @@ export async function sendFlavourInviteEmail(
 ) {
   const inviteUrl = `${BASE_URL}/${locale}/invite?token=${inviteToken}`;
 
-  const subject = locale === 'fr'
-    ? `${inviterName} vous invite à découvrir un arôme sur Oumamie`
-    : `${inviterName} invited you to view a flavor on Oumamie`;
+  const subject = locale === 'en'
+    ? `${inviterName} invited you to view a flavor on Oumamie`
+    : `${inviterName} vous invite à découvrir un arôme sur Oumamie`;
 
-  const html = locale === 'fr'
-    ? getFlavourInviteEmailFr(inviterName, flavourName, inviteUrl)
-    : getFlavourInviteEmailEn(inviterName, flavourName, inviteUrl);
+  const html = locale === 'en'
+    ? getFlavourInviteEmailEn(inviterName, flavourName, inviteUrl)
+    : getFlavourInviteEmailFr(inviterName, flavourName, inviteUrl);
 
   await resend.emails.send({
     from: 'Oumamie <hello@oumamie.xyz>',
@@ -339,13 +339,13 @@ export async function sendFlavourShareNotification(
 ) {
   const flavourUrl = `${BASE_URL}/${locale}/flavours/${flavourId}`;
 
-  const subject = locale === 'fr'
-    ? `${inviterName} a partagé un arôme avec vous`
-    : `${inviterName} shared a flavor with you`;
+  const subject = locale === 'en'
+    ? `${inviterName} shared a flavor with you`
+    : `${inviterName} a partagé un arôme avec vous`;
 
-  const html = locale === 'fr'
-    ? getFlavourShareNotificationFr(inviterName, flavourName, flavourUrl)
-    : getFlavourShareNotificationEn(inviterName, flavourName, flavourUrl);
+  const html = locale === 'en'
+    ? getFlavourShareNotificationEn(inviterName, flavourName, flavourUrl)
+    : getFlavourShareNotificationFr(inviterName, flavourName, flavourUrl);
 
   await resend.emails.send({
     from: 'Oumamie <hello@oumamie.xyz>',
