@@ -509,6 +509,18 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
               </AlertDialog>
             </>
           )}
+          {/* Duplicate button for shared flavours */}
+          {isSharedWithMe && !isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDuplicate}
+              disabled={isDuplicating}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              {isDuplicating ? t("duplicating") : t("duplicateToMyFlavours")}
+            </Button>
+          )}
         </div>
       </div>
       <div className="flex flex-col gap-2">

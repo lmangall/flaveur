@@ -466,7 +466,9 @@
 		"createAccount": "Créer un compte",
 		"signInExisting": "Se connecter à un compte existant",
 		"inviteSentTo": "Cette invitation a été envoyée à",
-		"backToHome": "Retour à l'accueil"
+		"backToHome": "Retour à l'accueil",
+		"duplicating": "Duplication...",
+		"duplicateToMyFlavours": "Dupliquer dans mes arômes"
 	  },
 	  "FAQ": {
 		"title": "Questions Fréquentes",

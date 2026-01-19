@@ -323,9 +323,13 @@ export async function duplicateFlavour(flavourId: number, newName?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Get original flavour
+  // Get original flavour - check if user owns it OR has shared access
   const originalFlavour = await sql`
-    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+    SELECT f.*
+    FROM public.flavour f
+    LEFT JOIN flavour_shares fs ON f.flavour_id = fs.flavour_id AND fs.shared_with_user_id = ${userId}
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR fs.share_id IS NOT NULL)
   `;
 
   if (originalFlavour.length === 0) {

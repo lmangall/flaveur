@@ -471,7 +471,9 @@
 		"createAccount": "Create Account",
 		"signInExisting": "Sign in to existing account",
 		"inviteSentTo": "This invitation was sent to",
-		"backToHome": "Back to Home"
+		"backToHome": "Back to Home",
+		"duplicating": "Duplicating...",
+		"duplicateToMyFlavours": "Duplicate to My Flavours"
 	  },
 	  "FAQ": {
 		"title": "Frequently Asked Questions",
