@@ -294,19 +294,18 @@ export default function SubstancesPage() {
               </TableHeader>
               <TableBody>
                 {filteredSubstances.map((substance, index) => (
-                  <TableRow key={`substance-${index}`}>
+                  <TableRow
+                    key={`substance-${index}`}
+                    onClick={() => openDetailsModal(substance)}
+                    className="cursor-pointer"
+                  >
                     <TableCell>
-                      <button
-                        onClick={() => openDetailsModal(substance)}
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                      >
-                        <MoleculeImage
-                          pubchemCid={substance.pubchem_cid}
-                          formula={substance.molecular_formula}
-                          name={substance.common_name}
-                          size={48}
-                        />
-                      </button>
+                      <MoleculeImage
+                        pubchemCid={substance.pubchem_cid}
+                        formula={substance.molecular_formula}
+                        name={substance.common_name}
+                        size={48}
+                      />
                     </TableCell>
                     <TableCell className="font-medium">
                       {substance.fema_number}
@@ -318,7 +317,7 @@ export default function SubstancesPage() {
                       {substance.olfactory_taste_notes || "-"}
                     </TableCell>
                     <TableCell>{substance.flavor_profile || "-"}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
