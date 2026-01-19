@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { sql } from "@/lib/db";
-import { sendFlavourInviteEmail, sendFlavourShareNotification } from "@/lib/email/resend";
+import { sendFlavourInviteEmail, sendFlavourShareNotification, sendShareAdminNotification } from "@/lib/email/resend";
 
 // Types
 export interface ShareInfo {
@@ -113,6 +113,19 @@ export async function shareFlavour(data: {
       console.error("[shareFlavour] Failed to send notification email:", emailError);
     }
 
+    // Notify admin
+    try {
+      await sendShareAdminNotification({
+        sharerEmail: flavour.owner_email,
+        sharerName: inviterName,
+        recipientEmail: targetUser.email,
+        flavourName: flavour.name,
+        isNewUser: false,
+      });
+    } catch (adminEmailError) {
+      console.error("[shareFlavour] Failed to send admin notification:", adminEmailError);
+    }
+
     return {
       type: "share" as const,
       share: result[0],
@@ -162,6 +175,19 @@ export async function shareFlavour(data: {
     } catch (emailError) {
       console.error("[shareFlavour] Failed to send invite email:", emailError);
       // Don't throw - invite was created, email failure shouldn't block
+    }
+
+    // Notify admin about potential new user
+    try {
+      await sendShareAdminNotification({
+        sharerEmail: flavour.owner_email,
+        sharerName: inviterName,
+        recipientEmail: normalizedEmail,
+        flavourName: flavour.name,
+        isNewUser: true,
+      });
+    } catch (adminEmailError) {
+      console.error("[shareFlavour] Failed to send admin notification:", adminEmailError);
     }
 
     return {
@@ -355,6 +381,14 @@ export async function acceptInvite(token: string): Promise<{ flavourId: number }
   // Verify email matches (case-insensitive)
   if (invite.invited_email?.toLowerCase() !== userEmail) {
     throw new Error("This invite was sent to a different email address");
+  }
+
+  // Prevent accepting invite to your own flavour
+  const flavourOwner = await sql`
+    SELECT user_id FROM flavour WHERE flavour_id = ${invite.flavour_id}
+  `;
+  if (flavourOwner.length > 0 && flavourOwner[0].user_id === userId) {
+    throw new Error("You cannot accept an invite to your own flavour");
   }
 
   // Create the share

@@ -75,13 +75,23 @@ export default async function InvitePage({ searchParams, params }: Props) {
 
   // User is logged in - try to accept the invite
   if (userId) {
-    try {
-      const result = await acceptInvite(token);
-      redirect(`/${locale}/flavours/${result.flavourId}`);
-    } catch (error) {
-      // Handle error - might be wrong email
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    let acceptResult: { flavourId: number } | null = null;
+    let acceptError: string | null = null;
 
+    try {
+      acceptResult = await acceptInvite(token);
+    } catch (error) {
+      // Handle error - might be wrong email, own flavour, etc.
+      acceptError = error instanceof Error ? error.message : "Unknown error";
+    }
+
+    // If successful, redirect (must be outside try-catch since redirect throws)
+    if (acceptResult) {
+      redirect(`/${locale}/flavours/${acceptResult.flavourId}`);
+    }
+
+    // Show error page
+    if (acceptError) {
       return (
         <div className="min-h-screen flex items-center justify-center p-4">
           <div className="max-w-md w-full text-center">
@@ -89,7 +99,7 @@ export default async function InvitePage({ searchParams, params }: Props) {
               <XCircle className="h-16 w-16 text-red-500" />
             </div>
             <h1 className="text-2xl font-bold mb-4">{t("inviteError")}</h1>
-            <p className="text-muted-foreground mb-6">{errorMessage}</p>
+            <p className="text-muted-foreground mb-6">{acceptError}</p>
             <Link href={`/${locale}/dashboard`}>
               <Button>{t("goToDashboard")}</Button>
             </Link>

@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { sql } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/[locale]/components/ui/card";
-import { Briefcase, Users, Eye, MousePointerClick, UserPlus, Bell, Mail, FlaskConical } from "lucide-react";
+import { Briefcase, Users, Eye, MousePointerClick, UserPlus, Bell, Mail, FlaskConical, Share2, Clock } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -38,6 +38,47 @@ async function getStats() {
     contactViews: Number(interactionsResult[0]?.contact_views ?? 0),
     uniqueUsers: Number(interactionsResult[0]?.unique_users ?? 0),
   };
+}
+
+async function getSharingStats() {
+  const [sharesResult, invitesResult] = await Promise.all([
+    sql`SELECT COUNT(*) as count FROM flavour_shares`,
+    sql`SELECT COUNT(*) as count FROM flavour_invites WHERE status = 'pending'`,
+  ]);
+
+  return {
+    totalShares: Number(sharesResult[0]?.count ?? 0),
+    pendingInvites: Number(invitesResult[0]?.count ?? 0),
+  };
+}
+
+type PendingInvite = {
+  invite_id: number;
+  invited_email: string;
+  created_at: string;
+  flavour_name: string;
+  inviter_username: string | null;
+  inviter_email: string;
+};
+
+async function getPendingInvites(): Promise<PendingInvite[]> {
+  const result = await sql`
+    SELECT
+      fi.invite_id,
+      fi.invited_email,
+      fi.created_at,
+      f.name as flavour_name,
+      u.username as inviter_username,
+      u.email as inviter_email
+    FROM flavour_invites fi
+    JOIN flavour f ON fi.flavour_id = f.flavour_id
+    JOIN users u ON fi.invited_by_user_id = u.user_id
+    WHERE fi.status = 'pending'
+    ORDER BY fi.created_at DESC
+    LIMIT 50
+  `;
+
+  return result as PendingInvite[];
 }
 
 async function getUserStats() {
@@ -113,10 +154,12 @@ async function getUsersWithStats(): Promise<UserWithStats[]> {
 
 export default async function AdminDashboard() {
   const t = await getTranslations("Admin");
-  const [stats, userStats, users] = await Promise.all([
+  const [stats, userStats, users, sharingStats, pendingInvites] = await Promise.all([
     getStats(),
     getUserStats(),
     getUsersWithStats(),
+    getSharingStats(),
+    getPendingInvites(),
   ]);
 
   return (
@@ -237,6 +280,72 @@ export default async function AdminDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Sharing Stats */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Flavor Sharing</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Shares</CardTitle>
+              <Share2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sharingStats.totalShares}</div>
+              <p className="text-xs text-muted-foreground">Flavors shared with users</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Invites</CardTitle>
+              <Clock className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sharingStats.pendingInvites}</div>
+              <p className="text-xs text-muted-foreground">Potential new users</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Pending Invites List */}
+      {pendingInvites.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-500" />
+              Pending Invites (Potential Users)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invited Email</TableHead>
+                  <TableHead>Flavor</TableHead>
+                  <TableHead>Invited By</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingInvites.map((invite) => (
+                  <TableRow key={invite.invite_id}>
+                    <TableCell className="font-medium">{invite.invited_email}</TableCell>
+                    <TableCell>{invite.flavour_name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {invite.inviter_username || invite.inviter_email}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(invite.created_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* User List */}
       <Card>
