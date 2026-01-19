@@ -7,6 +7,7 @@ if (!process.env.RESEND_API_KEY) {
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://oumamie.xyz';
+const LOGO_URL = `${BASE_URL}/logo_transparent_bg.png`;
 
 export async function sendConfirmationEmail(email: string, token: string, locale: string) {
   const confirmUrl = `${BASE_URL}/${locale}/newsletter/confirm?token=${token}`;
@@ -99,7 +100,7 @@ function getConfirmationEmailFr(confirmUrl: string): string {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
   </div>
 
@@ -134,7 +135,7 @@ function getConfirmationEmailEn(confirmUrl: string): string {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
   </div>
 
@@ -169,7 +170,7 @@ function getWelcomeEmailFr(): string {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
   </div>
 
@@ -208,7 +209,7 @@ function getWelcomeEmailEn(): string {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
   </div>
 
@@ -247,7 +248,7 @@ function getUnsubscribeEmailFr(): string {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
   </div>
 
@@ -276,7 +277,7 @@ function getUnsubscribeEmailEn(): string {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
   </div>
 
@@ -365,7 +366,7 @@ function getFlavourInviteEmailFr(inviterName: string, flavourName: string, invit
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
   </div>
 
@@ -402,7 +403,7 @@ function getFlavourInviteEmailEn(inviterName: string, flavourName: string, invit
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
   </div>
 
@@ -439,7 +440,7 @@ function getFlavourShareNotificationFr(inviterName: string, flavourName: string,
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
   </div>
 
@@ -471,7 +472,7 @@ function getFlavourShareNotificationEn(inviterName: string, flavourName: string,
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
   </div>
 
@@ -544,7 +545,7 @@ function getJobAlertEmailFr(jobs: JobAlertJob[], unsubscribeUrl: string): string
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
   </div>
 
@@ -560,6 +561,47 @@ function getJobAlertEmailFr(jobs: JobAlertJob[], unsubscribeUrl: string): string
 </body>
 </html>
   `;
+}
+
+// ============================================
+// ADMIN NOTIFICATIONS
+// ============================================
+
+/**
+ * Notify admin when a flavor is shared (for user acquisition tracking)
+ */
+export async function sendShareAdminNotification(data: {
+  sharerEmail: string;
+  sharerName: string;
+  recipientEmail: string;
+  flavourName: string;
+  isNewUser: boolean; // true = invite sent, false = shared with existing user
+}) {
+  const { sharerEmail, sharerName, recipientEmail, flavourName, isNewUser } = data;
+  const type = isNewUser ? 'INVITE (new user)' : 'SHARE (existing user)';
+
+  await resend.emails.send({
+    from: 'Oumamie <hello@oumamie.xyz>',
+    to: DEV_EMAIL,
+    subject: `[Oumamie] Flavor shared: ${flavourName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+  <h2>Flavor Sharing Activity</h2>
+  <p><strong>Type:</strong> ${type}</p>
+  <p><strong>Sharer:</strong> ${sharerName} (${sharerEmail})</p>
+  <p><strong>Recipient:</strong> ${recipientEmail}</p>
+  <p><strong>Flavor:</strong> ${flavourName}</p>
+  <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+  ${isNewUser ? '<p style="color: green; font-weight: bold;">🎯 Potential new user acquisition!</p>' : ''}
+</body>
+</html>
+    `,
+  });
 }
 
 function getJobAlertEmailEn(jobs: JobAlertJob[], unsubscribeUrl: string): string {
@@ -582,7 +624,7 @@ function getJobAlertEmailEn(jobs: JobAlertJob[], unsubscribeUrl: string): string
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #111; font-size: 24px; margin-bottom: 10px;">Oumamie</h1>
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
     <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
   </div>
 
