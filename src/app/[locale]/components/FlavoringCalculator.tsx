@@ -515,21 +515,21 @@ const FlavoringCalculator = () => {
           </p>
           <div className="relative mt-4">
             {/* Bars representing ingredient percentages - always visible */}
-            <div className="flex mb-2 rounded-md overflow-hidden">
+            <div className="flex mb-2 rounded-md overflow-hidden h-6">
               <div
-                className="h-8 bg-amber-400 dark:bg-amber-500 transition-all"
+                className="bg-amber-500 transition-all"
                 style={{ width: `${result.syrupPercent}%` }}
               ></div>
               <div
-                className="h-8 bg-purple-400 dark:bg-purple-500 transition-all"
+                className="bg-violet-500 transition-all"
                 style={{ width: `${result.infusionPercent}%` }}
               ></div>
               <div
-                className="h-8 bg-rose-400 dark:bg-rose-500 transition-all"
+                className="bg-red-500 transition-all"
                 style={{ width: `${result.alcoholPercent}%` }}
               ></div>
               <div
-                className="h-8 bg-sky-400 dark:bg-sky-500 transition-all"
+                className="bg-blue-500 transition-all"
                 style={{ width: `${result.waterPercent}%` }}
               ></div>
             </div>
@@ -544,17 +544,17 @@ const FlavoringCalculator = () => {
             <div className="relative">
               {/* Ingredient values that get blurred */}
               <div
-                className={`grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 transition-all duration-300 ${
+                className={`grid grid-cols-2 gap-3 mt-4 transition-all duration-300 ${
                   !result.isValid ? "blur-sm opacity-50" : ""
                 }`}
               >
-                <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <div className="text-xs uppercase font-semibold text-amber-700 dark:text-amber-400">Sirop</div>
-                  <div className="text-lg font-medium font-mono mt-1">
+                <div className="p-3 rounded-md border bg-card border-l-4 border-l-amber-500">
+                  <div className="text-xs uppercase font-medium text-muted-foreground">Sirop</div>
+                  <div className="text-lg font-semibold font-mono mt-1">
                     {result.syrup}
                   </div>
                   {advancedOptions && (
-                    <div className="flex justify-between items-center mt-2 text-xs">
+                    <div className="mt-2">
                       <PriceBadge
                         value={prices.syrupPerKg}
                         onChange={(value) =>
@@ -564,15 +564,15 @@ const FlavoringCalculator = () => {
                     </div>
                   )}
                 </div>
-                <div className="bg-purple-50 dark:bg-purple-950/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
-                  <div className="text-xs uppercase font-semibold text-purple-700 dark:text-purple-400">
+                <div className="p-3 rounded-md border bg-card border-l-4 border-l-violet-500">
+                  <div className="text-xs uppercase font-medium text-muted-foreground">
                     Infusion
                   </div>
-                  <div className="text-lg font-medium font-mono mt-1">
+                  <div className="text-lg font-semibold font-mono mt-1">
                     {result.infusion}
                   </div>
                   {advancedOptions && (
-                    <div className="flex justify-between items-center mt-2 text-xs">
+                    <div className="mt-2">
                       <PriceBadge
                         value={prices.infusionPerKg}
                         onChange={(value) =>
@@ -582,13 +582,13 @@ const FlavoringCalculator = () => {
                     </div>
                   )}
                 </div>
-                <div className="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-lg border border-rose-200 dark:border-rose-800">
-                  <div className="text-xs uppercase font-semibold text-rose-700 dark:text-rose-400">Alcool</div>
-                  <div className="text-lg font-medium font-mono mt-1">
+                <div className="p-3 rounded-md border bg-card border-l-4 border-l-red-500">
+                  <div className="text-xs uppercase font-medium text-muted-foreground">Alcool</div>
+                  <div className="text-lg font-semibold font-mono mt-1">
                     {result.alcohol}
                   </div>
                   {advancedOptions && (
-                    <div className="flex justify-between items-center mt-2 text-xs">
+                    <div className="mt-2">
                       <PriceBadge
                         value={prices.alcoholPerKg}
                         onChange={(value) =>
@@ -598,13 +598,13 @@ const FlavoringCalculator = () => {
                     </div>
                   )}
                 </div>
-                <div className="bg-sky-50 dark:bg-sky-950/30 p-4 rounded-lg border border-sky-200 dark:border-sky-800">
-                  <div className="text-xs uppercase font-semibold text-sky-700 dark:text-sky-400">Eau</div>
-                  <div className="text-lg font-medium font-mono mt-1">
+                <div className="p-3 rounded-md border bg-card border-l-4 border-l-blue-500">
+                  <div className="text-xs uppercase font-medium text-muted-foreground">Eau</div>
+                  <div className="text-lg font-semibold font-mono mt-1">
                     {result.water}
                   </div>
                   {advancedOptions && (
-                    <div className="flex justify-between items-center mt-2 text-xs">
+                    <div className="mt-2">
                       <PriceBadge
                         value={prices.waterPerKg}
                         onChange={(value) =>
@@ -618,15 +618,12 @@ const FlavoringCalculator = () => {
             </div>
             {/* Total Cost Display - only visible with advanced options */}
             {advancedOptions && (
-              <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              <div className="mt-4 p-3 rounded-md border bg-card border-l-4 border-l-green-500">
                 <div className="flex justify-between items-center">
-                  <h4 className="text-md font-medium">Coût Total:</h4>
-                  <div className="text-xl font-semibold font-mono text-emerald-700 dark:text-emerald-400">
+                  <span className="text-sm font-medium">Coût Total</span>
+                  <span className="text-lg font-semibold font-mono">
                     {result.totalCost.toFixed(2)}€ / kg
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Basé sur le volume calculé et les prix par kilogramme indiqués
+                  </span>
                 </div>
               </div>
             )}

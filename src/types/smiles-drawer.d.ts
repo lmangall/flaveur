@@ -26,6 +26,17 @@ declare module "smiles-drawer" {
     themes?: Record<string, Record<string, string>>;
   }
 
+  class SmiDrawer {
+    constructor(options?: SmilesDrawerOptions);
+    draw(
+      smiles: string,
+      canvas: HTMLCanvasElement | null,
+      theme?: string,
+      successCallback?: () => void,
+      errorCallback?: (error: Error) => void
+    ): void;
+  }
+
   class Drawer {
     constructor(options?: SmilesDrawerOptions);
     draw(
@@ -36,6 +47,7 @@ declare module "smiles-drawer" {
   }
 
   interface SmilesDrawerModule {
+    SmiDrawer: typeof SmiDrawer;
     Drawer: typeof Drawer;
     parse(
       smiles: string,
