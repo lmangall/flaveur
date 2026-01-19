@@ -10,7 +10,7 @@
 
 # Phase 2 Plan
 
-## 2.0 Deploy Phase 1
+## 2.0 Deploy Phase 1 ✅
 - Push commits to remote
 - Run newsletter migration on database
 - Add RESEND_API_KEY to environment
@@ -58,7 +58,7 @@
 
 # Phase 3 Plan
 
-## 3.0 Deploy Phase 2
+## 3.0 Deploy Phase 2 ✅
 - Push commits to remote
 - Run migration 003_add_job_alert_preferences.sql on database
 - Add CRON_SECRET to Vercel environment
