@@ -35,6 +35,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
+import { MoleculeImage } from "@/app/[locale]/components/ui/molecule-image";
 import {
   getSubstances,
   searchSubstances,
@@ -52,6 +53,9 @@ type Substance = {
   flavor_profile: string;
   taste?: string;
   olfactory_taste_notes?: string;
+  pubchem_cid?: string;
+  molecular_formula?: string;
+  molecular_weight?: number;
 };
 
 export default function SubstancesPage() {
@@ -358,46 +362,74 @@ export default function SubstancesPage() {
 
           {/* Detail modal */}
           <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
                 <DialogTitle>Substance Details</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 {viewDetailsSubstance && (
                   <>
-                    <p>
-                      <strong>FEMA Number:</strong>{" "}
-                      {viewDetailsSubstance.fema_number}
-                    </p>
-                    <p>
-                      <strong>CAS ID:</strong> {viewDetailsSubstance.cas_id}
-                    </p>
-                    <p>
-                      <strong>Common Name:</strong>{" "}
-                      {viewDetailsSubstance.common_name}
-                    </p>
-                    <p>
-                      <strong>Odor:</strong> {viewDetailsSubstance.odor}
-                    </p>
-                    <p>
-                      <strong>Functional Groups:</strong>{" "}
-                      {viewDetailsSubstance.functional_groups}
-                    </p>
-                    <p>
-                      <strong>Flavor Profile:</strong>{" "}
-                      {viewDetailsSubstance.flavor_profile}
-                    </p>
-                    {viewDetailsSubstance.taste && (
-                      <p>
-                        <strong>Taste:</strong> {viewDetailsSubstance.taste}
-                      </p>
-                    )}
-                    {viewDetailsSubstance.olfactory_taste_notes && (
-                      <p>
-                        <strong>Olfactory Notes:</strong>{" "}
-                        {viewDetailsSubstance.olfactory_taste_notes}
-                      </p>
-                    )}
+                    <div className="flex gap-4">
+                      <MoleculeImage
+                        pubchemCid={viewDetailsSubstance.pubchem_cid}
+                        formula={viewDetailsSubstance.molecular_formula}
+                        name={viewDetailsSubstance.common_name}
+                        size={140}
+                      />
+                      <div className="flex-1 space-y-1">
+                        <h3 className="font-semibold text-lg">
+                          {viewDetailsSubstance.common_name}
+                        </h3>
+                        {viewDetailsSubstance.molecular_formula && (
+                          <p className="text-sm text-muted-foreground font-mono">
+                            {viewDetailsSubstance.molecular_formula}
+                          </p>
+                        )}
+                        {viewDetailsSubstance.molecular_weight && (
+                          <p className="text-sm text-muted-foreground">
+                            MW: {viewDetailsSubstance.molecular_weight.toFixed(2)}
+                          </p>
+                        )}
+                        <p className="text-sm">
+                          <span className="text-muted-foreground">FEMA:</span>{" "}
+                          {viewDetailsSubstance.fema_number}
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-muted-foreground">CAS:</span>{" "}
+                          {viewDetailsSubstance.cas_id || "-"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="border-t pt-4 space-y-2">
+                      {viewDetailsSubstance.odor && (
+                        <p>
+                          <strong>Odor:</strong> {viewDetailsSubstance.odor}
+                        </p>
+                      )}
+                      {viewDetailsSubstance.taste && (
+                        <p>
+                          <strong>Taste:</strong> {viewDetailsSubstance.taste}
+                        </p>
+                      )}
+                      {viewDetailsSubstance.olfactory_taste_notes && (
+                        <p>
+                          <strong>Olfactory Notes:</strong>{" "}
+                          {viewDetailsSubstance.olfactory_taste_notes}
+                        </p>
+                      )}
+                      {viewDetailsSubstance.functional_groups && (
+                        <p>
+                          <strong>Functional Groups:</strong>{" "}
+                          {viewDetailsSubstance.functional_groups}
+                        </p>
+                      )}
+                      {viewDetailsSubstance.flavor_profile && (
+                        <p>
+                          <strong>Flavor Profile:</strong>{" "}
+                          {viewDetailsSubstance.flavor_profile}
+                        </p>
+                      )}
+                    </div>
                   </>
                 )}
               </div>

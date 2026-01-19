@@ -150,6 +150,24 @@ export async function getSubstanceByFemaNumber(femaNumber: number) {
   return result[0];
 }
 
+export async function getSubstancesWithSmiles(limit: number = 10) {
+  const result = await sql`
+    SELECT
+      substance_id,
+      fema_number,
+      common_name,
+      smile,
+      molecular_formula,
+      pubchem_cid,
+      iupac_name
+    FROM substance
+    WHERE smile IS NOT NULL AND smile != ''
+    LIMIT ${limit}
+  `;
+
+  return result;
+}
+
 export async function createSubstance(data: {
   fema_number: number;
   common_name: string;

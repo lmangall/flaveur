@@ -1,0 +1,64 @@
+"use client";
+
+import { useState } from "react";
+import { cn } from "@/app/lib/utils";
+
+interface MoleculeImageProps {
+  pubchemCid?: string | number | null;
+  formula?: string | null;
+  name?: string | null;
+  size?: number;
+  className?: string;
+}
+
+export function MoleculeImage({
+  pubchemCid,
+  formula,
+  name,
+  size = 150,
+  className,
+}: MoleculeImageProps) {
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  if (!pubchemCid || error) {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-lg border bg-muted text-muted-foreground",
+          className
+        )}
+        style={{ width: size, height: size }}
+      >
+        <span className="text-sm font-mono text-center px-2">
+          {formula ?? "No structure"}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("relative", className)} style={{ width: size, height: size }}>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg">
+          <div className="animate-pulse text-sm text-muted-foreground">Loading...</div>
+        </div>
+      )}
+      <img
+        src={`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${pubchemCid}/PNG?image_size=${size}x${size}`}
+        alt={name ?? `Molecule ${pubchemCid}`}
+        className={cn(
+          "rounded-lg border bg-white",
+          loading && "opacity-0"
+        )}
+        width={size}
+        height={size}
+        onLoad={() => setLoading(false)}
+        onError={() => {
+          setError(true);
+          setLoading(false);
+        }}
+      />
+    </div>
+  );
+}
