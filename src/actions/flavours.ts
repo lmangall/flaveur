@@ -5,9 +5,8 @@ import { sql } from "@/lib/db";
 import {
   type FlavourStatusValue,
   isValidFlavourStatus,
-  DEFAULT_FLAVOUR_STATUS,
-  DEFAULT_BASE_UNIT,
 } from "@/constants";
+import { createFlavourSchema, updateFlavourSchema } from "@/lib/validations/flavour";
 
 export async function getFlavours() {
   const { userId } = await auth();
@@ -68,15 +67,22 @@ export async function createFlavour(data: {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
+  // Validate with Zod
+  const validation = createFlavourSchema.safeParse(data);
+  if (!validation.success) {
+    const firstError = validation.error.issues[0];
+    throw new Error(firstError?.message || "Invalid flavour data");
+  }
+
   const {
     name,
     description,
-    is_public = false,
-    category_id = null,
-    status = DEFAULT_FLAVOUR_STATUS,
-    base_unit = DEFAULT_BASE_UNIT,
-    substances = [],
-  } = data;
+    is_public,
+    category_id,
+    status,
+    base_unit,
+    substances,
+  } = validation.data;
 
   // Insert flavour
   const flavourResult = await sql`
@@ -223,4 +229,115 @@ export async function updateFlavourStatus(
   `;
 
   return result[0];
+}
+
+export async function updateFlavour(
+  flavourId: number,
+  data: {
+    name?: string;
+    description?: string;
+    is_public?: boolean;
+    category_id?: number | null;
+    status?: string;
+    base_unit?: string;
+  }
+) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  // Validate with Zod
+  const validation = updateFlavourSchema.safeParse(data);
+  if (!validation.success) {
+    const firstError = validation.error.issues[0];
+    throw new Error(firstError?.message || "Invalid flavour data");
+  }
+
+  const validatedData = validation.data;
+
+  // Check flavour exists and belongs to user
+  const flavourCheck = await sql`
+    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  `;
+
+  if (flavourCheck.length === 0) {
+    throw new Error("Flavour not found or access denied");
+  }
+
+  const result = await sql`
+    UPDATE public.flavour
+    SET
+      name = COALESCE(${validatedData.name ?? null}, name),
+      description = COALESCE(${validatedData.description ?? null}, description),
+      is_public = COALESCE(${validatedData.is_public ?? null}, is_public),
+      category_id = ${validatedData.category_id ?? null},
+      status = COALESCE(${validatedData.status ?? null}, status),
+      base_unit = COALESCE(${validatedData.base_unit ?? null}, base_unit),
+      updated_at = CURRENT_TIMESTAMP
+    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+    RETURNING *
+  `;
+
+  return result[0];
+}
+
+export async function duplicateFlavour(flavourId: number, newName?: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  // Get original flavour
+  const originalFlavour = await sql`
+    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  `;
+
+  if (originalFlavour.length === 0) {
+    throw new Error("Flavour not found or access denied");
+  }
+
+  const original = originalFlavour[0];
+  const duplicateName = newName || `${original.name} (Copy)`;
+
+  // Create new flavour
+  const newFlavourResult = await sql`
+    INSERT INTO public.flavour (name, description, is_public, category_id, status, base_unit, user_id)
+    VALUES (${duplicateName}, ${original.description}, false, ${original.category_id}, 'draft', ${original.base_unit}, ${userId})
+    RETURNING *
+  `;
+
+  const newFlavour = newFlavourResult[0];
+
+  // Copy substances
+  const originalSubstances = await sql`
+    SELECT * FROM public.substance_flavour WHERE flavour_id = ${flavourId}
+  `;
+
+  for (const sub of originalSubstances) {
+    await sql`
+      INSERT INTO public.substance_flavour (substance_id, flavour_id, concentration, unit, order_index)
+      VALUES (${sub.substance_id}, ${newFlavour.flavour_id}, ${sub.concentration}, ${sub.unit}, ${sub.order_index})
+    `;
+  }
+
+  return newFlavour;
+}
+
+export async function deleteFlavour(flavourId: number) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  // Check flavour exists and belongs to user
+  const flavourCheck = await sql`
+    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  `;
+
+  if (flavourCheck.length === 0) {
+    throw new Error("Flavour not found or access denied");
+  }
+
+  // Delete substance links first
+  await sql`DELETE FROM public.substance_flavour WHERE flavour_id = ${flavourId}`;
+
+  // Delete flavour
+  await sql`DELETE FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}`;
+
+  return { success: true };
 }

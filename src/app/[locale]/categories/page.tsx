@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
 import { Textarea } from "@/app/[locale]/components/ui/textarea";
@@ -25,8 +27,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/app/[locale]/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/app/[locale]/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -35,109 +46,88 @@ import {
   SelectValue,
 } from "@/app/[locale]/components/ui/select";
 import { Label } from "@/app/[locale]/components/ui/label";
-import { Search, PlusCircle, MoreHorizontal, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/app/[locale]/components/ui/skeleton";
+import { Search, PlusCircle, MoreHorizontal, ChevronRight, Pencil, Trash2, FolderPlus } from "lucide-react";
+import { toast } from "sonner";
+import {
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  type CategoryWithDetails,
+} from "@/actions/categories";
 
-type Category = {
-  category_id: number;
-  name: string;
-  description: string;
-  parent_category_id: number | null;
-  parent_name: string | null | undefined;
-  children: number;
-};
+function TableSkeleton() {
+  return (
+    <div className="border rounded-md overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Parent Category</TableHead>
+            <TableHead>Sub-categories</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <TableRow key={i}>
+              <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+              <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+              <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+              <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+              <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+  const [categories, setCategories] = useState<CategoryWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [newCategory, setNewCategory] = useState({
+
+  // Dialog states
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
+  // Form states
+  const [formData, setFormData] = useState({
     name: "",
     description: "",
     parent_category_id: "",
   });
+  const [editingCategory, setEditingCategory] = useState<CategoryWithDetails | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<CategoryWithDetails | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      toast.error("Failed to load categories");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // Simulate fetching categories
-    setTimeout(() => {
-      const mockCategories = [
-        {
-          category_id: 1,
-          name: "Fruit",
-          description: "All fruit flavor profiles",
-          parent_category_id: null,
-          parent_name: null,
-          children: 3,
-        },
-        {
-          category_id: 2,
-          name: "Citrus",
-          description: "Lemon, lime, orange, and other citrus flavors",
-          parent_category_id: 1,
-          parent_name: "Fruit",
-          children: 0,
-        },
-        {
-          category_id: 3,
-          name: "Berry",
-          description: "Strawberry, blueberry, and other berry flavors",
-          parent_category_id: 1,
-          parent_name: "Fruit",
-          children: 0,
-        },
-        {
-          category_id: 4,
-          name: "Tropical",
-          description: "Pineapple, mango, and other tropical flavors",
-          parent_category_id: 1,
-          parent_name: "Fruit",
-          children: 0,
-        },
-        {
-          category_id: 5,
-          name: "Dessert",
-          description: "Sweet dessert flavors",
-          parent_category_id: null,
-          parent_name: null,
-          children: 2,
-        },
-        {
-          category_id: 6,
-          name: "Chocolate",
-          description: "Various chocolate flavors",
-          parent_category_id: 5,
-          parent_name: "Dessert",
-          children: 0,
-        },
-        {
-          category_id: 7,
-          name: "Vanilla",
-          description: "Various vanilla flavors",
-          parent_category_id: 5,
-          parent_name: "Dessert",
-          children: 0,
-        },
-        {
-          category_id: 8,
-          name: "Beverage",
-          description: "Flavors for drinks",
-          parent_category_id: null,
-          parent_name: null,
-          children: 0,
-        },
-        {
-          category_id: 9,
-          name: "Spice",
-          description: "Spicy and warm flavor profiles",
-          parent_category_id: null,
-          parent_name: null,
-          children: 0,
-        },
-      ];
-      setCategories(mockCategories);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+    if (isLoaded && !isSignedIn) {
+      router.push("/");
+    } else if (isLoaded && isSignedIn) {
+      fetchCategories();
+    }
+  }, [isSignedIn, isLoaded, router, fetchCategories]);
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -146,123 +136,126 @@ export default function CategoriesPage() {
         category.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewCategory({ ...newCategory, [name]: value });
+  const topLevelCategories = categories.filter((cat) => cat.parent_category_id === null);
+
+  const resetForm = () => {
+    setFormData({ name: "", description: "", parent_category_id: "" });
+    setEditingCategory(null);
   };
 
-  const handleSubmitCategory = () => {
-    // In a real app, you would submit this to an API
-    // For now, just add it to the local state
-    const newCategoryData = {
-      ...newCategory,
-      category_id: Math.max(...categories.map((cat) => cat.category_id)) + 1,
-      parent_category_id: newCategory.parent_category_id
-        ? Number.parseInt(newCategory.parent_category_id)
-        : null,
-      parent_name: newCategory.parent_category_id
-        ? categories.find(
-            (cat) =>
-              cat.category_id ===
-              Number.parseInt(newCategory.parent_category_id)
-          )?.name
-        : null,
-      children: 0,
-    };
+  const handleCreateCategory = async () => {
+    if (!formData.name.trim()) {
+      toast.error("Category name is required");
+      return;
+    }
 
-    setCategories([...categories, newCategoryData]);
-    setOpenDialog(false);
-    // Reset form
-    setNewCategory({
+    setIsSubmitting(true);
+    try {
+      const parentId = formData.parent_category_id && formData.parent_category_id !== "none"
+        ? parseInt(formData.parent_category_id)
+        : null;
+
+      await createCategory({
+        name: formData.name,
+        description: formData.description || undefined,
+        parent_category_id: parentId,
+      });
+
+      toast.success("Category created successfully");
+      setOpenCreateDialog(false);
+      resetForm();
+      fetchCategories();
+    } catch (error) {
+      console.error("Error creating category:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create category");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditCategory = async () => {
+    if (!editingCategory || !formData.name.trim()) {
+      toast.error("Category name is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const parentId = formData.parent_category_id && formData.parent_category_id !== "none"
+        ? parseInt(formData.parent_category_id)
+        : null;
+
+      await updateCategory(editingCategory.category_id, {
+        name: formData.name,
+        description: formData.description || undefined,
+        parent_category_id: parentId,
+      });
+
+      toast.success("Category updated successfully");
+      setOpenEditDialog(false);
+      resetForm();
+      fetchCategories();
+    } catch (error) {
+      console.error("Error updating category:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to update category");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!deletingCategory) return;
+
+    setIsSubmitting(true);
+    try {
+      await deleteCategory(deletingCategory.category_id);
+      toast.success("Category deleted successfully");
+      setOpenDeleteDialog(false);
+      setDeletingCategory(null);
+      fetchCategories();
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete category");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditMode = (category: CategoryWithDetails) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      description: category.description || "",
+      parent_category_id: category.parent_category_id?.toString() || "none",
+    });
+    setOpenEditDialog(true);
+  };
+
+  const openCreateWithParent = (parentCategory: CategoryWithDetails) => {
+    setFormData({
       name: "",
       description: "",
-      parent_category_id: "",
+      parent_category_id: parentCategory.category_id.toString(),
     });
+    setOpenCreateDialog(true);
   };
+
+  const openDeleteMode = (category: CategoryWithDetails) => {
+    setDeletingCategory(category);
+    setOpenDeleteDialog(true);
+  };
+
+  if (!isLoaded || !isSignedIn) return null;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
 
-        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Category
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Add New Category</DialogTitle>
-              <DialogDescription>
-                Create a new category for organizing flavors.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Category Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={newCategory.name}
-                  onChange={handleInputChange}
-                  placeholder="e.g. Fruit"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={newCategory.description}
-                  onChange={handleInputChange}
-                  placeholder="Describe this category"
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="parent_category_id">
-                  Parent Category (Optional)
-                </Label>
-                <Select
-                  value={newCategory.parent_category_id}
-                  onValueChange={(value) =>
-                    setNewCategory({
-                      ...newCategory,
-                      parent_category_id: value,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a parent category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None (Top Level)</SelectItem>
-                    {categories
-                      .filter((cat) => cat.parent_category_id === null)
-                      .map((category) => (
-                        <SelectItem
-                          key={category.category_id}
-                          value={category.category_id.toString()}
-                        >
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpenDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSubmitCategory}>Add Category</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => { resetForm(); setOpenCreateDialog(true); }}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Category
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -279,9 +272,7 @@ export default function CategoriesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        </div>
+        <TableSkeleton />
       ) : filteredCategories.length > 0 ? (
         <div className="border rounded-md overflow-hidden">
           <Table>
@@ -298,7 +289,9 @@ export default function CategoriesPage() {
               {filteredCategories.map((category) => (
                 <TableRow key={category.category_id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell>{category.description}</TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {category.description || <span className="text-muted-foreground text-xs">No description</span>}
+                  </TableCell>
                   <TableCell>
                     {category.parent_name ? (
                       category.parent_name
@@ -309,9 +302,9 @@ export default function CategoriesPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {category.children > 0 ? (
+                    {category.children_count > 0 ? (
                       <span className="inline-flex items-center">
-                        {category.children}{" "}
+                        {category.children_count}
                         <ChevronRight className="h-4 w-4 ml-1" />
                       </span>
                     ) : (
@@ -328,9 +321,19 @@ export default function CategoriesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Add Subcategory</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                        <DropdownMenuItem onClick={() => openEditMode(category)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openCreateWithParent(category)}>
+                          <FolderPlus className="mr-2 h-4 w-4" />
+                          Add Subcategory
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => openDeleteMode(category)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -344,13 +347,168 @@ export default function CategoriesPage() {
       ) : (
         <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted/30">
           <p className="text-muted-foreground mb-4">
-            No categories found matching your criteria
+            {searchQuery ? "No categories found matching your search" : "No categories yet"}
           </p>
-          <Button onClick={() => setOpenDialog(true)}>
+          <Button onClick={() => { resetForm(); setOpenCreateDialog(true); }}>
             Add a new category
           </Button>
         </div>
       )}
+
+      {/* Create Dialog */}
+      <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add New Category</DialogTitle>
+            <DialogDescription>
+              Create a new category for organizing flavors.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="create-name">Category Name *</Label>
+              <Input
+                id="create-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g. Fruit"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create-description">Description</Label>
+              <Textarea
+                id="create-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Describe this category"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create-parent">Parent Category (Optional)</Label>
+              <Select
+                value={formData.parent_category_id}
+                onValueChange={(value) => setFormData({ ...formData, parent_category_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a parent category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None (Top Level)</SelectItem>
+                  {topLevelCategories.map((category) => (
+                    <SelectItem
+                      key={category.category_id}
+                      value={category.category_id.toString()}
+                    >
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenCreateDialog(false)} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateCategory} disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Add Category"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>
+              Update the category details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Category Name *</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g. Fruit"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Describe this category"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-parent">Parent Category</Label>
+              <Select
+                value={formData.parent_category_id}
+                onValueChange={(value) => setFormData({ ...formData, parent_category_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a parent category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None (Top Level)</SelectItem>
+                  {topLevelCategories
+                    .filter((cat) => cat.category_id !== editingCategory?.category_id)
+                    .map((category) => (
+                      <SelectItem
+                        key={category.category_id}
+                        value={category.category_id.toString()}
+                      >
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenEditDialog(false)} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditCategory} disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Category</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{deletingCategory?.name}&quot;?
+              {deletingCategory?.children_count && deletingCategory.children_count > 0 && (
+                <span className="block mt-2 text-destructive">
+                  This category has {deletingCategory.children_count} subcategories that must be deleted or reassigned first.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCategory}
+              disabled={isSubmitting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isSubmitting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

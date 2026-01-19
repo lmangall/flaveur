@@ -5,10 +5,16 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
 import { toast } from "sonner";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { subscribeToNewsletter } from "@/actions/newsletter";
 
-export function NewsletterSignup() {
+interface NewsletterSignupProps {
+  source?: string;
+}
+
+export function NewsletterSignup({ source = "homepage" }: NewsletterSignupProps) {
   const t = useTranslations("Home");
+  const locale = useLocale();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -17,28 +23,27 @@ export function NewsletterSignup() {
     setIsLoading(true);
 
     try {
-      await fetch(
-        "https://script.google.com/macros/s/AKfycbyoHonbBsRmyMkwTMsKVP4xZooJNBIrH-eYfM0Rezt7WX5mhINSym6-aMHWSLmkPcs/exec",
-        {
-          method: "POST",
-          mode: "no-cors", // Prevents CORS errors but makes response opaque
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({ email }).toString(),
-        }
-      );
+      const result = await subscribeToNewsletter(email, source, locale);
 
-      // Since we can't read the response with no-cors mode, assume success
-      // The script is working as confirmed by your testing
-      toast.success(t("subscribeSuccess"));
-      setEmail("");
+      if (result.success) {
+        if (result.message === "confirmation_resent") {
+          toast.success(t("confirmationResent"));
+        } else {
+          toast.success(t("subscribeSuccess"));
+        }
+        setEmail("");
+      } else {
+        if (result.error === "already_subscribed") {
+          toast.info(t("alreadySubscribed"));
+        } else if (result.error === "invalid_email") {
+          toast.error(t("invalidEmail"));
+        } else {
+          toast.error(t("subscribeError"));
+        }
+      }
     } catch (error) {
-      // Only network-level errors (like no internet) will reach here
-      console.error("Network error:", error);
-      toast.error(
-        t("subscribeError") || "Something went wrong. Please try again."
-      );
+      console.error("Subscription error:", error);
+      toast.error(t("subscribeError"));
     } finally {
       setIsLoading(false);
     }

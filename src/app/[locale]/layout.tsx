@@ -33,6 +33,16 @@ export const metadata = {
   authors: [{ name: "Oumamie Team" }],
   creator: "Oumamie Team",
   publisher: "Oumamie",
+  manifest: "/manifest.json",
+  themeColor: "#8B4513",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Oumamie",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
   formatDetection: {
     email: false,
     address: false,

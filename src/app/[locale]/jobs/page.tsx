@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Button } from "@/app/[locale]/components/ui/button";
+import { Input } from "@/app/[locale]/components/ui/input";
 import {
   Card,
   CardContent,
@@ -12,6 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/[locale]/components/ui/select";
 import { Skeleton } from "@/app/[locale]/components/ui/skeleton";
 import {
   BriefcaseBusiness,
@@ -19,9 +27,13 @@ import {
   Building,
   Calendar,
   ArrowRight,
+  Search,
+  Filter,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getJobs, addJobInteraction } from "@/actions/jobs";
+import { EMPLOYMENT_TYPE_OPTIONS, EXPERIENCE_LEVEL_OPTIONS } from "@/constants";
 
 // Define JobOffer type based on your backend
 interface JobOffer {
@@ -45,6 +57,12 @@ export default function JobsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState("all");
+  const [experienceLevelFilter, setExperienceLevelFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+
   useEffect(() => {
     async function fetchJobsData() {
       try {
@@ -65,6 +83,62 @@ export default function JobsPage() {
       fetchJobsData();
     }
   }, [isLoaded, t]);
+
+  // Get unique locations from jobs for the filter dropdown
+  const uniqueLocations = useMemo(() => {
+    const locations = jobs
+      .map((job) => job.location)
+      .filter((location): location is string => !!location);
+    return [...new Set(locations)].sort();
+  }, [jobs]);
+
+  // Filter jobs based on search and filters
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      // Search filter - check title and company name
+      const matchesSearch =
+        searchQuery === "" ||
+        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (job.company_name &&
+          job.company_name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      // Employment type filter
+      const matchesEmploymentType =
+        employmentTypeFilter === "all" ||
+        job.employment_type === employmentTypeFilter;
+
+      // Experience level filter
+      const matchesExperienceLevel =
+        experienceLevelFilter === "all" ||
+        job.experience_level === experienceLevelFilter;
+
+      // Location filter
+      const matchesLocation =
+        locationFilter === "all" || job.location === locationFilter;
+
+      return (
+        matchesSearch &&
+        matchesEmploymentType &&
+        matchesExperienceLevel &&
+        matchesLocation
+      );
+    });
+  }, [jobs, searchQuery, employmentTypeFilter, experienceLevelFilter, locationFilter]);
+
+  // Check if any filters are active
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    employmentTypeFilter !== "all" ||
+    experienceLevelFilter !== "all" ||
+    locationFilter !== "all";
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery("");
+    setEmploymentTypeFilter("all");
+    setExperienceLevelFilter("all");
+    setLocationFilter("all");
+  };
 
   // Format date in a localized way
   const formatDate = (dateString: string) => {
@@ -96,6 +170,100 @@ export default function JobsPage() {
           <p className="text-muted-foreground mt-2">
             {t("jobListingSubheading")}
           </p>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder={t("searchJobs") || "Search jobs..."}
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Filter Dropdowns */}
+            <div className="flex flex-wrap gap-2">
+              <Select
+                value={employmentTypeFilter}
+                onValueChange={setEmploymentTypeFilter}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder={t("employmentType") || "Type"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("allTypes") || "All Types"}</SelectItem>
+                  {EMPLOYMENT_TYPE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={experienceLevelFilter}
+                onValueChange={setExperienceLevelFilter}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder={t("experienceLevel") || "Experience"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("allLevels") || "All Levels"}</SelectItem>
+                  {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {uniqueLocations.length > 0 && (
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <MapPin className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder={t("location") || "Location"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allLocations") || "All Locations"}</SelectItem>
+                    {uniqueLocations.map((location) => (
+                      <SelectItem key={location} value={location}>
+                        {location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-10"
+                >
+                  <X className="mr-1 h-4 w-4" />
+                  {t("clearFilters") || "Clear"}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Results count */}
+          {!isLoading && (
+            <p className="text-sm text-muted-foreground">
+              {filteredJobs.length === jobs.length
+                ? t("showingAllJobs", { count: jobs.length }) || `Showing ${jobs.length} jobs`
+                : t("showingFilteredJobs", { filtered: filteredJobs.length, total: jobs.length }) ||
+                  `Showing ${filteredJobs.length} of ${jobs.length} jobs`}
+            </p>
+          )}
         </div>
 
         {error && (
@@ -131,7 +299,7 @@ export default function JobsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jobs.map((job) => (
+            {filteredJobs.map((job) => (
               <Card key={job.id} className="overflow-hidden">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-xl">{job.title}</CardTitle>
@@ -186,10 +354,19 @@ export default function JobsPage() {
           </div>
         )}
 
-        {!isLoading && jobs.length === 0 && (
+        {!isLoading && filteredJobs.length === 0 && (
           <div className="text-center py-12">
             <h3 className="text-xl font-medium">{t("noJobsFound")}</h3>
-            <p className="text-muted-foreground mt-2">{t("checkBackLater")}</p>
+            <p className="text-muted-foreground mt-2">
+              {hasActiveFilters
+                ? t("tryDifferentFilters") || "Try adjusting your search or filters"
+                : t("checkBackLater")}
+            </p>
+            {hasActiveFilters && (
+              <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                {t("clearFilters") || "Clear Filters"}
+              </Button>
+            )}
           </div>
         )}
       </div>

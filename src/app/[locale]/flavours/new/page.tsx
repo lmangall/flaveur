@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Card } from "@/app/[locale]/components/ui/card";
 import { Input } from "@/app/[locale]/components/ui/input";
@@ -38,6 +39,7 @@ import { createFlavour } from "@/actions/flavours";
 
 export default function NewFlavourPage() {
   const router = useRouter();
+  const t = useTranslations("NewFlavour");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
@@ -125,9 +127,9 @@ export default function NewFlavourPage() {
     try {
       // Prepare substances data for the server action
       const substancesData = substances
-        .filter((substance) => substance.substance?.fema_number !== undefined)
+        .filter((substance) => substance.substance?.fema_number != null)
         .map((substance, index) => ({
-          fema_number: substance.substance!.fema_number,
+          fema_number: substance.substance!.fema_number!,
           concentration: parseFloat(substance.concentration),
           unit: substance.unit,
           order_index: index + 1,
@@ -163,29 +165,29 @@ export default function NewFlavourPage() {
       <div className="flex items-center">
         <Button variant="ghost" onClick={() => router.back()} className="mr-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          {t("back")}
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">New Flavor</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("newFlavor")}</h1>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-8">
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
+            <h2 className="text-xl font-semibold mb-4">{t("basicInfo")}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Flavor Name</Label>
+                <Label htmlFor="name">{t("flavorName")}</Label>
                 <Input
                   id="name"
                   name="name"
                   value={flavour.name}
                   onChange={handleFlavourChange}
-                  placeholder="Enter flavor name"
+                  placeholder={t("enterFlavorName")}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">{t("category")}</Label>
                 <Select
                   value={flavour.category}
                   onValueChange={(value) =>
@@ -193,7 +195,7 @@ export default function NewFlavourPage() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder={t("selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
@@ -208,34 +210,34 @@ export default function NewFlavourPage() {
                 </Select>
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{t("description")}</Label>
                 <Textarea
                   id="description"
                   name="description"
                   value={flavour.description}
                   onChange={handleFlavourChange}
-                  placeholder="Describe your flavor"
+                  placeholder={t("describeYourFlavor")}
                   rows={3}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">{t("status")}</Label>
                 <Select
                   value={flavour.status}
                   onValueChange={(value) => handleSelectChange("status", value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t("selectStatus")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="draft">{t("draft")}</SelectItem>
+                    <SelectItem value="published">{t("published")}</SelectItem>
+                    <SelectItem value="archived">{t("archived")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="baseUnit">Base Unit</Label>
+                <Label htmlFor="baseUnit">{t("baseUnit")}</Label>
                 <Select
                   value={flavour.baseUnit}
                   onValueChange={(value) =>
@@ -243,7 +245,7 @@ export default function NewFlavourPage() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select base unit" />
+                    <SelectValue placeholder={t("selectBaseUnit")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="g/kg">g/kg</SelectItem>
@@ -260,19 +262,19 @@ export default function NewFlavourPage() {
                   checked={flavour.isPublic}
                   onCheckedChange={handleSwitchChange}
                 />
-                <Label htmlFor="isPublic">Public flavor</Label>
+                <Label htmlFor="isPublic">{t("publicFlavor")}</Label>
               </div>
             </div>
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Substances</h2>
+            <h2 className="text-xl font-semibold mb-4">{t("substances")}</h2>
 
             <div className="space-y-4">
               {/* Search and Add Section */}
               <div className="grid gap-4 sm:grid-cols-12 p-4 border rounded-lg bg-muted/30">
                 <div className="sm:col-span-5 space-y-2">
-                  <Label htmlFor="substance-search">Search Substance</Label>
+                  <Label htmlFor="substance-search">{t("searchSubstance")}</Label>
                   <SubstanceSearchField
                     onSelect={(substance) => {
                       setCurrentSubstance(substance);
@@ -287,12 +289,12 @@ export default function NewFlavourPage() {
                   />
                 </div>
                 <div className="sm:col-span-3 space-y-2">
-                  <Label htmlFor="concentration-input">Concentration</Label>
+                  <Label htmlFor="concentration-input">{t("concentration")}</Label>
                   <Input
                     id="concentration-input"
                     value={currentConcentration}
                     onChange={(e) => setCurrentConcentration(e.target.value)}
-                    placeholder="Amount"
+                    placeholder={t("amount")}
                     type="number"
                     min="0"
                     step="0.01"
@@ -301,14 +303,14 @@ export default function NewFlavourPage() {
                   />
                 </div>
                 <div className="sm:col-span-3 space-y-2">
-                  <Label htmlFor="unit-select">Unit</Label>
+                  <Label htmlFor="unit-select">{t("unit")}</Label>
                   <Select
                     value={currentUnit}
                     onValueChange={setCurrentUnit}
                     disabled={!currentSubstance}
                   >
                     <SelectTrigger id="unit-select">
-                      <SelectValue placeholder="Select unit" />
+                      <SelectValue placeholder={t("selectUnit")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="g/kg">g/kg</SelectItem>
@@ -326,7 +328,7 @@ export default function NewFlavourPage() {
                     onClick={handleAddSubstance}
                     disabled={!currentSubstance || !currentConcentration}
                     className="w-full"
-                    aria-label="Add substance"
+                    aria-label={t("addedSubstances")}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -337,10 +339,9 @@ export default function NewFlavourPage() {
               {substances.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Added Substances</h3>
+                    <h3 className="text-lg font-medium">{t("addedSubstances")}</h3>
                     <Badge variant="secondary" className="text-xs">
-                      {substances.length} component
-                      {substances.length !== 1 ? "s" : ""}
+                      {substances.length} {substances.length !== 1 ? t("components") : t("component")}
                     </Badge>
                   </div>
 
@@ -349,15 +350,15 @@ export default function NewFlavourPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Substance Name</TableHead>
+                          <TableHead>{t("substanceName")}</TableHead>
                           <TableHead>FEMA #</TableHead>
                           <TableHead>CAS #</TableHead>
                           <TableHead className="text-right">
-                            Concentration
+                            {t("concentration")}
                           </TableHead>
-                          <TableHead>Unit</TableHead>
+                          <TableHead>{t("unit")}</TableHead>
                           <TableHead className="w-[80px] text-center">
-                            Actions
+                            {t("actions")}
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -367,9 +368,9 @@ export default function NewFlavourPage() {
                             <TableCell>
                               <div className="space-y-1">
                                 <div className="font-medium">{item.name}</div>
-                                {item.substance?.chemical_name && (
+                                {item.substance?.common_name && (
                                   <div className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                    {item.substance.chemical_name}
+                                    {item.substance.common_name}
                                   </div>
                                 )}
                               </div>
@@ -386,7 +387,7 @@ export default function NewFlavourPage() {
                               )}
                             </TableCell>
                             <TableCell className="font-mono text-xs">
-                              {item.substance?.cas_number || (
+                              {item.substance?.cas_id || (
                                 <span className="text-muted-foreground">
                                   N/A
                                 </span>
@@ -415,7 +416,7 @@ export default function NewFlavourPage() {
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Remove substance</p>
+                                    <p>{t("removeSubstance")}</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -433,9 +434,9 @@ export default function NewFlavourPage() {
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 space-y-1">
                             <h4 className="font-medium">{item.name}</h4>
-                            {item.substance?.chemical_name && (
+                            {item.substance?.common_name && (
                               <p className="text-sm text-muted-foreground">
-                                {item.substance.chemical_name}
+                                {item.substance.common_name}
                               </p>
                             )}
                           </div>
@@ -482,7 +483,7 @@ export default function NewFlavourPage() {
                               CAS #
                             </Label>
                             <div className="mt-1 font-mono text-xs">
-                              {item.substance?.cas_number || (
+                              {item.substance?.cas_id || (
                                 <span className="text-muted-foreground">
                                   N/A
                                 </span>
@@ -492,7 +493,7 @@ export default function NewFlavourPage() {
 
                           <div>
                             <Label className="text-xs text-muted-foreground">
-                              Concentration
+                              {t("concentration")}
                             </Label>
                             <div className="mt-1 font-medium">
                               {item.concentration}
@@ -501,7 +502,7 @@ export default function NewFlavourPage() {
 
                           <div>
                             <Label className="text-xs text-muted-foreground">
-                              Unit
+                              {t("unit")}
                             </Label>
                             <div className="mt-1">
                               <Badge variant="secondary" className="text-xs">
@@ -519,12 +520,11 @@ export default function NewFlavourPage() {
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">
-                          {substances.length} substance
-                          {substances.length !== 1 ? "s" : ""}
+                          {substances.length} {substances.length !== 1 ? t("substancesCount") : t("substance")}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground">Units:</span>
+                        <span className="text-muted-foreground">{t("units")}:</span>
                         {[...new Set(substances.map((s) => s.unit))].map(
                           (unit) => (
                             <Badge
@@ -550,18 +550,18 @@ export default function NewFlavourPage() {
               variant="outline"
               onClick={() => router.back()}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <div className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></div>
-                  Saving...
+                  {t("saving")}
                 </>
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Save Flavor
+                  {t("saveFlavor")}
                 </>
               )}
             </Button>

@@ -27,7 +27,7 @@ import {
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Eye, EyeOff, ChevronDown, Trash2 } from "lucide-react";
-import { Flavour } from "@/app/type";
+import { Flavour, Substance } from "@/app/type";
 import {
   getFlavourById,
   addSubstanceToFlavour,
@@ -383,7 +383,7 @@ function FlavorContent({ flavor }: { flavor: Flavour }) {
                       )}
                       {visibleColumns.cas_number && (
                         <TableCell>
-                          {substance.substance?.cas_number || "N/A"}
+                          {substance.substance?.cas_id || "N/A"}
                         </TableCell>
                       )}
                       <TableCell className="text-right">
@@ -451,9 +451,9 @@ export default function FlavorDetailPage() {
                 (substance, index: number) => ({
                   substance_id: (substance as { substance_id: number }).substance_id,
                   concentration: 0, // Default values since not provided by API
-                  unit: "",
+                  unit: "ppm" as const,
                   order_index: index,
-                  substance: substance, // Nest the actual substance data
+                  substance: substance as Substance, // Nest the actual substance data
                 })
               )
             : [],
