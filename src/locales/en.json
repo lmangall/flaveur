@@ -405,7 +405,31 @@
 		"jobCreateError": "Failed to create job",
 		"jobUpdateError": "Failed to update job",
 		"back": "Back",
-		"admin": "Admin"
+		"admin": "Admin",
+		"users": "Users",
+		"usersDescription": "View and manage platform users",
+		"totalUsers": "Total Users",
+		"registeredUsers": "Registered users",
+		"newUsers": "New Users",
+		"last7Days": "Last 7 days",
+		"activeUsers": "Active Users",
+		"usersWithActivity": "Users with interactions",
+		"jobAlertUsers": "Job Alert Users",
+		"usersWithAlerts": "Users with active alerts",
+		"userList": "User List",
+		"username": "Username",
+		"email": "Email",
+		"joined": "Joined",
+		"interactions": "Interactions",
+		"views": "Views",
+		"applied": "Applied",
+		"contacts": "Contacts",
+		"flavors": "Flavors",
+		"alerts": "Alerts",
+		"noUsersFound": "No users found",
+		"searchUsers": "Search users...",
+		"newsletterSubscribers": "Newsletter",
+		"confirmedSubscribers": "Confirmed subscribers"
 	  }
   }
   

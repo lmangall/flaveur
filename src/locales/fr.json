@@ -400,7 +400,31 @@
 		"jobCreateError": "Échec de la création",
 		"jobUpdateError": "Échec de la mise à jour",
 		"back": "Retour",
-		"admin": "Admin"
+		"admin": "Admin",
+		"users": "Utilisateurs",
+		"usersDescription": "Voir et gérer les utilisateurs",
+		"totalUsers": "Total utilisateurs",
+		"registeredUsers": "Utilisateurs inscrits",
+		"newUsers": "Nouveaux",
+		"last7Days": "7 derniers jours",
+		"activeUsers": "Utilisateurs actifs",
+		"usersWithActivity": "Utilisateurs avec interactions",
+		"jobAlertUsers": "Alertes emploi",
+		"usersWithAlerts": "Utilisateurs avec alertes",
+		"userList": "Liste des utilisateurs",
+		"username": "Nom d'utilisateur",
+		"email": "Email",
+		"joined": "Inscrit",
+		"interactions": "Interactions",
+		"views": "Vues",
+		"applied": "Postulé",
+		"contacts": "Contacts",
+		"flavors": "Arômes",
+		"alerts": "Alertes",
+		"noUsersFound": "Aucun utilisateur trouvé",
+		"searchUsers": "Rechercher des utilisateurs...",
+		"newsletterSubscribers": "Newsletter",
+		"confirmedSubscribers": "Abonnés confirmés"
 	  }
   }
   

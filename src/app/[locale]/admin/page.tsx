@@ -1,7 +1,16 @@
 import { getTranslations } from "next-intl/server";
 import { sql } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/[locale]/components/ui/card";
-import { Briefcase, Users, Eye, MousePointerClick } from "lucide-react";
+import { Briefcase, Users, Eye, MousePointerClick, UserPlus, Bell, Mail, FlaskConical } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/app/[locale]/components/ui/table";
+import { Badge } from "@/app/[locale]/components/ui/badge";
 
 async function getStats() {
   const [jobsResult, interactionsResult] = await Promise.all([
@@ -31,9 +40,84 @@ async function getStats() {
   };
 }
 
+async function getUserStats() {
+  const [
+    totalUsersResult,
+    newUsersResult,
+    activeUsersResult,
+    alertUsersResult,
+    newsletterResult,
+  ] = await Promise.all([
+    sql`SELECT COUNT(*) as count FROM users`,
+    sql`SELECT COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL '7 days'`,
+    sql`SELECT COUNT(DISTINCT user_id) as count FROM job_offer_interactions`,
+    sql`SELECT COUNT(*) as count FROM job_alert_preferences WHERE is_active = TRUE`,
+    sql`SELECT COUNT(*) as count FROM newsletter_subscribers WHERE confirmed_at IS NOT NULL AND unsubscribed_at IS NULL`,
+  ]);
+
+  return {
+    totalUsers: Number(totalUsersResult[0]?.count ?? 0),
+    newUsers: Number(newUsersResult[0]?.count ?? 0),
+    activeUsers: Number(activeUsersResult[0]?.count ?? 0),
+    alertUsers: Number(alertUsersResult[0]?.count ?? 0),
+    newsletterSubscribers: Number(newsletterResult[0]?.count ?? 0),
+  };
+}
+
+type UserWithStats = {
+  user_id: string;
+  email: string | null;
+  username: string;
+  created_at: string;
+  views: number;
+  applications: number;
+  contact_views: number;
+  flavors_count: number;
+  has_alerts: boolean;
+};
+
+async function getUsersWithStats(): Promise<UserWithStats[]> {
+  const result = await sql`
+    SELECT
+      u.user_id,
+      u.email,
+      u.username,
+      u.created_at,
+      COALESCE(i.views, 0) as views,
+      COALESCE(i.applications, 0) as applications,
+      COALESCE(i.contact_views, 0) as contact_views,
+      COALESCE(f.flavors_count, 0) as flavors_count,
+      CASE WHEN jap.user_id IS NOT NULL AND jap.is_active = TRUE THEN TRUE ELSE FALSE END as has_alerts
+    FROM users u
+    LEFT JOIN (
+      SELECT
+        user_id,
+        COUNT(*) FILTER (WHERE action = 'viewed') as views,
+        COUNT(*) FILTER (WHERE action = 'applied') as applications,
+        COUNT(*) FILTER (WHERE action = 'seen_contact') as contact_views
+      FROM job_offer_interactions
+      GROUP BY user_id
+    ) i ON u.user_id = i.user_id
+    LEFT JOIN (
+      SELECT user_id, COUNT(*) as flavors_count
+      FROM flavour
+      GROUP BY user_id
+    ) f ON u.user_id = f.user_id
+    LEFT JOIN job_alert_preferences jap ON u.user_id = jap.user_id
+    ORDER BY u.created_at DESC
+    LIMIT 100
+  `;
+
+  return result as UserWithStats[];
+}
+
 export default async function AdminDashboard() {
   const t = await getTranslations("Admin");
-  const stats = await getStats();
+  const [stats, userStats, users] = await Promise.all([
+    getStats(),
+    getUserStats(),
+    getUsersWithStats(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -42,6 +126,7 @@ export default async function AdminDashboard() {
         <p className="text-muted-foreground">{t("dashboardDescription")}</p>
       </div>
 
+      {/* Job Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -83,7 +168,7 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t("contactViews")}</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <MousePointerClick className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.contactViews}</div>
@@ -91,6 +176,127 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* User Stats */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">{t("users")}</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("totalUsers")}</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">{t("registeredUsers")}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("newUsers")}</CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats.newUsers}</div>
+              <p className="text-xs text-muted-foreground">{t("last7Days")}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("activeUsers")}</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats.activeUsers}</div>
+              <p className="text-xs text-muted-foreground">{t("usersWithActivity")}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("jobAlertUsers")}</CardTitle>
+              <Bell className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats.alertUsers}</div>
+              <p className="text-xs text-muted-foreground">{t("usersWithAlerts")}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t("newsletterSubscribers")}</CardTitle>
+              <Mail className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats.newsletterSubscribers}</div>
+              <p className="text-xs text-muted-foreground">{t("confirmedSubscribers")}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* User List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("userList")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {users.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">{t("noUsersFound")}</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("username")}</TableHead>
+                  <TableHead>{t("email")}</TableHead>
+                  <TableHead>{t("joined")}</TableHead>
+                  <TableHead className="text-center">{t("views")}</TableHead>
+                  <TableHead className="text-center">{t("applied")}</TableHead>
+                  <TableHead className="text-center">{t("contacts")}</TableHead>
+                  <TableHead className="text-center">{t("flavors")}</TableHead>
+                  <TableHead className="text-center">{t("alerts")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.user_id}>
+                    <TableCell className="font-medium">{user.username}</TableCell>
+                    <TableCell className="text-muted-foreground">{user.email ?? "-"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-center">{user.views}</TableCell>
+                    <TableCell className="text-center">{user.applications}</TableCell>
+                    <TableCell className="text-center">{user.contact_views}</TableCell>
+                    <TableCell className="text-center">
+                      {user.flavors_count > 0 ? (
+                        <Badge variant="secondary" className="gap-1">
+                          <FlaskConical className="h-3 w-3" />
+                          {user.flavors_count}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">0</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {user.has_alerts ? (
+                        <Badge variant="default" className="gap-1">
+                          <Bell className="h-3 w-3" />
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
