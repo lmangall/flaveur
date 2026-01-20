@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="flex gap-4">
           <Link
             href="/faq"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="text-sm font-medium text-foreground underline underline-offset-4 hover:text-primary"
           >
             FAQ
           </Link>
