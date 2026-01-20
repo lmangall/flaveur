@@ -170,6 +170,7 @@ export async function getSubstancesWithSmiles(limit: number = 10) {
 
 export async function searchSubstancesWithSmiles(
   query: string,
+  category: string = "all",
   limit: number = 20
 ) {
   if (!query || query.trim().length < 2) {
@@ -178,27 +179,73 @@ export async function searchSubstancesWithSmiles(
 
   const searchTerm = `%${query}%`;
 
-  const result = await sql`
-    SELECT
-      substance_id,
-      fema_number,
-      common_name,
-      smile,
-      molecular_formula,
-      pubchem_cid,
-      iupac_name
-    FROM substance
-    WHERE smile IS NOT NULL AND smile != ''
-    AND (
-      common_name ILIKE ${searchTerm}
-      OR iupac_name ILIKE ${searchTerm}
-      OR fema_number::text ILIKE ${searchTerm}
-    )
-    ORDER BY
-      CASE WHEN common_name ILIKE ${searchTerm} THEN 0 ELSE 1 END,
-      common_name
-    LIMIT ${limit}
-  `;
+  let result: Record<string, unknown>[];
+
+  switch (category) {
+    case "name":
+      result = await sql`
+        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
+        FROM substance
+        WHERE smile IS NOT NULL AND smile != ''
+        AND (common_name ILIKE ${searchTerm} OR alternative_names::text ILIKE ${searchTerm})
+        ORDER BY CASE WHEN common_name ILIKE ${searchTerm} THEN 0 ELSE 1 END, common_name
+        LIMIT ${limit}
+      `;
+      break;
+
+    case "profile":
+      result = await sql`
+        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
+        FROM substance
+        WHERE smile IS NOT NULL AND smile != ''
+        AND (olfactory_taste_notes ILIKE ${searchTerm} OR flavor_profile ILIKE ${searchTerm} OR fema_flavor_profile ILIKE ${searchTerm} OR taste ILIKE ${searchTerm} OR odor ILIKE ${searchTerm})
+        ORDER BY common_name
+        LIMIT ${limit}
+      `;
+      break;
+
+    case "cas_id":
+      result = await sql`
+        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
+        FROM substance
+        WHERE smile IS NOT NULL AND smile != ''
+        AND cas_id ILIKE ${searchTerm}
+        ORDER BY common_name
+        LIMIT ${limit}
+      `;
+      break;
+
+    case "fema_number":
+      result = await sql`
+        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
+        FROM substance
+        WHERE smile IS NOT NULL AND smile != ''
+        AND fema_number::text ILIKE ${searchTerm}
+        ORDER BY fema_number
+        LIMIT ${limit}
+      `;
+      break;
+
+    case "all":
+    default:
+      result = await sql`
+        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
+        FROM substance
+        WHERE smile IS NOT NULL AND smile != ''
+        AND (
+          common_name ILIKE ${searchTerm}
+          OR iupac_name ILIKE ${searchTerm}
+          OR fema_number::text ILIKE ${searchTerm}
+          OR olfactory_taste_notes ILIKE ${searchTerm}
+          OR flavor_profile ILIKE ${searchTerm}
+          OR odor ILIKE ${searchTerm}
+          OR cas_id ILIKE ${searchTerm}
+        )
+        ORDER BY CASE WHEN common_name ILIKE ${searchTerm} THEN 0 ELSE 1 END, common_name
+        LIMIT ${limit}
+      `;
+      break;
+  }
 
   return result;
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RDKitRenderer } from "./components/rdkit-renderer";
 import { ThreeDmolRenderer } from "./components/three-dmol-renderer";
+import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
 import { searchSubstancesWithSmiles } from "@/actions/substances";
 
 interface Substance {
@@ -20,6 +21,7 @@ interface MoleculeViewerClientProps {
 }
 
 type ViewMode = "2d" | "3d" | "both";
+type SearchType = "all" | "name" | "profile" | "cas_id" | "fema_number";
 
 export function MoleculeViewerClient({
   initialSubstances,
@@ -30,93 +32,62 @@ export function MoleculeViewerClient({
   const [customSmiles, setCustomSmiles] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("both");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<SearchType>("all");
   const [searchResults, setSearchResults] = useState<Substance[]>([]);
-  const [isPending, startTransition] = useTransition();
-  const [showSearch, setShowSearch] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const currentSmiles = customSmiles || selectedSubstance?.smile || "";
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (query.length >= 2) {
-      startTransition(async () => {
-        const results = (await searchSubstancesWithSmiles(
-          query,
-          10
-        )) as Substance[];
-        setSearchResults(results);
-        setShowSearch(true);
-      });
-    } else {
+  const performSearch = useCallback(async () => {
+    if (searchQuery.length < 2) {
       setSearchResults([]);
-      setShowSearch(false);
+      return;
     }
-  };
 
-  const selectFromSearch = (substance: Substance) => {
+    setIsSearching(true);
+    try {
+      const results = await searchSubstancesWithSmiles(
+        searchQuery,
+        searchType,
+        20
+      );
+      setSearchResults(results as unknown as Substance[]);
+    } catch (error) {
+      console.error("Search error:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchQuery, searchType]);
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      performSearch();
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [performSearch]);
+
+  const selectSubstance = (substance: Substance) => {
     setSelectedSubstance(substance);
     setCustomSmiles("");
-    setSearchQuery("");
-    setSearchResults([]);
-    setShowSearch(false);
   };
 
   return (
     <div className="space-y-6">
-      {/* Search and Input Section */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Database Search */}
-        <div className="relative">
-          <label className="block text-sm font-medium mb-2">
-            Search Database
-          </label>
-          <input
-            type="text"
-            className="w-full p-2 rounded-lg border bg-background"
-            placeholder="Search by name, IUPAC, or FEMA number..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            onFocus={() => searchResults.length > 0 && setShowSearch(true)}
-          />
-          {isPending && (
-            <div className="absolute right-3 top-9 text-muted-foreground text-sm">
-              ...
-            </div>
-          )}
-
-          {/* Search Results Dropdown */}
-          {showSearch && searchResults.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-auto">
-              {searchResults.map((substance) => (
-                <button
-                  key={substance.substance_id}
-                  className="w-full px-3 py-2 text-left hover:bg-accent transition-colors border-b last:border-b-0"
-                  onClick={() => selectFromSearch(substance)}
-                >
-                  <div className="font-medium">
-                    {substance.common_name || substance.iupac_name}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    FEMA {substance.fema_number}
-                    {substance.molecular_formula &&
-                      ` • ${substance.molecular_formula}`}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {showSearch && searchQuery.length >= 2 && searchResults.length === 0 && !isPending && (
-            <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg p-3 text-sm text-muted-foreground">
-              No molecules found with SMILES data
-            </div>
-          )}
-        </div>
+      {/* Search Section */}
+      <div className="space-y-4">
+        <SubstanceSearch
+          searchQuery={searchQuery}
+          searchType={searchType}
+          onSearchChange={setSearchQuery}
+          onSearchTypeChange={setSearchType}
+          placeholder="Search substances with molecular data..."
+        />
 
         {/* Custom SMILES Input */}
         <div>
           <label className="block text-sm font-medium mb-2">
-            Or Enter SMILES
+            Or Enter SMILES Directly
           </label>
           <input
             type="text"
@@ -133,8 +104,46 @@ export function MoleculeViewerClient({
         </div>
       </div>
 
-      {/* Quick Select from Initial Data */}
-      {initialSubstances.length > 0 && (
+      {/* Search Results */}
+      {searchQuery.length >= 2 && (
+        <div className="border rounded-lg overflow-hidden">
+          {isSearching ? (
+            <div className="p-4 text-center text-muted-foreground">
+              Searching...
+            </div>
+          ) : searchResults.length > 0 ? (
+            <div className="max-h-60 overflow-auto">
+              {searchResults.map((substance) => (
+                <button
+                  key={substance.substance_id}
+                  className={`w-full px-4 py-3 text-left hover:bg-accent transition-colors border-b last:border-b-0 ${
+                    selectedSubstance?.substance_id === substance.substance_id
+                      ? "bg-accent"
+                      : ""
+                  }`}
+                  onClick={() => selectSubstance(substance)}
+                >
+                  <div className="font-medium">
+                    {substance.common_name || substance.iupac_name}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    FEMA {substance.fema_number}
+                    {substance.molecular_formula &&
+                      ` • ${substance.molecular_formula}`}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="p-4 text-center text-muted-foreground">
+              No substances found with molecular data
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick Select */}
+      {!searchQuery && initialSubstances.length > 0 && (
         <div>
           <label className="block text-sm font-medium mb-2">Quick Select</label>
           <div className="flex flex-wrap gap-2">
@@ -147,10 +156,7 @@ export function MoleculeViewerClient({
                     ? "bg-primary text-primary-foreground"
                     : "bg-background hover:bg-accent"
                 }`}
-                onClick={() => {
-                  setSelectedSubstance(substance);
-                  setCustomSmiles("");
-                }}
+                onClick={() => selectSubstance(substance)}
               >
                 {substance.common_name || `FEMA ${substance.fema_number}`}
               </button>
@@ -246,7 +252,7 @@ export function MoleculeViewerClient({
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground border rounded-lg">
-          Search for a molecule or enter a SMILES string to visualize
+          Search for a substance or enter a SMILES string to visualize
         </div>
       )}
     </div>
