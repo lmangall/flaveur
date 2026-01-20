@@ -30,7 +30,7 @@ export function MoleculeImage({
         )}
         style={{ width: size, height: size }}
       >
-        <span className="text-sm font-mono text-center px-2">
+        <span className="text-xs font-mono text-center px-1 break-all line-clamp-3 overflow-hidden">
           {formula ?? "No structure"}
         </span>
       </div>

@@ -38,8 +38,8 @@ export function MoleculeViewerClient({
 
   const currentSmiles = customSmiles || selectedSubstance?.smile || "";
 
-  const performSearch = useCallback(async () => {
-    if (searchQuery.length < 2) {
+  const fetchSearchResults = useCallback(async () => {
+    if (!searchQuery || searchQuery.length < 2) {
       setSearchResults([]);
       return;
     }
@@ -61,11 +61,8 @@ export function MoleculeViewerClient({
   }, [searchQuery, searchType]);
 
   useEffect(() => {
-    const debounce = setTimeout(() => {
-      performSearch();
-    }, 300);
-    return () => clearTimeout(debounce);
-  }, [performSearch]);
+    fetchSearchResults();
+  }, [fetchSearchResults]);
 
   const selectSubstance = (substance: Substance) => {
     setSelectedSubstance(substance);
