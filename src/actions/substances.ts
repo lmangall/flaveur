@@ -168,6 +168,41 @@ export async function getSubstancesWithSmiles(limit: number = 10) {
   return result;
 }
 
+export async function searchSubstancesWithSmiles(
+  query: string,
+  limit: number = 20
+) {
+  if (!query || query.trim().length < 2) {
+    return [];
+  }
+
+  const searchTerm = `%${query}%`;
+
+  const result = await sql`
+    SELECT
+      substance_id,
+      fema_number,
+      common_name,
+      smile,
+      molecular_formula,
+      pubchem_cid,
+      iupac_name
+    FROM substance
+    WHERE smile IS NOT NULL AND smile != ''
+    AND (
+      common_name ILIKE ${searchTerm}
+      OR iupac_name ILIKE ${searchTerm}
+      OR fema_number::text ILIKE ${searchTerm}
+    )
+    ORDER BY
+      CASE WHEN common_name ILIKE ${searchTerm} THEN 0 ELSE 1 END,
+      common_name
+    LIMIT ${limit}
+  `;
+
+  return result;
+}
+
 export async function createSubstance(data: {
   fema_number: number;
   common_name: string;
