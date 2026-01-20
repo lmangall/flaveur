@@ -195,6 +195,7 @@
 	  "Navbar": {
 		"myFlavours": "My Flavours",
 		"substances": "Substances",
+		"molecules": "Molecules",
 		"calculator": "Calculator",
 		"jobs": "Jobs",
 		"about": "About"
@@ -474,6 +475,11 @@
 		"backToHome": "Back to Home",
 		"duplicating": "Duplicating...",
 		"duplicateToMyFlavours": "Duplicate to My Flavours"
+	  },
+	  "molecules": {
+		"title": "Molecule Viewer",
+		"description": "Visualize molecular structures in 2D and 3D. Search for substances from the database or enter your own SMILES.",
+		"usingDefaults": "Using sample molecules (no SMILES data in database)"
 	  },
 	  "FAQ": {
 		"title": "Frequently Asked Questions",

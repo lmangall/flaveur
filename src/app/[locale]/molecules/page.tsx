@@ -1,5 +1,6 @@
 import { getSubstancesWithSmiles } from "@/actions/substances";
-import { MoleculeTestClient } from "./molecule-test-client";
+import { MoleculeViewerClient } from "./molecule-viewer-client";
+import { getTranslations } from "next-intl/server";
 
 interface Substance {
   substance_id: number;
@@ -11,7 +12,6 @@ interface Substance {
   iupac_name: string | null;
 }
 
-// Default test molecules when database has no SMILES data
 const DEFAULT_MOLECULES: Substance[] = [
   {
     substance_id: -1,
@@ -25,7 +25,7 @@ const DEFAULT_MOLECULES: Substance[] = [
   {
     substance_id: -2,
     fema_number: 2055,
-    common_name: "Benzaldehyde (Almond)",
+    common_name: "Benzaldehyde",
     smile: "C1=CC=C(C=C1)C=O",
     molecular_formula: "C7H6O",
     pubchem_cid: "240",
@@ -34,7 +34,7 @@ const DEFAULT_MOLECULES: Substance[] = [
   {
     substance_id: -3,
     fema_number: 2414,
-    common_name: "Limonene (Citrus)",
+    common_name: "Limonene",
     smile: "CC1=CCC(CC1)C(=C)C",
     molecular_formula: "C10H16",
     pubchem_cid: "22311",
@@ -61,7 +61,7 @@ const DEFAULT_MOLECULES: Substance[] = [
   {
     substance_id: -6,
     fema_number: 2465,
-    common_name: "Linalool (Floral)",
+    common_name: "Linalool",
     smile: "CC(=CCCC(C)(C=C)O)C",
     molecular_formula: "C10H18O",
     pubchem_cid: "6549",
@@ -70,7 +70,7 @@ const DEFAULT_MOLECULES: Substance[] = [
   {
     substance_id: -7,
     fema_number: 2902,
-    common_name: "Ethyl Butyrate (Pineapple)",
+    common_name: "Ethyl Butyrate",
     smile: "CCCC(=O)OCC",
     molecular_formula: "C6H12O2",
     pubchem_cid: "7762",
@@ -79,33 +79,16 @@ const DEFAULT_MOLECULES: Substance[] = [
   {
     substance_id: -8,
     fema_number: 2418,
-    common_name: "Geraniol (Rose)",
+    common_name: "Geraniol",
     smile: "CC(=CCCC(=CC)C)CO",
     molecular_formula: "C10H18O",
     pubchem_cid: "637566",
     iupac_name: "(E)-3,7-dimethylocta-2,6-dien-1-ol",
   },
-  {
-    substance_id: -9,
-    fema_number: 2055,
-    common_name: "Caffeine",
-    smile: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
-    molecular_formula: "C8H10N4O2",
-    pubchem_cid: "2519",
-    iupac_name: "1,3,7-trimethylpurine-2,6-dione",
-  },
-  {
-    substance_id: -10,
-    fema_number: 0,
-    common_name: "Aspirin",
-    smile: "CC(=O)OC1=CC=CC=C1C(=O)O",
-    molecular_formula: "C9H8O4",
-    pubchem_cid: "2244",
-    iupac_name: "2-acetoxybenzoic acid",
-  },
 ];
 
-export default async function TestMoleculesPage() {
+export default async function MoleculesPage() {
+  const t = await getTranslations("molecules");
   let substances: Substance[] = [];
 
   try {
@@ -114,25 +97,21 @@ export default async function TestMoleculesPage() {
     console.error("Failed to fetch substances:", error);
   }
 
-  // Use default molecules if database has no SMILES data
-  const displaySubstances = substances.length > 0 ? substances : DEFAULT_MOLECULES;
+  const displaySubstances =
+    substances.length > 0 ? substances : DEFAULT_MOLECULES;
   const usingDefaults = substances.length === 0;
 
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Molecule Rendering Test</h1>
-        <p className="text-muted-foreground">
-          Compare different SMILES rendering libraries with {usingDefaults ? "sample" : "database"} molecules.
-        </p>
+        <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
         {usingDefaults && (
-          <p className="text-sm text-amber-600 mt-2">
-            Using default test molecules (no SMILES data in database)
-          </p>
+          <p className="text-sm text-amber-600 mt-2">{t("usingDefaults")}</p>
         )}
       </div>
 
-      <MoleculeTestClient substances={displaySubstances} />
+      <MoleculeViewerClient initialSubstances={displaySubstances} />
     </div>
   );
 }

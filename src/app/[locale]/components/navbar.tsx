@@ -21,6 +21,7 @@ const authRoutes = [
   // { href: "/dashboard", label: "Dashboard" },
   { href: "/flavours", label: "myFlavours" },
   { href: "/substances", label: "substances" },
+  { href: "/molecules", label: "molecules" },
   { href: "/calculator", label: "calculator" },
   { href: "/jobs", label: "jobs" },
   { href: "/about", label: "about" },
