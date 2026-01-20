@@ -217,18 +217,10 @@ export function MoleculeViewerClient({
             viewMode === "both" ? "md:grid-cols-2" : ""
           }`}
         >
-          {/* RDKit 2D */}
+          {/* 2D Structure */}
           {(viewMode === "2d" || viewMode === "both") && (
             <div className="space-y-2">
-              <h3 className="font-medium flex items-center gap-2">
-                2D Structure
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-200">
-                  RDKit.js
-                </span>
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Accurate 2D rendering with WASM chemistry toolkit
-              </p>
+              <h3 className="font-medium">2D Structure</h3>
               <RDKitRenderer
                 smiles={currentSmiles}
                 width={viewMode === "both" ? 350 : 500}
@@ -237,17 +229,12 @@ export function MoleculeViewerClient({
             </div>
           )}
 
-          {/* 3Dmol 3D */}
+          {/* 3D Structure */}
           {(viewMode === "3d" || viewMode === "both") && (
             <div className="space-y-2">
-              <h3 className="font-medium flex items-center gap-2">
-                3D Structure
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded dark:bg-green-900 dark:text-green-200">
-                  3Dmol.js
-                </span>
-              </h3>
+              <h3 className="font-medium">3D Structure</h3>
               <p className="text-sm text-muted-foreground">
-                Interactive 3D visualization (rotate with mouse)
+                Rotate with mouse
               </p>
               <ThreeDmolRenderer
                 smiles={currentSmiles}
