@@ -25,55 +25,52 @@ export async function searchSubstances(
 
   const offset = (page - 1) * limit;
   const searchTerm = `%${query}%`;
-  // Convert query to tsquery format for full-text search
-  const tsQuery = query
-    .trim()
-    .split(/\s+/)
-    .filter((word) => word.length > 0)
-    .join(" & ");
 
   let results: Record<string, unknown>[];
   let totalResults: number;
 
   switch (category) {
     case "name":
-      // Name search: use full-text search with fallback to ILIKE for partial matches
+      // Simple keyword search on names with exact match prioritization
       results = await sql`
-        SELECT *, ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
+        SELECT *,
+          CASE
+            WHEN LOWER(common_name) = LOWER(${query}) THEN 1
+            WHEN LOWER(common_name) LIKE LOWER(${query}) || '%' THEN 2
+            WHEN common_name ILIKE ${searchTerm} THEN 3
+            WHEN alternative_names::text ILIKE ${searchTerm} THEN 4
+            ELSE 5
+          END AS name_match_priority
         FROM substance
-        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
-           OR common_name ILIKE ${searchTerm}
+        WHERE common_name ILIKE ${searchTerm}
            OR alternative_names::text ILIKE ${searchTerm}
-        ORDER BY rank DESC NULLS LAST, common_name
+        ORDER BY name_match_priority ASC, common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const nameCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
-           OR common_name ILIKE ${searchTerm}
+        WHERE common_name ILIKE ${searchTerm}
            OR alternative_names::text ILIKE ${searchTerm}
       `;
       totalResults = parseInt(nameCount[0].count as string);
       break;
 
     case "profile":
-      // Flavor/odor profile search: use full-text search
+      // Simple keyword search on flavor/odor profiles
       results = await sql`
-        SELECT *, ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
+        SELECT *
         FROM substance
-        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
-           OR olfactory_taste_notes ILIKE ${searchTerm}
+        WHERE olfactory_taste_notes ILIKE ${searchTerm}
            OR flavor_profile ILIKE ${searchTerm}
            OR fema_flavor_profile ILIKE ${searchTerm}
            OR taste ILIKE ${searchTerm}
            OR odor ILIKE ${searchTerm}
-        ORDER BY rank DESC NULLS LAST, common_name
+        ORDER BY common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const profileCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
-           OR olfactory_taste_notes ILIKE ${searchTerm}
+        WHERE olfactory_taste_notes ILIKE ${searchTerm}
            OR flavor_profile ILIKE ${searchTerm}
            OR fema_flavor_profile ILIKE ${searchTerm}
            OR taste ILIKE ${searchTerm}
@@ -112,21 +109,27 @@ export async function searchSubstances(
 
     case "all":
     default:
-      // Full search: use full-text search with ranking, fallback to ILIKE
+      // Simple keyword search with exact match prioritization
       results = await sql`
-        SELECT *, ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
+        SELECT *,
+          CASE
+            WHEN LOWER(common_name) = LOWER(${query}) THEN 1
+            WHEN LOWER(common_name) LIKE LOWER(${query}) || '%' THEN 2
+            WHEN common_name ILIKE ${searchTerm} THEN 3
+            ELSE 4
+          END AS name_match_priority
         FROM substance
-        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
-           OR common_name ILIKE ${searchTerm}
+        WHERE common_name ILIKE ${searchTerm}
+           OR alternative_names::text ILIKE ${searchTerm}
            OR cas_id ILIKE ${searchTerm}
            OR fema_number::text ILIKE ${searchTerm}
-        ORDER BY rank DESC NULLS LAST, common_name
+        ORDER BY name_match_priority ASC, common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const allCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
-           OR common_name ILIKE ${searchTerm}
+        WHERE common_name ILIKE ${searchTerm}
+           OR alternative_names::text ILIKE ${searchTerm}
            OR cas_id ILIKE ${searchTerm}
            OR fema_number::text ILIKE ${searchTerm}
       `;
@@ -202,13 +205,20 @@ export async function searchSubstancesWithSmiles(
     case "name":
       result = await sql`
         SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name,
-               ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
+               ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank,
+               CASE
+                 WHEN LOWER(common_name) = LOWER(${query}) THEN 1
+                 WHEN LOWER(common_name) LIKE LOWER(${query}) || '%' THEN 2
+                 WHEN common_name ILIKE ${searchTerm} THEN 3
+                 WHEN alternative_names::text ILIKE ${searchTerm} THEN 4
+                 ELSE 5
+               END AS name_match_priority
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
         AND (search_vector @@ to_tsquery('english', ${tsQuery})
              OR common_name ILIKE ${searchTerm}
              OR alternative_names::text ILIKE ${searchTerm})
-        ORDER BY rank DESC NULLS LAST, common_name
+        ORDER BY name_match_priority ASC, rank DESC NULLS LAST, common_name
         LIMIT ${limit}
       `;
       break;
@@ -256,14 +266,20 @@ export async function searchSubstancesWithSmiles(
     default:
       result = await sql`
         SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name,
-               ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
+               ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank,
+               CASE
+                 WHEN LOWER(common_name) = LOWER(${query}) THEN 1
+                 WHEN LOWER(common_name) LIKE LOWER(${query}) || '%' THEN 2
+                 WHEN common_name ILIKE ${searchTerm} THEN 3
+                 ELSE 4
+               END AS name_match_priority
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
         AND (search_vector @@ to_tsquery('english', ${tsQuery})
              OR common_name ILIKE ${searchTerm}
              OR cas_id ILIKE ${searchTerm}
              OR fema_number::text ILIKE ${searchTerm})
-        ORDER BY rank DESC NULLS LAST, common_name
+        ORDER BY name_match_priority ASC, rank DESC NULLS LAST, common_name
         LIMIT ${limit}
       `;
       break;
