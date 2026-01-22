@@ -13,9 +13,14 @@ import type {
 export type Substance = {
   substance_id: number;
   fema_number: number | null;
-  common_name: string | null;
+  common_name: string; // NOT NULL after migration 009
   cas_id: string | null;
   iupac_name: string | null;
+
+  // EU regulatory identifiers (added by migration 012)
+  fl_number: string | null; // FLAVIS number (format: XX.XXX)
+  coe_number: string | null; // Council of Europe number
+  jecfa_number: number | null; // JECFA number
 
   // Chemical properties
   molecular_weight: number | null;
@@ -51,10 +56,17 @@ export type Substance = {
   created_at: string;
   updated_at: string;
 
+  // Full-text search (added by migration 006)
+  search_vector?: string;
+
   // Junction table fields (when joined with substance_flavour)
   concentration?: number;
   unit?: ConcentrationUnitValue;
   order_index?: number;
+
+  // Relations (when loaded)
+  regulatory_statuses?: RegulatoryStatus[];
+  usage_guidelines?: SubstanceUsageGuideline[];
 };
 
 // ===========================================
@@ -156,4 +168,78 @@ export type JobInteraction = {
   action: JobInteractionValue;
   referrer: string | null;
   timestamp: string;
+};
+
+// ===========================================
+// REGULATORY STATUS
+// ===========================================
+export type RegulatoryBody =
+  | "FDA"
+  | "EU"
+  | "FEMA"
+  | "JECFA"
+  | "COE"
+  | "EFSA"
+  | "Health_Canada"
+  | "FSANZ"
+  | "Other";
+
+export type RegulatoryStatusValue =
+  | "GRAS"
+  | "Approved"
+  | "Restricted"
+  | "Banned"
+  | "Under_Review"
+  | "Pending"
+  | "Not_Evaluated";
+
+export type RegulatoryStatus = {
+  status_id: number;
+  substance_id: number;
+  regulatory_body: RegulatoryBody;
+  status: RegulatoryStatusValue;
+  max_usage_level: string | null;
+  reference_number: string | null;
+  reference_url: string | null;
+  effective_date: string | null;
+  expiry_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// ===========================================
+// SUBSTANCE USAGE GUIDELINES
+// ===========================================
+export type ApplicationType =
+  | "beverages"
+  | "baked_goods"
+  | "confectionery"
+  | "dairy"
+  | "savory"
+  | "snacks"
+  | "frozen_desserts"
+  | "sauces_condiments"
+  | "meat_products"
+  | "tobacco"
+  | "oral_care"
+  | "fragrances"
+  | "other";
+
+export type SubstanceUsageGuideline = {
+  guideline_id: number;
+  substance_id: number;
+  application_type: ApplicationType;
+  application_subtype: string | null;
+  typical_min_ppm: number | null;
+  typical_max_ppm: number | null;
+  legal_max_ppm: number | null;
+  detection_threshold_ppm: number | null;
+  low_level_character: string | null;
+  high_level_character: string | null;
+  data_source: string | null;
+  source_reference: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 };

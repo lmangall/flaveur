@@ -36,12 +36,31 @@ import {
 } from "lucide-react";
 import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
 import { MoleculeImage } from "@/app/[locale]/components/ui/molecule-image";
+import { EUStatusBadge } from "@/app/[locale]/components/eu-status-badge";
+import { Badge } from "@/app/[locale]/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/[locale]/components/ui/tabs";
+import {
+  CheckCircle,
+  AlertTriangle,
+  HelpCircle,
+  ExternalLink,
+  Loader2,
+  Info,
+  List,
+  Scale,
+  Sparkles,
+  FlaskConical,
+  Building2,
+  Flag,
+} from "lucide-react";
 import {
   getSubstances,
   searchSubstances,
   getSubstanceByFemaNumber,
 } from "@/actions/substances";
 import { addSubstanceToFlavour } from "@/actions/flavours";
+import { getSubstanceEUFullData } from "@/actions/regulatory";
+import type { EUAdditiveFullData } from "@/lib/eu-api/client";
 
 type Substance = {
   fema_number: number;
@@ -97,6 +116,9 @@ export default function SubstancesPage() {
   const [viewDetailsSubstance, setViewDetailsSubstance] =
     useState<Substance | null>(null);
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
+  const [euData, setEuData] = useState<EUAdditiveFullData | null>(null);
+  const [euLoading, setEuLoading] = useState(false);
+  const [euError, setEuError] = useState<string | null>(null);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -120,6 +142,32 @@ export default function SubstancesPage() {
   useEffect(() => {
     fetchSubstancesData();
   }, [currentPage, fetchSubstancesData]);
+
+  // Fetch EU data when modal opens
+  useEffect(() => {
+    if (!isViewDetailsOpen || !viewDetailsSubstance) {
+      setEuData(null);
+      setEuError(null);
+      return;
+    }
+
+    setEuLoading(true);
+    setEuError(null);
+
+    getSubstanceEUFullData(
+      viewDetailsSubstance.common_name,
+      viewDetailsSubstance.alternative_names
+    )
+      .then((result) => {
+        setEuData(result);
+      })
+      .catch(() => {
+        setEuError("Failed to load EU regulatory data");
+      })
+      .finally(() => {
+        setEuLoading(false);
+      });
+  }, [isViewDetailsOpen, viewDetailsSubstance]);
 
   // Remove the local filtering since we're now using backend search
   const filteredSubstances = substances;
@@ -303,6 +351,7 @@ export default function SubstancesPage() {
                   <TableHead>FEMA #</TableHead>
                   <TableHead>CAS ID</TableHead>
                   <TableHead>Name</TableHead>
+                  <TableHead>EU Status</TableHead>
                   <TableHead>Taste</TableHead>
                   <TableHead>Olfactory Notes</TableHead>
                   <TableHead>Flavor Profile</TableHead>
@@ -329,6 +378,14 @@ export default function SubstancesPage() {
                     </TableCell>
                     <TableCell>{substance.cas_id}</TableCell>
                     <TableCell>{substance.common_name}</TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <EUStatusBadge
+                        chemicalName={substance.common_name}
+                        alternativeNames={substance.alternative_names}
+                        compact
+                        showLink={false}
+                      />
+                    </TableCell>
                     <TableCell>{substance.taste || "-"}</TableCell>
                     <TableCell>
                       {substance.olfactory_taste_notes || "-"}
@@ -392,20 +449,20 @@ export default function SubstancesPage() {
 
           {/* Detail modal */}
           <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
-            <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[750px] max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Substance Details</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="py-4">
                 {viewDetailsSubstance && (
                   <>
-                    {/* Header with image and basic info */}
-                    <div className="flex gap-4">
+                    {/* Header with image and basic info - always visible */}
+                    <div className="flex gap-4 pb-4">
                       <MoleculeImage
                         pubchemCid={viewDetailsSubstance.pubchem_cid}
                         formula={viewDetailsSubstance.molecular_formula}
                         name={viewDetailsSubstance.common_name}
-                        size={140}
+                        size={120}
                       />
                       <div className="flex-1 space-y-1">
                         <h3 className="font-semibold text-lg">
@@ -431,146 +488,425 @@ export default function SubstancesPage() {
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           {viewDetailsSubstance.is_natural && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">Natural</span>
+                            <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Natural</span>
                           )}
                           {viewDetailsSubstance.synthetic && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800">Synthetic</span>
+                            <span className="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">Synthetic</span>
                           )}
                           {viewDetailsSubstance.type && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">{viewDetailsSubstance.type}</span>
+                            <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">{viewDetailsSubstance.type}</span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Identifiers */}
-                    <div className="border-t pt-4">
-                      <h4 className="font-medium text-sm mb-2 text-muted-foreground">Identifiers</h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div><span className="text-muted-foreground">FEMA:</span> {viewDetailsSubstance.fema_number || "-"}</div>
-                        <div><span className="text-muted-foreground">CAS:</span> {viewDetailsSubstance.cas_id || "-"}</div>
-                        {viewDetailsSubstance.ec_number && (
-                          <div><span className="text-muted-foreground">EC:</span> {viewDetailsSubstance.ec_number}</div>
-                        )}
-                        {viewDetailsSubstance.pubchem_cid && (
-                          <div><span className="text-muted-foreground">PubChem CID:</span> {viewDetailsSubstance.pubchem_cid}</div>
-                        )}
-                        {viewDetailsSubstance.pubchem_sid && (
-                          <div><span className="text-muted-foreground">PubChem SID:</span> {viewDetailsSubstance.pubchem_sid}</div>
-                        )}
-                      </div>
-                    </div>
+                    {/* Main tabbed content */}
+                    <Tabs defaultValue="overview" className="w-full">
+                      <TabsList className="grid w-full grid-cols-5">
+                        <TabsTrigger value="overview" className="gap-1 text-xs">
+                          <Info className="h-3 w-3" />
+                          <span className="hidden sm:inline">Overview</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="sensory" className="gap-1 text-xs">
+                          <Sparkles className="h-3 w-3" />
+                          <span className="hidden sm:inline">Sensory</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="chemistry" className="gap-1 text-xs">
+                          <FlaskConical className="h-3 w-3" />
+                          <span className="hidden sm:inline">Chemistry</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="applications" className="gap-1 text-xs">
+                          <Building2 className="h-3 w-3" />
+                          <span className="hidden sm:inline">Applications</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="eu-regulation" className="gap-1 text-xs">
+                          <Flag className="h-3 w-3" />
+                          <span className="hidden sm:inline">EU</span>
+                        </TabsTrigger>
+                      </TabsList>
 
-                    {/* Sensory Properties */}
-                    {(viewDetailsSubstance.odor || viewDetailsSubstance.taste || viewDetailsSubstance.olfactory_taste_notes || viewDetailsSubstance.flavor_profile || viewDetailsSubstance.fema_flavor_profile) && (
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium text-sm mb-2 text-muted-foreground">Sensory Properties</h4>
-                        <div className="space-y-2 text-sm">
-                          {viewDetailsSubstance.odor && (
-                            <p><strong>Odor:</strong> {viewDetailsSubstance.odor}</p>
-                          )}
-                          {viewDetailsSubstance.taste && (
-                            <p><strong>Taste:</strong> {viewDetailsSubstance.taste}</p>
-                          )}
-                          {viewDetailsSubstance.olfactory_taste_notes && (
-                            <p><strong>Olfactory Notes:</strong> {viewDetailsSubstance.olfactory_taste_notes}</p>
-                          )}
-                          {viewDetailsSubstance.flavor_profile && (
-                            <p><strong>Flavor Profile:</strong> {viewDetailsSubstance.flavor_profile}</p>
-                          )}
-                          {viewDetailsSubstance.fema_flavor_profile && (
-                            <p><strong>FEMA Flavor Profile:</strong> {viewDetailsSubstance.fema_flavor_profile}</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Chemical Properties */}
-                    {(viewDetailsSubstance.functional_groups || viewDetailsSubstance.xlogp || viewDetailsSubstance.smile || viewDetailsSubstance.inchi) && (
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium text-sm mb-2 text-muted-foreground">Chemical Properties</h4>
-                        <div className="space-y-2 text-sm">
-                          {viewDetailsSubstance.functional_groups && (
-                            <p><strong>Functional Groups:</strong> {viewDetailsSubstance.functional_groups}</p>
-                          )}
-                          {viewDetailsSubstance.xlogp !== undefined && viewDetailsSubstance.xlogp !== null && (
-                            <p><strong>XLogP:</strong> {viewDetailsSubstance.xlogp}</p>
-                          )}
-                          {viewDetailsSubstance.smile && (
-                            <div>
-                              <strong>SMILES:</strong>
-                              <code className="block mt-1 p-2 bg-muted rounded text-xs break-all">{viewDetailsSubstance.smile}</code>
+                      {/* Overview Tab */}
+                      <TabsContent value="overview" className="mt-4 space-y-4">
+                        {/* Identifiers */}
+                        <div>
+                          <h4 className="font-medium text-sm mb-3 text-muted-foreground">Identifiers</h4>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground">FEMA Number</p>
+                              <p className="font-medium">{viewDetailsSubstance.fema_number || "-"}</p>
                             </div>
-                          )}
-                          {viewDetailsSubstance.inchi && (
-                            <div>
-                              <strong>InChI:</strong>
-                              <code className="block mt-1 p-2 bg-muted rounded text-xs break-all">{viewDetailsSubstance.inchi}</code>
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground">CAS ID</p>
+                              <p className="font-medium">{viewDetailsSubstance.cas_id || "-"}</p>
                             </div>
-                          )}
+                            {viewDetailsSubstance.ec_number && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground">EC Number</p>
+                                <p className="font-medium">{viewDetailsSubstance.ec_number}</p>
+                              </div>
+                            )}
+                            {viewDetailsSubstance.pubchem_cid && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground">PubChem CID</p>
+                                <p className="font-medium">{viewDetailsSubstance.pubchem_cid}</p>
+                              </div>
+                            )}
+                            {viewDetailsSubstance.pubchem_sid && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground">PubChem SID</p>
+                                <p className="font-medium">{viewDetailsSubstance.pubchem_sid}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
 
-                    {/* Physical Properties */}
-                    {(viewDetailsSubstance.melting_point_c || viewDetailsSubstance.boiling_point_c || viewDetailsSubstance.solubility) && (
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium text-sm mb-2 text-muted-foreground">Physical Properties</h4>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          {viewDetailsSubstance.melting_point_c && (
-                            <div><strong>Melting Point:</strong> {viewDetailsSubstance.melting_point_c}°C</div>
-                          )}
-                          {viewDetailsSubstance.boiling_point_c && (
-                            <div><strong>Boiling Point:</strong> {viewDetailsSubstance.boiling_point_c}°C</div>
-                          )}
-                        </div>
-                        {viewDetailsSubstance.solubility && Object.keys(viewDetailsSubstance.solubility).length > 0 && (
-                          <div className="mt-2">
-                            <strong>Solubility:</strong>
-                            <pre className="mt-1 p-2 bg-muted rounded text-xs overflow-x-auto">
-                              {JSON.stringify(viewDetailsSubstance.solubility, null, 2)}
-                            </pre>
+                        {/* Alternative Names */}
+                        {viewDetailsSubstance.alternative_names && viewDetailsSubstance.alternative_names.length > 0 && (
+                          <div>
+                            <h4 className="font-medium text-sm mb-2 text-muted-foreground">Alternative Names</h4>
+                            <div className="flex flex-wrap gap-1">
+                              {viewDetailsSubstance.alternative_names.map((name, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
+                              ))}
+                            </div>
                           </div>
                         )}
-                      </div>
-                    )}
+                      </TabsContent>
 
-                    {/* Applications & Classification */}
-                    {(viewDetailsSubstance.description || viewDetailsSubstance.common_applications || viewDetailsSubstance.food_additive_classes) && (
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium text-sm mb-2 text-muted-foreground">Applications</h4>
-                        <div className="space-y-2 text-sm">
-                          {viewDetailsSubstance.description && (
-                            <p><strong>Description:</strong> {viewDetailsSubstance.description}</p>
+                      {/* Sensory Tab */}
+                      <TabsContent value="sensory" className="mt-4 space-y-4">
+                        {(viewDetailsSubstance.odor || viewDetailsSubstance.taste || viewDetailsSubstance.olfactory_taste_notes || viewDetailsSubstance.flavor_profile || viewDetailsSubstance.fema_flavor_profile) ? (
+                          <div className="space-y-4">
+                            {viewDetailsSubstance.odor && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground mb-1">Odor</p>
+                                <p className="text-sm">{viewDetailsSubstance.odor}</p>
+                              </div>
+                            )}
+                            {viewDetailsSubstance.taste && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground mb-1">Taste</p>
+                                <p className="text-sm">{viewDetailsSubstance.taste}</p>
+                              </div>
+                            )}
+                            {viewDetailsSubstance.olfactory_taste_notes && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground mb-1">Olfactory Notes</p>
+                                <p className="text-sm">{viewDetailsSubstance.olfactory_taste_notes}</p>
+                              </div>
+                            )}
+                            {viewDetailsSubstance.flavor_profile && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground mb-1">Flavor Profile</p>
+                                <p className="text-sm">{viewDetailsSubstance.flavor_profile}</p>
+                              </div>
+                            )}
+                            {viewDetailsSubstance.fema_flavor_profile && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground mb-1">FEMA Flavor Profile</p>
+                                <p className="text-sm">{viewDetailsSubstance.fema_flavor_profile}</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center py-8 text-muted-foreground">
+                            <Sparkles className="h-8 w-8 mb-2 opacity-50" />
+                            <p className="text-sm">No sensory data available</p>
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      {/* Chemistry Tab */}
+                      <TabsContent value="chemistry" className="mt-4 space-y-4">
+                        {(viewDetailsSubstance.functional_groups || viewDetailsSubstance.xlogp !== undefined || viewDetailsSubstance.smile || viewDetailsSubstance.inchi || viewDetailsSubstance.melting_point_c || viewDetailsSubstance.boiling_point_c || viewDetailsSubstance.solubility) ? (
+                          <>
+                            {/* Chemical Properties */}
+                            {(viewDetailsSubstance.functional_groups || (viewDetailsSubstance.xlogp !== undefined && viewDetailsSubstance.xlogp !== null)) && (
+                              <div>
+                                <h4 className="font-medium text-sm mb-3 text-muted-foreground">Chemical Properties</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                  {viewDetailsSubstance.functional_groups && (
+                                    <div className="p-3 rounded-lg bg-muted/50">
+                                      <p className="text-xs text-muted-foreground mb-1">Functional Groups</p>
+                                      <p className="text-sm">{viewDetailsSubstance.functional_groups}</p>
+                                    </div>
+                                  )}
+                                  {viewDetailsSubstance.xlogp !== undefined && viewDetailsSubstance.xlogp !== null && (
+                                    <div className="p-3 rounded-lg bg-muted/50">
+                                      <p className="text-xs text-muted-foreground mb-1">XLogP</p>
+                                      <p className="text-sm font-medium">{viewDetailsSubstance.xlogp}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Physical Properties */}
+                            {(viewDetailsSubstance.melting_point_c || viewDetailsSubstance.boiling_point_c) && (
+                              <div>
+                                <h4 className="font-medium text-sm mb-3 text-muted-foreground">Physical Properties</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                  {viewDetailsSubstance.melting_point_c && (
+                                    <div className="p-3 rounded-lg bg-muted/50">
+                                      <p className="text-xs text-muted-foreground mb-1">Melting Point</p>
+                                      <p className="text-sm font-medium">{viewDetailsSubstance.melting_point_c}°C</p>
+                                    </div>
+                                  )}
+                                  {viewDetailsSubstance.boiling_point_c && (
+                                    <div className="p-3 rounded-lg bg-muted/50">
+                                      <p className="text-xs text-muted-foreground mb-1">Boiling Point</p>
+                                      <p className="text-sm font-medium">{viewDetailsSubstance.boiling_point_c}°C</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Solubility */}
+                            {viewDetailsSubstance.solubility && Object.keys(viewDetailsSubstance.solubility).length > 0 && (
+                              <div>
+                                <h4 className="font-medium text-sm mb-3 text-muted-foreground">Solubility</h4>
+                                <pre className="p-3 bg-muted/50 rounded-lg text-xs overflow-x-auto">
+                                  {JSON.stringify(viewDetailsSubstance.solubility, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+
+                            {/* Structural Notations */}
+                            {(viewDetailsSubstance.smile || viewDetailsSubstance.inchi) && (
+                              <div>
+                                <h4 className="font-medium text-sm mb-3 text-muted-foreground">Structural Notations</h4>
+                                <div className="space-y-3">
+                                  {viewDetailsSubstance.smile && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">SMILES</p>
+                                      <code className="block p-3 bg-muted/50 rounded-lg text-xs break-all font-mono">{viewDetailsSubstance.smile}</code>
+                                    </div>
+                                  )}
+                                  {viewDetailsSubstance.inchi && (
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-1">InChI</p>
+                                      <code className="block p-3 bg-muted/50 rounded-lg text-xs break-all font-mono">{viewDetailsSubstance.inchi}</code>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center py-8 text-muted-foreground">
+                            <FlaskConical className="h-8 w-8 mb-2 opacity-50" />
+                            <p className="text-sm">No chemistry data available</p>
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      {/* Applications Tab */}
+                      <TabsContent value="applications" className="mt-4 space-y-4">
+                        {(viewDetailsSubstance.description || viewDetailsSubstance.common_applications || (viewDetailsSubstance.food_additive_classes && viewDetailsSubstance.food_additive_classes.length > 0)) ? (
+                          <>
+                            {viewDetailsSubstance.description && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground mb-1">Description</p>
+                                <p className="text-sm">{viewDetailsSubstance.description}</p>
+                              </div>
+                            )}
+                            {viewDetailsSubstance.common_applications && (
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground mb-1">Common Applications</p>
+                                <p className="text-sm">{viewDetailsSubstance.common_applications}</p>
+                              </div>
+                            )}
+                            {viewDetailsSubstance.food_additive_classes && viewDetailsSubstance.food_additive_classes.length > 0 && (
+                              <div>
+                                <h4 className="font-medium text-sm mb-2 text-muted-foreground">Food Additive Classes</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {viewDetailsSubstance.food_additive_classes.map((cls, i) => (
+                                    <Badge key={i} variant="outline" className="text-xs">{cls}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center py-8 text-muted-foreground">
+                            <Building2 className="h-8 w-8 mb-2 opacity-50" />
+                            <p className="text-sm">No application data available</p>
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      {/* EU Regulation Tab */}
+                      <TabsContent value="eu-regulation" className="mt-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <h4 className="font-medium text-sm text-muted-foreground">EU Regulatory Status</h4>
+                          {euData && (
+                            <Badge variant={euData.hasRestrictions ? "warning" : "success"} className="text-xs">
+                              {euData.hasRestrictions ? (
+                                <>
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Restricted
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Approved
+                                </>
+                              )}
+                            </Badge>
                           )}
-                          {viewDetailsSubstance.common_applications && (
-                            <p><strong>Applications:</strong> {viewDetailsSubstance.common_applications}</p>
-                          )}
-                          {viewDetailsSubstance.food_additive_classes && viewDetailsSubstance.food_additive_classes.length > 0 && (
-                            <div>
-                              <strong>Food Additive Classes:</strong>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {viewDetailsSubstance.food_additive_classes.map((cls, i) => (
-                                  <span key={i} className="px-2 py-0.5 text-xs rounded bg-muted">{cls}</span>
+                        </div>
+
+                        {euLoading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                            <span className="ml-2 text-sm text-muted-foreground">Loading EU data...</span>
+                          </div>
+                        ) : euError ? (
+                          <div className="flex items-center justify-center py-6 text-destructive text-sm">
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            {euError}
+                          </div>
+                        ) : !euData ? (
+                          <div className="flex flex-col items-center py-8 text-muted-foreground">
+                            <HelpCircle className="h-8 w-8 mb-2 opacity-50" />
+                            <p className="text-sm font-medium">Not found in EU database</p>
+                            <p className="text-xs mt-1">
+                              &quot;{viewDetailsSubstance.common_name}&quot; is not registered as an EU food additive.
+                            </p>
+                          </div>
+                        ) : (
+                          <Tabs defaultValue="eu-overview" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
+                              <TabsTrigger value="eu-overview" className="gap-1 text-xs">
+                                <Info className="h-3 w-3" />
+                                Overview
+                              </TabsTrigger>
+                              <TabsTrigger value="eu-categories" className="gap-1 text-xs">
+                                <List className="h-3 w-3" />
+                                Categories ({euData.foodCategories.length})
+                              </TabsTrigger>
+                              <TabsTrigger value="eu-legislation" className="gap-1 text-xs">
+                                <Scale className="h-3 w-3" />
+                                Legislation
+                              </TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="eu-overview" className="mt-3 space-y-3">
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="p-3 rounded-lg bg-muted/50">
+                                  <p className="text-xs text-muted-foreground">Name</p>
+                                  <p className="font-medium">{euData.name}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-muted/50">
+                                  <p className="text-xs text-muted-foreground">E Number</p>
+                                  <p className="font-medium">{euData.eNumber}</p>
+                                </div>
+                              </div>
+
+                              {euData.synonyms.length > 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground mb-2">Synonyms</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {euData.synonyms.slice(0, 5).map((syn, i) => (
+                                      <Badge key={i} variant="secondary" className="text-xs">
+                                        {syn}
+                                      </Badge>
+                                    ))}
+                                    {euData.synonyms.length > 5 && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        +{euData.synonyms.length - 5} more
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div className="p-3 rounded-lg bg-muted/50">
+                                  <p className="text-xs text-muted-foreground">Food Categories</p>
+                                  <p className="font-medium">{euData.foodCategories.length} authorized</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-muted/50">
+                                  <p className="text-xs text-muted-foreground">Status</p>
+                                  <p className="font-medium text-xs">
+                                    {euData.hasRestrictions ? "Has specific restrictions" : "Quantum satis (no limit)"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {euData.detailsUrl && (
+                                <Button variant="outline" size="sm" className="w-full" asChild>
+                                  <a href={euData.detailsUrl} target="_blank" rel="noopener noreferrer">
+                                    View on EU Food Portal
+                                    <ExternalLink className="h-3 w-3 ml-2" />
+                                  </a>
+                                </Button>
+                              )}
+                            </TabsContent>
+
+                            <TabsContent value="eu-categories" className="mt-3">
+                              <div className="max-h-[200px] overflow-y-auto pr-1 space-y-2">
+                                {euData.foodCategories.map((cat, i) => (
+                                  <div
+                                    key={i}
+                                    className="border rounded-lg p-2 text-sm hover:bg-muted/30 transition-colors"
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-xs leading-tight">{cat.name}</p>
+                                        <p className="text-xs text-muted-foreground">Category {cat.level}</p>
+                                      </div>
+                                      <Badge
+                                        variant={cat.restrictionType === "quantum satis" ? "secondary" : "warning"}
+                                        className="shrink-0 text-xs"
+                                      >
+                                        {cat.restrictionType === "quantum satis"
+                                          ? "No limit"
+                                          : cat.restrictionValue
+                                          ? `${cat.restrictionValue} ${cat.restrictionUnit || ""}`
+                                          : cat.restrictionType || "Allowed"}
+                                      </Badge>
+                                    </div>
+                                  </div>
                                 ))}
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                            </TabsContent>
 
-                    {/* Alternative Names */}
-                    {viewDetailsSubstance.alternative_names && viewDetailsSubstance.alternative_names.length > 0 && (
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium text-sm mb-2 text-muted-foreground">Alternative Names</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {viewDetailsSubstance.alternative_names.map((name, i) => (
-                            <span key={i} className="px-2 py-0.5 text-xs rounded bg-muted">{name}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                            <TabsContent value="eu-legislation" className="mt-3 space-y-3">
+                              <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-xs text-muted-foreground">Regulation</p>
+                                <p className="font-medium text-sm">{euData.legislation.short || "N/A"}</p>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                {euData.legislation.ojRef && (
+                                  <div className="p-3 rounded-lg bg-muted/50">
+                                    <p className="text-xs text-muted-foreground">Official Journal</p>
+                                    <p className="text-sm">{euData.legislation.ojRef}</p>
+                                  </div>
+                                )}
+                                {euData.legislation.pubDate && (
+                                  <div className="p-3 rounded-lg bg-muted/50">
+                                    <p className="text-xs text-muted-foreground">Publication Date</p>
+                                    <p className="text-sm">{euData.legislation.pubDate}</p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {euData.legislation.url && (
+                                <Button variant="outline" size="sm" className="w-full" asChild>
+                                  <a href={euData.legislation.url} target="_blank" rel="noopener noreferrer">
+                                    View Legislation
+                                    <ExternalLink className="h-3 w-3 ml-2" />
+                                  </a>
+                                </Button>
+                              )}
+                            </TabsContent>
+                          </Tabs>
+                        )}
+                      </TabsContent>
+                    </Tabs>
                   </>
                 )}
               </div>
@@ -584,6 +920,7 @@ export default function SubstancesPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
         </>
       ) : (
         <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted/30">

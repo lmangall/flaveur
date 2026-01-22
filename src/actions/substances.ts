@@ -25,51 +25,69 @@ export async function searchSubstances(
 
   const offset = (page - 1) * limit;
   const searchTerm = `%${query}%`;
+  // Convert query to tsquery format for full-text search
+  const tsQuery = query
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0)
+    .join(" & ");
 
   let results: Record<string, unknown>[];
   let totalResults: number;
 
   switch (category) {
     case "name":
+      // Name search: use full-text search with fallback to ILIKE for partial matches
       results = await sql`
-        SELECT * FROM substance
-        WHERE common_name ILIKE ${searchTerm}
-        OR alternative_names::text ILIKE ${searchTerm}
+        SELECT *, ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
+        FROM substance
+        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
+           OR common_name ILIKE ${searchTerm}
+           OR alternative_names::text ILIKE ${searchTerm}
+        ORDER BY rank DESC NULLS LAST, common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const nameCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE common_name ILIKE ${searchTerm}
-        OR alternative_names::text ILIKE ${searchTerm}
+        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
+           OR common_name ILIKE ${searchTerm}
+           OR alternative_names::text ILIKE ${searchTerm}
       `;
       totalResults = parseInt(nameCount[0].count as string);
       break;
 
     case "profile":
+      // Flavor/odor profile search: use full-text search
       results = await sql`
-        SELECT * FROM substance
-        WHERE olfactory_taste_notes ILIKE ${searchTerm}
-        OR flavor_profile ILIKE ${searchTerm}
-        OR fema_flavor_profile ILIKE ${searchTerm}
-        OR taste ILIKE ${searchTerm}
-        OR odor ILIKE ${searchTerm}
+        SELECT *, ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
+        FROM substance
+        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
+           OR olfactory_taste_notes ILIKE ${searchTerm}
+           OR flavor_profile ILIKE ${searchTerm}
+           OR fema_flavor_profile ILIKE ${searchTerm}
+           OR taste ILIKE ${searchTerm}
+           OR odor ILIKE ${searchTerm}
+        ORDER BY rank DESC NULLS LAST, common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const profileCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE olfactory_taste_notes ILIKE ${searchTerm}
-        OR flavor_profile ILIKE ${searchTerm}
-        OR fema_flavor_profile ILIKE ${searchTerm}
-        OR taste ILIKE ${searchTerm}
-        OR odor ILIKE ${searchTerm}
+        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
+           OR olfactory_taste_notes ILIKE ${searchTerm}
+           OR flavor_profile ILIKE ${searchTerm}
+           OR fema_flavor_profile ILIKE ${searchTerm}
+           OR taste ILIKE ${searchTerm}
+           OR odor ILIKE ${searchTerm}
       `;
       totalResults = parseInt(profileCount[0].count as string);
       break;
 
     case "cas_id":
+      // CAS ID: exact pattern match is more appropriate
       results = await sql`
         SELECT * FROM substance
         WHERE cas_id ILIKE ${searchTerm}
+        ORDER BY cas_id
         LIMIT ${limit} OFFSET ${offset}
       `;
       const casCount = await sql`
@@ -79,9 +97,11 @@ export async function searchSubstances(
       break;
 
     case "fema_number":
+      // FEMA number: exact pattern match is more appropriate
       results = await sql`
         SELECT * FROM substance
         WHERE fema_number::text ILIKE ${searchTerm}
+        ORDER BY fema_number
         LIMIT ${limit} OFFSET ${offset}
       `;
       const femaCount = await sql`
@@ -92,32 +112,23 @@ export async function searchSubstances(
 
     case "all":
     default:
+      // Full search: use full-text search with ranking, fallback to ILIKE
       results = await sql`
-        SELECT * FROM substance
-        WHERE common_name ILIKE ${searchTerm}
-        OR alternative_names::text ILIKE ${searchTerm}
-        OR olfactory_taste_notes ILIKE ${searchTerm}
-        OR flavor_profile ILIKE ${searchTerm}
-        OR fema_flavor_profile ILIKE ${searchTerm}
-        OR taste ILIKE ${searchTerm}
-        OR cas_id ILIKE ${searchTerm}
-        OR description ILIKE ${searchTerm}
-        OR odor ILIKE ${searchTerm}
-        OR common_applications ILIKE ${searchTerm}
+        SELECT *, ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
+        FROM substance
+        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
+           OR common_name ILIKE ${searchTerm}
+           OR cas_id ILIKE ${searchTerm}
+           OR fema_number::text ILIKE ${searchTerm}
+        ORDER BY rank DESC NULLS LAST, common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const allCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE common_name ILIKE ${searchTerm}
-        OR alternative_names::text ILIKE ${searchTerm}
-        OR olfactory_taste_notes ILIKE ${searchTerm}
-        OR flavor_profile ILIKE ${searchTerm}
-        OR fema_flavor_profile ILIKE ${searchTerm}
-        OR taste ILIKE ${searchTerm}
-        OR cas_id ILIKE ${searchTerm}
-        OR description ILIKE ${searchTerm}
-        OR odor ILIKE ${searchTerm}
-        OR common_applications ILIKE ${searchTerm}
+        WHERE search_vector @@ to_tsquery('english', ${tsQuery})
+           OR common_name ILIKE ${searchTerm}
+           OR cas_id ILIKE ${searchTerm}
+           OR fema_number::text ILIKE ${searchTerm}
       `;
       totalResults = parseInt(allCount[0].count as string);
       break;
@@ -178,28 +189,43 @@ export async function searchSubstancesWithSmiles(
   }
 
   const searchTerm = `%${query}%`;
+  // Convert query to tsquery format for full-text search
+  const tsQuery = query
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0)
+    .join(" & ");
 
   let result: Record<string, unknown>[];
 
   switch (category) {
     case "name":
       result = await sql`
-        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
+        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name,
+               ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
-        AND (common_name ILIKE ${searchTerm} OR alternative_names::text ILIKE ${searchTerm})
-        ORDER BY CASE WHEN common_name ILIKE ${searchTerm} THEN 0 ELSE 1 END, common_name
+        AND (search_vector @@ to_tsquery('english', ${tsQuery})
+             OR common_name ILIKE ${searchTerm}
+             OR alternative_names::text ILIKE ${searchTerm})
+        ORDER BY rank DESC NULLS LAST, common_name
         LIMIT ${limit}
       `;
       break;
 
     case "profile":
       result = await sql`
-        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
+        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name,
+               ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
-        AND (olfactory_taste_notes ILIKE ${searchTerm} OR flavor_profile ILIKE ${searchTerm} OR fema_flavor_profile ILIKE ${searchTerm} OR taste ILIKE ${searchTerm} OR odor ILIKE ${searchTerm})
-        ORDER BY common_name
+        AND (search_vector @@ to_tsquery('english', ${tsQuery})
+             OR olfactory_taste_notes ILIKE ${searchTerm}
+             OR flavor_profile ILIKE ${searchTerm}
+             OR fema_flavor_profile ILIKE ${searchTerm}
+             OR taste ILIKE ${searchTerm}
+             OR odor ILIKE ${searchTerm})
+        ORDER BY rank DESC NULLS LAST, common_name
         LIMIT ${limit}
       `;
       break;
@@ -210,7 +236,7 @@ export async function searchSubstancesWithSmiles(
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
         AND cas_id ILIKE ${searchTerm}
-        ORDER BY common_name
+        ORDER BY cas_id
         LIMIT ${limit}
       `;
       break;
@@ -229,19 +255,15 @@ export async function searchSubstancesWithSmiles(
     case "all":
     default:
       result = await sql`
-        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
+        SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name,
+               ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
-        AND (
-          common_name ILIKE ${searchTerm}
-          OR iupac_name ILIKE ${searchTerm}
-          OR fema_number::text ILIKE ${searchTerm}
-          OR olfactory_taste_notes ILIKE ${searchTerm}
-          OR flavor_profile ILIKE ${searchTerm}
-          OR odor ILIKE ${searchTerm}
-          OR cas_id ILIKE ${searchTerm}
-        )
-        ORDER BY CASE WHEN common_name ILIKE ${searchTerm} THEN 0 ELSE 1 END, common_name
+        AND (search_vector @@ to_tsquery('english', ${tsQuery})
+             OR common_name ILIKE ${searchTerm}
+             OR cas_id ILIKE ${searchTerm}
+             OR fema_number::text ILIKE ${searchTerm})
+        ORDER BY rank DESC NULLS LAST, common_name
         LIMIT ${limit}
       `;
       break;
@@ -289,4 +311,271 @@ export async function createSubstance(data: {
   `;
 
   return result[0];
+}
+
+// ===========================================
+// REGULATORY STATUS
+// ===========================================
+
+import type {
+  RegulatoryBody,
+  RegulatoryStatusValue,
+  RegulatoryStatus,
+} from "@/app/type";
+
+export async function getRegulatoryStatusBySubstance(
+  substanceId: number
+): Promise<RegulatoryStatus[]> {
+  const result = await sql`
+    SELECT * FROM regulatory_status
+    WHERE substance_id = ${substanceId}
+    ORDER BY regulatory_body
+  `;
+  return result as RegulatoryStatus[];
+}
+
+export async function getRegulatoryStatusByBody(
+  regulatoryBody: RegulatoryBody,
+  status?: RegulatoryStatusValue,
+  page: number = 1,
+  limit: number = 50
+) {
+  const offset = (page - 1) * limit;
+
+  let results: Record<string, unknown>[];
+  let totalCount: number;
+
+  if (status) {
+    results = await sql`
+      SELECT rs.*, s.common_name, s.fema_number, s.cas_id
+      FROM regulatory_status rs
+      JOIN substance s ON rs.substance_id = s.substance_id
+      WHERE rs.regulatory_body = ${regulatoryBody}
+        AND rs.status = ${status}
+      ORDER BY s.common_name
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    const countResult = await sql`
+      SELECT COUNT(*) FROM regulatory_status
+      WHERE regulatory_body = ${regulatoryBody} AND status = ${status}
+    `;
+    totalCount = parseInt(countResult[0].count as string);
+  } else {
+    results = await sql`
+      SELECT rs.*, s.common_name, s.fema_number, s.cas_id
+      FROM regulatory_status rs
+      JOIN substance s ON rs.substance_id = s.substance_id
+      WHERE rs.regulatory_body = ${regulatoryBody}
+      ORDER BY s.common_name
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    const countResult = await sql`
+      SELECT COUNT(*) FROM regulatory_status
+      WHERE regulatory_body = ${regulatoryBody}
+    `;
+    totalCount = parseInt(countResult[0].count as string);
+  }
+
+  return {
+    results,
+    pagination: {
+      total: totalCount,
+      page,
+      limit,
+      pages: Math.ceil(totalCount / limit),
+    },
+  };
+}
+
+export async function createRegulatoryStatus(data: {
+  substance_id: number;
+  regulatory_body: RegulatoryBody;
+  status: RegulatoryStatusValue;
+  max_usage_level?: string;
+  reference_number?: string;
+  reference_url?: string;
+  effective_date?: string;
+  expiry_date?: string;
+  notes?: string;
+}) {
+  const result = await sql`
+    INSERT INTO regulatory_status (
+      substance_id, regulatory_body, status, max_usage_level,
+      reference_number, reference_url, effective_date, expiry_date, notes
+    )
+    VALUES (
+      ${data.substance_id}, ${data.regulatory_body}, ${data.status},
+      ${data.max_usage_level ?? null}, ${data.reference_number ?? null},
+      ${data.reference_url ?? null}, ${data.effective_date ?? null},
+      ${data.expiry_date ?? null}, ${data.notes ?? null}
+    )
+    ON CONFLICT (substance_id, regulatory_body)
+    DO UPDATE SET
+      status = EXCLUDED.status,
+      max_usage_level = EXCLUDED.max_usage_level,
+      reference_number = EXCLUDED.reference_number,
+      reference_url = EXCLUDED.reference_url,
+      effective_date = EXCLUDED.effective_date,
+      expiry_date = EXCLUDED.expiry_date,
+      notes = EXCLUDED.notes,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING *
+  `;
+  return result[0];
+}
+
+export async function deleteRegulatoryStatus(
+  substanceId: number,
+  regulatoryBody: RegulatoryBody
+) {
+  await sql`
+    DELETE FROM regulatory_status
+    WHERE substance_id = ${substanceId} AND regulatory_body = ${regulatoryBody}
+  `;
+}
+
+// ===========================================
+// USAGE GUIDELINES
+// ===========================================
+
+import type { ApplicationType, SubstanceUsageGuideline } from "@/app/type";
+
+export async function getUsageGuidelinesBySubstance(
+  substanceId: number
+): Promise<SubstanceUsageGuideline[]> {
+  const result = await sql`
+    SELECT * FROM substance_usage_guideline
+    WHERE substance_id = ${substanceId}
+    ORDER BY application_type, application_subtype
+  `;
+  return result as SubstanceUsageGuideline[];
+}
+
+export async function getUsageGuidelinesByApplication(
+  applicationType: ApplicationType,
+  page: number = 1,
+  limit: number = 50
+) {
+  const offset = (page - 1) * limit;
+
+  const results = await sql`
+    SELECT ug.*, s.common_name, s.fema_number, s.cas_id
+    FROM substance_usage_guideline ug
+    JOIN substance s ON ug.substance_id = s.substance_id
+    WHERE ug.application_type = ${applicationType}
+    ORDER BY s.common_name
+    LIMIT ${limit} OFFSET ${offset}
+  `;
+
+  const countResult = await sql`
+    SELECT COUNT(*) FROM substance_usage_guideline
+    WHERE application_type = ${applicationType}
+  `;
+  const totalCount = parseInt(countResult[0].count as string);
+
+  return {
+    results,
+    pagination: {
+      total: totalCount,
+      page,
+      limit,
+      pages: Math.ceil(totalCount / limit),
+    },
+  };
+}
+
+export async function createUsageGuideline(data: {
+  substance_id: number;
+  application_type: ApplicationType;
+  application_subtype?: string;
+  typical_min_ppm?: number;
+  typical_max_ppm?: number;
+  legal_max_ppm?: number;
+  detection_threshold_ppm?: number;
+  low_level_character?: string;
+  high_level_character?: string;
+  data_source?: string;
+  source_reference?: string;
+  notes?: string;
+}) {
+  const result = await sql`
+    INSERT INTO substance_usage_guideline (
+      substance_id, application_type, application_subtype,
+      typical_min_ppm, typical_max_ppm, legal_max_ppm, detection_threshold_ppm,
+      low_level_character, high_level_character,
+      data_source, source_reference, notes
+    )
+    VALUES (
+      ${data.substance_id}, ${data.application_type}, ${data.application_subtype ?? null},
+      ${data.typical_min_ppm ?? null}, ${data.typical_max_ppm ?? null},
+      ${data.legal_max_ppm ?? null}, ${data.detection_threshold_ppm ?? null},
+      ${data.low_level_character ?? null}, ${data.high_level_character ?? null},
+      ${data.data_source ?? null}, ${data.source_reference ?? null}, ${data.notes ?? null}
+    )
+    ON CONFLICT (substance_id, application_type, application_subtype)
+    DO UPDATE SET
+      typical_min_ppm = EXCLUDED.typical_min_ppm,
+      typical_max_ppm = EXCLUDED.typical_max_ppm,
+      legal_max_ppm = EXCLUDED.legal_max_ppm,
+      detection_threshold_ppm = EXCLUDED.detection_threshold_ppm,
+      low_level_character = EXCLUDED.low_level_character,
+      high_level_character = EXCLUDED.high_level_character,
+      data_source = EXCLUDED.data_source,
+      source_reference = EXCLUDED.source_reference,
+      notes = EXCLUDED.notes,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING *
+  `;
+  return result[0];
+}
+
+export async function deleteUsageGuideline(guidelineId: number) {
+  await sql`
+    DELETE FROM substance_usage_guideline WHERE guideline_id = ${guidelineId}
+  `;
+}
+
+// ===========================================
+// SUBSTANCE WITH FULL RELATIONS
+// ===========================================
+
+export async function getSubstanceWithRelations(substanceId: number) {
+  const substance = await sql`
+    SELECT * FROM substance WHERE substance_id = ${substanceId}
+  `;
+
+  if (substance.length === 0) {
+    throw new Error(`Substance not found with ID: ${substanceId}`);
+  }
+
+  const [regulatoryStatuses, usageGuidelines] = await Promise.all([
+    getRegulatoryStatusBySubstance(substanceId),
+    getUsageGuidelinesBySubstance(substanceId),
+  ]);
+
+  return {
+    ...substance[0],
+    regulatory_statuses: regulatoryStatuses,
+    usage_guidelines: usageGuidelines,
+  };
+}
+
+// ===========================================
+// FUZZY SEARCH (requires pg_trgm extension)
+// ===========================================
+
+export async function searchSubstancesFuzzy(
+  query: string,
+  threshold: number = 0.3,
+  limit: number = 20
+) {
+  if (!query || query.trim().length < 2) {
+    return [];
+  }
+
+  const results = await sql`
+    SELECT * FROM search_substances_fuzzy(${query}, ${threshold}, ${limit})
+  `;
+
+  return results;
 }

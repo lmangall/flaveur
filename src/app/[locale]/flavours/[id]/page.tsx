@@ -26,7 +26,7 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save, Share2 } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save, Share2, Shield } from "lucide-react";
 import { Flavour, Substance, FlavorProfileAttribute } from "@/app/type";
 import {
   getFlavourById,
@@ -459,6 +459,13 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
         </Button>
         <h1 className="text-3xl font-bold tracking-tight flex-1">{flavor.name}</h1>
         <div className="flex items-center gap-2">
+          {/* EU Compliance Check - available to all with access */}
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/${locale}/flavours/${flavor.flavour_id}/compliance`}>
+              <Shield className="h-4 w-4 mr-2" />
+              Check EU Compliance
+            </Link>
+          </Button>
           {/* Owner-only actions */}
           {isOwner && (
             <>

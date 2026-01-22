@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin";
 import { getLocale } from "next-intl/server";
-import { Briefcase, LayoutDashboard } from "lucide-react";
+import { Briefcase, LayoutDashboard, Database } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminLayout({
@@ -34,6 +34,13 @@ export default async function AdminLayout({
           >
             <Briefcase className="h-4 w-4" />
             Jobs
+          </Link>
+          <Link
+            href={`/${locale}/admin/data-quality`}
+            className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors"
+          >
+            <Database className="h-4 w-4" />
+            Data Quality
           </Link>
         </nav>
       </aside>
