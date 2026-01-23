@@ -504,7 +504,9 @@
 		"freeQuestion": "Is Oumamie free?",
 		"freeAnswer": "Yes, Oumamie is completely free for all users. Our mission is to provide aspiring flavorists with the tools they need to develop their skills.",
 		"dataQuestion": "Is my data secure?",
-		"dataAnswer": "Your compositions are private by default and only visible to you. You control who you share your flavors with, and you can revoke access at any time."
+		"dataAnswer": "Your compositions are private by default and only visible to you. You control who you share your flavors with, and you can revoke access at any time.",
+		"regulatoryDataQuestion": "Where does the regulatory data come from?",
+		"regulatoryDataAnswer": "All EU regulatory data is sourced directly from the official EU FLAVIS database maintained by the European Commission. This ensures you always have access to accurate and up-to-date information about flavouring substance regulations in the European Union."
 	  }
   }
   

@@ -26,6 +26,7 @@ const faqItems: FAQItem[] = [
   { questionKey: "revokeQuestion", answerKey: "revokeAnswer" },
   { questionKey: "freeQuestion", answerKey: "freeAnswer" },
   { questionKey: "dataQuestion", answerKey: "dataAnswer" },
+  { questionKey: "regulatoryDataQuestion", answerKey: "regulatoryDataAnswer" },
 ];
 
 export default function FAQ() {
