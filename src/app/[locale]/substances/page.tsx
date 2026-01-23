@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
 import {
@@ -95,7 +95,7 @@ type Substance = {
 };
 
 export default function SubstancesPage() {
-  const router = useRouter();
+  const t = useTranslations("Substances");
   const [substances, setSubstances] = useState<Substance[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<
@@ -119,6 +119,8 @@ export default function SubstancesPage() {
   const [euData, setEuData] = useState<EUAdditiveFullData | null>(null);
   const [euLoading, setEuLoading] = useState(false);
   const [euError, setEuError] = useState<string | null>(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactSubstance, setContactSubstance] = useState<Substance | null>(null);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -232,6 +234,21 @@ export default function SubstancesPage() {
   const openDetailsModal = (substance: Substance) => {
     setViewDetailsSubstance(substance);
     setIsViewDetailsOpen(true);
+  };
+
+  // Open contact modal for editing
+  const openContactModal = (substance: Substance) => {
+    setContactSubstance(substance);
+    setIsContactModalOpen(true);
+  };
+
+  // Handle WhatsApp contact
+  const handleWhatsAppContact = () => {
+    if (!contactSubstance) return;
+    const message = `Hi Leo, I would like to request an edit for substance: ${contactSubstance.common_name} (FEMA #${contactSubstance.fema_number})`;
+    const phoneNumber = "48537606403";
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
   };
 
   return (
@@ -405,11 +422,7 @@ export default function SubstancesPage() {
                             View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() =>
-                              router.push(
-                                `/substances/${substance.fema_number}/edit`
-                              )
-                            }
+                            onClick={() => openContactModal(substance)}
                           >
                             Edit
                           </DropdownMenuItem>
@@ -916,6 +929,46 @@ export default function SubstancesPage() {
                   onClick={() => setIsViewDetailsOpen(false)}
                 >
                   Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Contact Leo modal for editing */}
+          <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+            <DialogContent className="sm:max-w-[450px]">
+              <DialogHeader>
+                <DialogTitle>{t("contactModalTitle")}</DialogTitle>
+                <DialogDescription className="text-base leading-relaxed pt-2">
+                  {t("contactModalDescription")}
+                </DialogDescription>
+              </DialogHeader>
+              {contactSubstance && (
+                <div className="py-4 space-y-4">
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-xs text-muted-foreground">{t("substance")}</p>
+                    <p className="font-medium">{contactSubstance.common_name}</p>
+                    <p className="text-sm text-muted-foreground">FEMA #{contactSubstance.fema_number}</p>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <Button onClick={handleWhatsAppContact} className="bg-green-600 hover:bg-green-700 w-full">
+                      {t("contactWhatsApp")}
+                    </Button>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{t("orEmail")}</span>
+                      <a
+                        href={`mailto:l.mangallon@gmail.com?subject=Edit suggestion for ${contactSubstance.common_name} (FEMA #${contactSubstance.fema_number})`}
+                        className="text-primary hover:underline"
+                      >
+                        l.mangallon@gmail.com
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsContactModalOpen(false)}>
+                  {t("cancel")}
                 </Button>
               </DialogFooter>
             </DialogContent>

@@ -476,6 +476,15 @@
 		"description": "Visualisez les structures moléculaires en 2D et 3D. Recherchez des substances dans la base de données ou entrez votre propre SMILES.",
 		"usingDefaults": "Utilisation de molécules d'exemple (pas de données SMILES dans la base)"
 	  },
+	  "Substances": {
+		"contactModalTitle": "Suggérer une modification",
+		"contactModalDescription": "Salut ! C'est Leo, celui qui est derrière ce projet. Si tu veux suggérer une modification pour cette substance, je serais ravi d'en discuter ! N'hésite pas à me contacter sur WhatsApp ou par email - toujours dispo pour discuter arômes.",
+		"substance": "Substance",
+		"contactWhatsApp": "M'envoyer un message WhatsApp",
+		"contactEmail": "M'envoyer un email",
+		"orEmail": "ou m'écrire à",
+		"cancel": "Annuler"
+	  },
 	  "FAQ": {
 		"title": "Questions Fréquentes",
 		"subtitle": "Tout ce que vous devez savoir sur Oumamie",
