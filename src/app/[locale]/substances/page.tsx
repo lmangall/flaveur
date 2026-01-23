@@ -121,6 +121,7 @@ export default function SubstancesPage() {
   const [euError, setEuError] = useState<string | null>(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactSubstance, setContactSubstance] = useState<Substance | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -471,12 +472,18 @@ export default function SubstancesPage() {
                   <>
                     {/* Header with image and basic info - always visible */}
                     <div className="flex gap-4 pb-4">
-                      <MoleculeImage
-                        pubchemCid={viewDetailsSubstance.pubchem_cid}
-                        formula={viewDetailsSubstance.molecular_formula}
-                        name={viewDetailsSubstance.common_name}
-                        size={120}
-                      />
+                      <div
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setIsImageModalOpen(true)}
+                        title="Click to enlarge"
+                      >
+                        <MoleculeImage
+                          pubchemCid={viewDetailsSubstance.pubchem_cid}
+                          formula={viewDetailsSubstance.molecular_formula}
+                          name={viewDetailsSubstance.common_name}
+                          size={120}
+                        />
+                      </div>
                       <div className="flex-1 space-y-1">
                         <h3 className="font-semibold text-lg">
                           {viewDetailsSubstance.common_name}
@@ -928,6 +935,32 @@ export default function SubstancesPage() {
                   variant="outline"
                   onClick={() => setIsViewDetailsOpen(false)}
                 >
+                  Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Enlarged molecule image modal */}
+          <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+            <DialogContent className="sm:max-w-[500px] p-6">
+              <DialogHeader>
+                <DialogTitle>
+                  {viewDetailsSubstance?.common_name || "Molecule Structure"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-center py-4">
+                {viewDetailsSubstance && (
+                  <MoleculeImage
+                    pubchemCid={viewDetailsSubstance.pubchem_cid}
+                    formula={viewDetailsSubstance.molecular_formula}
+                    name={viewDetailsSubstance.common_name}
+                    size={400}
+                  />
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsImageModalOpen(false)}>
                   Close
                 </Button>
               </DialogFooter>
