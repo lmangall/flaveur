@@ -30,9 +30,7 @@ import {
   Crown,
   Pencil,
   Eye,
-  Image,
   Table,
-  File,
   PlusCircle,
   UserPlus,
 } from "lucide-react";
@@ -77,51 +75,86 @@ function getRoleBadge(role: WorkspaceRoleValue) {
   }
 }
 
-function getDocumentIcon(type: string) {
+function getDocumentTypeStyle(type: string) {
   switch (type) {
     case "image":
-      return <Image className="h-4 w-4" />;
+      return { bg: "bg-purple-50 dark:bg-purple-950/30", icon: "text-purple-600 dark:text-purple-400", badge: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" };
     case "csv":
-      return <Table className="h-4 w-4" />;
+      return { bg: "bg-emerald-50 dark:bg-emerald-950/30", icon: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" };
     case "markdown":
-      return <FileText className="h-4 w-4" />;
+      return { bg: "bg-blue-50 dark:bg-blue-950/30", icon: "text-blue-600 dark:text-blue-400", badge: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" };
     default:
-      return <File className="h-4 w-4" />;
+      return { bg: "bg-gray-50 dark:bg-gray-950/30", icon: "text-gray-600 dark:text-gray-400", badge: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300" };
   }
 }
 
+function formatRelativeDate(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 function DocumentCard({ document }: { document: WorkspaceDocument }) {
+  const style = getDocumentTypeStyle(document.type);
+
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          {getDocumentIcon(document.type)}
-          <CardTitle className="text-base">{document.name}</CardTitle>
-        </div>
-        {document.description && (
-          <CardDescription className="line-clamp-2">
-            {document.description}
-          </CardDescription>
+    <Link href={`/workspaces/${document.workspace_id}/documents/${document.document_id}`}>
+      <Card className="group h-full overflow-hidden transition-all hover:shadow-md hover:border-primary/20">
+        {/* Image thumbnail or type icon header */}
+        {document.type === "image" && document.url ? (
+          <div className="relative aspect-video overflow-hidden bg-muted">
+            <img
+              src={document.url}
+              alt={document.name}
+              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        ) : (
+          <div className={`flex items-center justify-center py-8 ${style.bg}`}>
+            <div className={`rounded-full p-3 bg-white/80 dark:bg-black/20 ${style.icon}`}>
+              {document.type === "csv" ? (
+                <Table className="h-8 w-8" />
+              ) : (
+                <FileText className="h-8 w-8" />
+              )}
+            </div>
+          </div>
         )}
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Badge variant="outline">{document.type}</Badge>
-          {document.file_size && (
-            <span>{(document.file_size / 1024).toFixed(1)} KB</span>
+
+        <CardHeader className="pb-2 pt-3">
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-base font-medium line-clamp-1 group-hover:text-primary transition-colors">
+              {document.name}
+            </CardTitle>
+            <Badge variant="secondary" className={`shrink-0 text-xs ${style.badge} border-0`}>
+              {document.type === "markdown" ? "Doc" : document.type === "csv" ? "Table" : "Image"}
+            </Badge>
+          </div>
+          {document.description && (
+            <CardDescription className="line-clamp-2 text-xs">
+              {document.description}
+            </CardDescription>
           )}
-        </div>
-      </CardContent>
-      <CardFooter className="border-t pt-3">
-        <Button variant="ghost" size="sm" asChild className="ml-auto">
-          <Link
-            href={`/workspaces/${document.workspace_id}/documents/${document.document_id}`}
-          >
-            View
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardHeader>
+
+        <CardContent className="pt-0 pb-3">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{formatRelativeDate(document.created_at)}</span>
+            {document.file_size && (
+              <span>{(document.file_size / 1024).toFixed(1)} KB</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 

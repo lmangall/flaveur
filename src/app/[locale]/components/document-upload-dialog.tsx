@@ -9,7 +9,9 @@ import {
   Table,
   Loader2,
   Upload,
-  X,
+  ArrowLeft,
+  Plus,
+  FileUp,
 } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -25,13 +27,11 @@ import { Label } from "@/app/[locale]/components/ui/label";
 import { Textarea } from "@/app/[locale]/components/ui/textarea";
 import { toast } from "sonner";
 import { createTextDocument } from "@/actions/documents";
-import {
-  MAX_IMAGE_SIZE_MB,
-  ALLOWED_IMAGE_TYPES,
-} from "@/constants/workspace";
+import { MAX_IMAGE_SIZE_MB } from "@/constants/workspace";
 import { cn } from "@/app/lib/utils";
 
 type DocumentType = "image" | "markdown" | "csv";
+type ActionMode = "upload" | "create";
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -40,6 +40,42 @@ interface DocumentUploadDialogProps {
   onDocumentCreated: () => void;
 }
 
+const documentTypes = [
+  {
+    type: "image" as const,
+    label: "Image",
+    description: "JPG, PNG, GIF, WebP",
+    icon: Image,
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-50 dark:bg-purple-950/40",
+    hoverBg: "hover:bg-purple-100 dark:hover:bg-purple-950/60",
+    border: "border-purple-200 dark:border-purple-800",
+    uploadOnly: true,
+  },
+  {
+    type: "markdown" as const,
+    label: "Document",
+    description: "Rich text with formatting",
+    icon: FileText,
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-950/40",
+    hoverBg: "hover:bg-blue-100 dark:hover:bg-blue-950/60",
+    border: "border-blue-200 dark:border-blue-800",
+    uploadOnly: false,
+  },
+  {
+    type: "csv" as const,
+    label: "Spreadsheet",
+    description: "Tables and data",
+    icon: Table,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
+    hoverBg: "hover:bg-emerald-100 dark:hover:bg-emerald-950/60",
+    border: "border-emerald-200 dark:border-emerald-800",
+    uploadOnly: false,
+  },
+];
+
 export function DocumentUploadDialog({
   open,
   onOpenChange,
@@ -47,13 +83,17 @@ export function DocumentUploadDialog({
   onDocumentCreated,
 }: DocumentUploadDialogProps) {
   const [selectedType, setSelectedType] = useState<DocumentType | null>(null);
+  const [actionMode, setActionMode] = useState<ActionMode | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const selectedConfig = documentTypes.find((d) => d.type === selectedType);
+
   const resetForm = () => {
     setSelectedType(null);
+    setActionMode(null);
     setName("");
     setDescription("");
     setUploadProgress(0);
@@ -66,7 +106,18 @@ export function DocumentUploadDialog({
     }
   };
 
-  const onDrop = useCallback(
+  const goBack = () => {
+    if (actionMode) {
+      setActionMode(null);
+      setName("");
+      setDescription("");
+    } else {
+      setSelectedType(null);
+    }
+  };
+
+  // Handle image upload to Vercel Blob
+  const onImageDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
 
@@ -99,8 +150,43 @@ export function DocumentUploadDialog({
     [workspaceId, onDocumentCreated]
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
+  // Handle text file upload (CSV/Markdown)
+  const onTextFileDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0 || !selectedType) return;
+
+      const file = acceptedFiles[0];
+      setIsUploading(true);
+
+      try {
+        const content = await file.text();
+        const fileName = file.name.replace(/\.(md|csv)$/i, "");
+
+        await createTextDocument({
+          workspaceId,
+          name: fileName,
+          type: selectedType,
+          content,
+        });
+
+        toast.success(
+          `${selectedType === "markdown" ? "Document" : "Spreadsheet"} uploaded successfully`
+        );
+        onDocumentCreated();
+        handleOpenChange(false);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to upload file"
+        );
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [workspaceId, selectedType, onDocumentCreated]
+  );
+
+  const imageDropzone = useDropzone({
+    onDrop: onImageDrop,
     accept: {
       "image/jpeg": [".jpg", ".jpeg"],
       "image/png": [".png"],
@@ -108,6 +194,16 @@ export function DocumentUploadDialog({
       "image/webp": [".webp"],
     },
     maxSize: MAX_IMAGE_SIZE_MB * 1024 * 1024,
+    multiple: false,
+    disabled: isUploading,
+  });
+
+  const textFileDropzone = useDropzone({
+    onDrop: onTextFileDrop,
+    accept:
+      selectedType === "markdown"
+        ? { "text/markdown": [".md", ".markdown"] }
+        : { "text/csv": [".csv"] },
     multiple: false,
     disabled: isUploading,
   });
@@ -149,136 +245,211 @@ export function DocumentUploadDialog({
     }
   };
 
-  const documentTypes = [
-    {
-      type: "image" as const,
-      label: "Image",
-      description: "Upload an image file (JPG, PNG, GIF, WebP)",
-      icon: Image,
-    },
-    {
-      type: "markdown" as const,
-      label: "Document",
-      description: "Create a rich text document with formatting",
-      icon: FileText,
-    },
-    {
-      type: "csv" as const,
-      label: "Spreadsheet",
-      description: "Create a data table with rows and columns",
-      icon: Table,
-    },
-  ];
+  const renderDropzone = (
+    dropzone: ReturnType<typeof useDropzone>,
+    fileTypes: string,
+    maxSize?: string
+  ) => (
+    <div
+      {...dropzone.getRootProps()}
+      className={cn(
+        "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
+        dropzone.isDragActive && "border-primary bg-primary/5 scale-[1.02]",
+        isUploading && "opacity-50 cursor-not-allowed"
+      )}
+    >
+      <input {...dropzone.getInputProps()} />
+      {isUploading ? (
+        <div className="space-y-3">
+          <Loader2 className="h-10 w-10 mx-auto animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Uploading... {uploadProgress > 0 ? `${uploadProgress}%` : ""}
+          </p>
+          {uploadProgress > 0 && (
+            <div className="w-full max-w-xs mx-auto bg-muted rounded-full h-2">
+              <div
+                className="bg-primary h-2 rounded-full transition-all"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          )}
+        </div>
+      ) : dropzone.isDragActive ? (
+        <div className="space-y-2">
+          <Upload className="h-10 w-10 mx-auto text-primary" />
+          <p className="text-sm font-medium text-primary">Drop your file here</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div
+            className={cn(
+              "mx-auto w-14 h-14 rounded-full flex items-center justify-center",
+              selectedConfig?.bg
+            )}
+          >
+            <Upload className={cn("h-6 w-6", selectedConfig?.color)} />
+          </div>
+          <div>
+            <p className="text-sm font-medium">
+              Drag and drop or click to browse
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {fileTypes}
+              {maxSize && ` • Max ${maxSize}`}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Document</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {(selectedType || actionMode) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 -ml-2"
+                onClick={goBack}
+                disabled={isUploading}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            {!selectedType
+              ? "Add Document"
+              : actionMode === "create"
+                ? `New ${selectedConfig?.label}`
+                : actionMode === "upload"
+                  ? `Upload ${selectedConfig?.label}`
+                  : selectedConfig?.label}
+          </DialogTitle>
           <DialogDescription>
-            Upload an image or create a new document
+            {!selectedType
+              ? "Choose the type of document to add"
+              : !actionMode && !selectedConfig?.uploadOnly
+                ? "Upload a file or create from scratch"
+                : actionMode === "create"
+                  ? `Create a new ${selectedType === "markdown" ? "document" : "spreadsheet"}`
+                  : `Upload a ${selectedType === "markdown" ? ".md" : selectedType === "csv" ? ".csv" : ""} file`}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {!selectedType ? (
-            <div className="grid grid-cols-3 gap-3">
+        <div className="py-2">
+          {/* Step 1: Choose document type */}
+          {!selectedType && (
+            <div className="grid gap-3">
               {documentTypes.map((docType) => (
                 <button
                   key={docType.type}
-                  onClick={() => setSelectedType(docType.type)}
-                  className="flex flex-col items-center gap-2 p-4 border rounded-lg hover:bg-muted transition-colors"
+                  onClick={() => {
+                    setSelectedType(docType.type);
+                    if (docType.uploadOnly) {
+                      setActionMode("upload");
+                    }
+                  }}
+                  className={cn(
+                    "flex items-center gap-4 p-4 rounded-xl border transition-all text-left",
+                    docType.bg,
+                    docType.border,
+                    docType.hoverBg
+                  )}
                 >
-                  <docType.icon className="h-8 w-8 text-muted-foreground" />
-                  <span className="font-medium text-sm">{docType.label}</span>
+                  <div
+                    className={cn(
+                      "w-12 h-12 rounded-lg flex items-center justify-center bg-white/80 dark:bg-black/20"
+                    )}
+                  >
+                    <docType.icon className={cn("h-6 w-6", docType.color)} />
+                  </div>
+                  <div>
+                    <p className="font-medium">{docType.label}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {docType.description}
+                    </p>
+                  </div>
                 </button>
               ))}
             </div>
-          ) : selectedType === "image" ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Image className="h-5 w-5" />
-                  <span className="font-medium">Upload Image</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedType(null)}
-                  disabled={isUploading}
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Back
-                </Button>
-              </div>
+          )}
 
-              <div
-                {...getRootProps()}
+          {/* Step 2: Choose action (upload or create) - for non-image types */}
+          {selectedType && !actionMode && !selectedConfig?.uploadOnly && (
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setActionMode("upload")}
                 className={cn(
-                  "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-                  isDragActive && "border-primary bg-primary/5",
-                  isUploading && "opacity-50 cursor-not-allowed"
+                  "flex flex-col items-center gap-3 p-6 rounded-xl border transition-all",
+                  selectedConfig?.bg,
+                  selectedConfig?.border,
+                  selectedConfig?.hoverBg
                 )}
               >
-                <input {...getInputProps()} />
-                {isUploading ? (
-                  <div className="space-y-2">
-                    <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">
-                      Uploading... {uploadProgress}%
-                    </p>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                ) : isDragActive ? (
-                  <div className="space-y-2">
-                    <Upload className="h-8 w-8 mx-auto text-primary" />
-                    <p className="text-sm text-primary">Drop your image here</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Drag and drop an image, or click to select
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Max {MAX_IMAGE_SIZE_MB}MB - JPG, PNG, GIF, WebP
-                    </p>
-                  </div>
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/80 dark:bg-black/20">
+                  <FileUp className={cn("h-6 w-6", selectedConfig?.color)} />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">Upload File</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {selectedType === "markdown" ? ".md file" : ".csv file"}
+                  </p>
+                </div>
+              </button>
+              <button
+                onClick={() => setActionMode("create")}
+                className={cn(
+                  "flex flex-col items-center gap-3 p-6 rounded-xl border transition-all",
+                  selectedConfig?.bg,
+                  selectedConfig?.border,
+                  selectedConfig?.hoverBg
+                )}
+              >
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white/80 dark:bg-black/20">
+                  <Plus className={cn("h-6 w-6", selectedConfig?.color)} />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">Create New</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Start from scratch
+                  </p>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Image upload dropzone */}
+          {selectedType === "image" && actionMode === "upload" && (
+            <div className="space-y-4">
+              {renderDropzone(
+                imageDropzone,
+                "JPG, PNG, GIF, WebP",
+                `${MAX_IMAGE_SIZE_MB}MB`
+              )}
+            </div>
+          )}
+
+          {/* Text file upload dropzone */}
+          {selectedType &&
+            selectedType !== "image" &&
+            actionMode === "upload" && (
+              <div className="space-y-4">
+                {renderDropzone(
+                  textFileDropzone,
+                  selectedType === "markdown"
+                    ? "Markdown (.md) files"
+                    : "CSV (.csv) files"
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {selectedType === "markdown" ? (
-                    <FileText className="h-5 w-5" />
-                  ) : (
-                    <Table className="h-5 w-5" />
-                  )}
-                  <span className="font-medium">
-                    {selectedType === "markdown"
-                      ? "Create Document"
-                      : "Create Spreadsheet"}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedType(null)}
-                  disabled={isUploading}
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Back
-                </Button>
-              </div>
+            )}
 
-              <div className="space-y-3">
+          {/* Create new document form */}
+          {selectedType &&
+            selectedType !== "image" &&
+            actionMode === "create" && (
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="doc-name">Name</Label>
                   <Input
@@ -291,13 +462,16 @@ export function DocumentUploadDialog({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={isUploading}
+                    autoFocus
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="doc-description">
                     Description{" "}
-                    <span className="text-muted-foreground">(optional)</span>
+                    <span className="text-muted-foreground font-normal">
+                      (optional)
+                    </span>
                   </Label>
                   <Textarea
                     id="doc-description"
@@ -309,15 +483,14 @@ export function DocumentUploadDialog({
                   />
                 </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
-          {selectedType && selectedType !== "image" && (
+          {actionMode === "create" && (
             <Button
               onClick={handleCreateTextDocument}
               disabled={isUploading || !name.trim()}
@@ -328,7 +501,10 @@ export function DocumentUploadDialog({
                   Creating...
                 </>
               ) : (
-                "Create"
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create
+                </>
               )}
             </Button>
           )}
