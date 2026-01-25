@@ -92,16 +92,17 @@ function getDocumentTypeStyle(type: string) {
   }
 }
 
-function getDocumentIcon(type: string) {
+function getDocumentIcon(type: string, size: "sm" | "md" = "md") {
+  const className = size === "sm" ? "h-5 w-5" : "h-8 w-8";
   switch (type) {
     case "csv":
-      return <Table className="h-8 w-8" />;
+      return <Table className={className} />;
     case "pdf":
-      return <FileType className="h-8 w-8" />;
+      return <FileType className={className} />;
     case "file":
-      return <File className="h-8 w-8" />;
+      return <File className={className} />;
     default:
-      return <FileText className="h-8 w-8" />;
+      return <FileText className={className} />;
   }
 }
 
@@ -133,49 +134,39 @@ function DocumentCard({ document }: { document: WorkspaceDocument }) {
 
   return (
     <Link href={`/workspaces/${document.workspace_id}/documents/${document.document_id}`}>
-      <Card className="group h-full overflow-hidden transition-all hover:shadow-md hover:border-primary/20">
-        {/* Image thumbnail or type icon header */}
-        {document.type === "image" && document.url ? (
-          <div className="relative aspect-video overflow-hidden bg-muted">
-            <img
-              src={document.url}
-              alt={document.name}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-        ) : (
-          <div className={`flex items-center justify-center py-8 ${style.bg}`}>
-            <div className={`rounded-full p-3 bg-white/80 dark:bg-black/20 ${style.icon}`}>
-              {getDocumentIcon(document.type)}
+      <Card className="group h-full overflow-hidden transition-all hover:shadow-sm hover:border-primary/30">
+        <div className="flex items-center gap-3 p-3">
+          {/* Thumbnail or icon */}
+          {document.type === "image" && document.url ? (
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
+              <img
+                src={document.url}
+                alt={document.name}
+                className="h-full w-full object-cover"
+              />
             </div>
-          </div>
-        )}
-
-        <CardHeader className="pb-2 pt-3">
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base font-medium line-clamp-1 group-hover:text-primary transition-colors">
-              {document.name}
-            </CardTitle>
-            <Badge variant="secondary" className={`shrink-0 text-xs ${style.badge} border-0`}>
-              {getDocumentTypeLabel(document.type)}
-            </Badge>
-          </div>
-          {document.description && (
-            <CardDescription className="line-clamp-2 text-xs">
-              {document.description}
-            </CardDescription>
+          ) : (
+            <div className={`h-12 w-12 shrink-0 rounded-md flex items-center justify-center ${style.bg}`}>
+              <span className={style.icon}>{getDocumentIcon(document.type, "sm")}</span>
+            </div>
           )}
-        </CardHeader>
 
-        <CardContent className="pt-0 pb-3">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{formatRelativeDate(document.created_at)}</span>
-            {document.file_size && (
-              <span>{(document.file_size / 1024).toFixed(1)} KB</span>
-            )}
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                {document.name}
+              </p>
+              <Badge variant="secondary" className={`shrink-0 text-[10px] px-1.5 py-0 ${style.badge} border-0`}>
+                {getDocumentTypeLabel(document.type)}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {formatRelativeDate(document.created_at)}
+              {document.file_size && ` · ${(document.file_size / 1024).toFixed(0)} KB`}
+            </p>
           </div>
-        </CardContent>
+        </div>
       </Card>
     </Link>
   );
@@ -437,7 +428,7 @@ export default function WorkspaceDetailPage() {
             </div>
           )}
           {documents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {documents.map((doc) => (
                 <DocumentCard key={doc.document_id} document={doc} />
               ))}
