@@ -643,3 +643,89 @@ function getJobAlertEmailEn(jobs: JobAlertJob[], unsubscribeUrl: string): string
 </html>
   `;
 }
+
+// ============================================
+// CONTRIBUTION NOTIFICATIONS (Admin)
+// ============================================
+
+/**
+ * Notify admin when a user submits a new substance
+ */
+export async function sendNewSubmissionNotification(data: {
+  substanceId: number;
+  substanceName: string;
+  submittedByUserId: string;
+}) {
+  const { substanceId, substanceName, submittedByUserId } = data;
+  const reviewUrl = `${BASE_URL}/en/admin/contributions/submissions/${substanceId}`;
+
+  await resend.emails.send({
+    from: 'Oumamie <hello@oumamie.xyz>',
+    to: DEV_EMAIL,
+    subject: `[Oumamie] New substance submission: ${substanceName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+  <h2>New Substance Submission</h2>
+  <p><strong>Substance:</strong> ${substanceName}</p>
+  <p><strong>Substance ID:</strong> ${substanceId}</p>
+  <p><strong>Submitted by:</strong> ${submittedByUserId}</p>
+  <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+  <p style="margin-top: 20px;">
+    <a href="${reviewUrl}" style="display: inline-block; background: #111; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Review Submission</a>
+  </p>
+</body>
+</html>
+    `,
+  });
+}
+
+/**
+ * Notify admin when a user submits feedback on a substance
+ */
+export async function sendNewFeedbackNotification(data: {
+  feedbackId: number;
+  substanceId: number;
+  substanceName: string;
+  feedbackType: string;
+  submittedByUserId: string;
+}) {
+  const { feedbackId, substanceId, substanceName, feedbackType, submittedByUserId } = data;
+  const reviewUrl = `${BASE_URL}/en/admin/contributions/feedback/${feedbackId}`;
+
+  const typeLabel = {
+    error_report: 'Error Report',
+    change_request: 'Change Request',
+    data_enhancement: 'Data Enhancement',
+    general: 'General Feedback',
+  }[feedbackType] || feedbackType;
+
+  await resend.emails.send({
+    from: 'Oumamie <hello@oumamie.xyz>',
+    to: DEV_EMAIL,
+    subject: `[Oumamie] ${typeLabel} on: ${substanceName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+  <h2>New Substance Feedback</h2>
+  <p><strong>Type:</strong> ${typeLabel}</p>
+  <p><strong>Substance:</strong> ${substanceName} (ID: ${substanceId})</p>
+  <p><strong>Feedback ID:</strong> ${feedbackId}</p>
+  <p><strong>Submitted by:</strong> ${submittedByUserId}</p>
+  <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+  <p style="margin-top: 20px;">
+    <a href="${reviewUrl}" style="display: inline-block; background: #111; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Review Feedback</a>
+  </p>
+</body>
+</html>
+    `,
+  });
+}
