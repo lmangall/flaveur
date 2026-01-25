@@ -501,7 +501,9 @@
 		"dataQuestion": "Mes données sont-elles en sécurité ?",
 		"dataAnswer": "Vos compositions sont privées par défaut et ne sont visibles que par vous. Vous contrôlez avec qui vous partagez vos arômes, et vous pouvez révoquer l'accès à tout moment.",
 		"regulatoryDataQuestion": "D'où proviennent les données réglementaires ?",
-		"regulatoryDataAnswer": "Toutes les données réglementaires européennes proviennent directement de la base de données officielle EU FLAVIS, gérée par la Commission européenne. Cela garantit un accès à des informations précises et à jour sur la réglementation des substances aromatisantes dans l'Union européenne."
+		"regulatoryDataAnswer": "Toutes les données réglementaires européennes proviennent directement de la base de données officielle EU FLAVIS, gérée par la Commission européenne. Cela garantit un accès à des informations précises et à jour sur la réglementation des substances aromatisantes dans l'Union européenne.",
+		"additiveVsFlavouringQuestion": "Quelle est la différence entre additifs et arômes dans la réglementation ?",
+		"additiveVsFlavouringAnswer": "Une même molécule peut être classée soit comme additif, soit comme substance aromatisante, et cette classification détermine quelle réglementation s'applique. Notre base de données s'appuie sur deux sources : la liste des additifs et la liste des arômes. Cette distinction est cruciale pour les aromaticiens, car le choix d'utiliser une substance comme additif ou comme arôme a des implications réglementaires significatives. Comprendre ces différences est essentiel pour prendre des décisions éclairées lors de la formulation d'arômes."
 	  }
   }
   

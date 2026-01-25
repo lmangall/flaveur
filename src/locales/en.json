@@ -506,7 +506,9 @@
 		"dataQuestion": "Is my data secure?",
 		"dataAnswer": "Your compositions are private by default and only visible to you. You control who you share your flavors with, and you can revoke access at any time.",
 		"regulatoryDataQuestion": "Where does the regulatory data come from?",
-		"regulatoryDataAnswer": "All EU regulatory data is sourced directly from the official EU FLAVIS database maintained by the European Commission. This ensures you always have access to accurate and up-to-date information about flavouring substance regulations in the European Union."
+		"regulatoryDataAnswer": "All EU regulatory data is sourced directly from the official EU FLAVIS database maintained by the European Commission. This ensures you always have access to accurate and up-to-date information about flavouring substance regulations in the European Union.",
+		"additiveVsFlavouringQuestion": "What is the difference between additives and flavourings in regulations?",
+		"additiveVsFlavouringAnswer": "The same molecule can be classified either as an additive or as a flavouring substance, and this classification determines which regulation applies. Our database draws from two sources: the additives list and the flavourings list. This distinction is crucial for flavorists, as choosing whether to use a substance as an additive or a flavouring has significant regulatory implications. Understanding these differences is essential for making informed decisions in flavor formulation."
 	  }
   }
   
