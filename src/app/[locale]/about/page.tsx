@@ -13,6 +13,11 @@ import {
   FileDown,
   PieChart,
   ArrowRight,
+  Share2,
+  Atom,
+  ShieldCheck,
+  Bell,
+  GitPullRequestCreate,
 } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 
@@ -55,11 +60,53 @@ const features: FeatureItem[] = [
     href: "/flavours",
   },
   {
+    key: "sharing",
+    descKey: "sharingDesc",
+    icon: <Share2 className="h-5 w-5" />,
+    implemented: true,
+    href: "/flavours",
+  },
+  {
+    key: "radarChart",
+    descKey: "radarChartDesc",
+    icon: <PieChart className="h-5 w-5" />,
+    implemented: true,
+    href: "/flavours",
+  },
+  {
+    key: "moleculeViewer",
+    descKey: "moleculeViewerDesc",
+    icon: <Atom className="h-5 w-5" />,
+    implemented: true,
+    href: "/molecules",
+  },
+  {
+    key: "euCompliance",
+    descKey: "euComplianceDesc",
+    icon: <ShieldCheck className="h-5 w-5" />,
+    implemented: true,
+    href: "/flavours",
+  },
+  {
+    key: "contributions",
+    descKey: "contributionsDesc",
+    icon: <GitPullRequestCreate className="h-5 w-5" />,
+    implemented: true,
+    href: "/contribute",
+  },
+  {
     key: "jobBoard",
     descKey: "jobBoardDesc",
     icon: <Briefcase className="h-5 w-5" />,
     implemented: true,
     href: "/jobs",
+  },
+  {
+    key: "jobAlerts",
+    descKey: "jobAlertsDesc",
+    icon: <Bell className="h-5 w-5" />,
+    implemented: true,
+    href: "/settings",
   },
   {
     key: "quantityCalculator",
@@ -78,12 +125,6 @@ const features: FeatureItem[] = [
     key: "portfolioExport",
     descKey: "portfolioExportDesc",
     icon: <FileDown className="h-5 w-5" />,
-    implemented: false,
-  },
-  {
-    key: "radarChart",
-    descKey: "radarChartDesc",
-    icon: <PieChart className="h-5 w-5" />,
     implemented: false,
   },
 ];
