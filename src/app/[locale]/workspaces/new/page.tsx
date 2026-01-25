@@ -27,6 +27,7 @@ import {
 } from "@/app/[locale]/components/ui/form";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 import { createWorkspace } from "@/actions/workspaces";
 
 const formSchema = z.object({
@@ -42,6 +43,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function NewWorkspacePage() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
+  const { fire: fireConfetti } = useConfetti();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormData>({
@@ -59,6 +61,7 @@ export default function NewWorkspacePage() {
         name: data.name,
         description: data.description,
       });
+      fireConfetti();
       toast.success("Workspace created successfully");
       router.push(`/workspaces/${workspace.workspace_id}`);
     } catch (error) {

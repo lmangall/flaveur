@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Table,
@@ -71,6 +71,7 @@ import {
 } from "@/app/[locale]/components/ui/chart";
 import { ShareFlavourDialog } from "@/app/[locale]/components/share-flavour-dialog";
 import { useTranslations } from "next-intl";
+import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 
 const STATUS_OPTIONS = [
   { value: "draft", label: "Draft", className: "bg-amber-100 text-amber-800" },
@@ -810,6 +811,8 @@ function LoadingState() {
 
 export default function FlavorDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const { fire: fireConfetti } = useConfetti();
   const flavorId = parseInt(params.id as string, 10);
   const [flavor, setFlavor] = useState<Flavour | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -817,6 +820,15 @@ export default function FlavorDetailPage() {
   const [isOwner, setIsOwner] = useState(true);
   const [isSharedWithMe, setIsSharedWithMe] = useState(false);
   const [sharedBy, setSharedBy] = useState<{ username: string | null; email: string } | null>(null);
+
+  // Fire confetti when arriving from invite acceptance
+  useEffect(() => {
+    if (searchParams.get("welcome") === "true") {
+      fireConfetti();
+      // Clean up URL without page reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [searchParams, fireConfetti]);
 
   useEffect(() => {
     async function fetchFlavorData() {

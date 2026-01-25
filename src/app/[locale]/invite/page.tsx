@@ -87,7 +87,7 @@ export default async function InvitePage({ searchParams, params }: Props) {
 
     // If successful, redirect (must be outside try-catch since redirect throws)
     if (acceptResult) {
-      redirect(`/${locale}/flavours/${acceptResult.flavourId}`);
+      redirect(`/${locale}/flavours/${acceptResult.flavourId}?welcome=true`);
     }
 
     // Show error page

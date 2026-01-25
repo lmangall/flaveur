@@ -18,6 +18,7 @@ import {
 import { Switch } from "@/app/[locale]/components/ui/switch";
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 import { SubstanceSearchField } from "@/app/[locale]/components/substance-search-field";
 import type { Substance } from "@/app/type";
 import { Badge } from "@/app/[locale]/components/ui/badge";
@@ -40,6 +41,7 @@ import { createFlavour } from "@/actions/flavours";
 export default function NewFlavourPage() {
   const router = useRouter();
   const t = useTranslations("NewFlavour");
+  const { fire: fireConfetti } = useConfetti();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
@@ -146,6 +148,7 @@ export default function NewFlavourPage() {
         substances: substancesData,
       });
 
+      fireConfetti();
       toast.success(`${flavour.name} has been created successfully.`);
       router.push("/flavours");
     } catch (error) {

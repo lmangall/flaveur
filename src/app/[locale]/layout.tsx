@@ -3,6 +3,7 @@ import type { Viewport } from "next";
 import "@/app/globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/app/[locale]/components/ui/sonner";
+import { ConfettiProvider } from "@/app/[locale]/components/ui/confetti";
 import Navbar from "@/app/[locale]/components/navbar";
 import Footer from "@/app/[locale]/components/footer";
 import { Mona_Sans as FontSans } from "next/font/google";
@@ -139,18 +140,20 @@ export default async function RootLayout({
               disableTransitionOnChange
             >
               <NextIntlClientProvider locale={locale} messages={messages}>
-                <a
-                  href="#main-content"
-                  className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-100 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  Skip to main content
-                </a>
-                <Navbar />
-                <main id="main-content" className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
-                  {children}
-                </main>
-                <Footer />
-                <Toaster />
+                <ConfettiProvider>
+                  <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-100 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    Skip to main content
+                  </a>
+                  <Navbar />
+                  <main id="main-content" className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
+                    {children}
+                  </main>
+                  <Footer />
+                  <Toaster />
+                </ConfettiProvider>
               </NextIntlClientProvider>
             </ThemeProvider>
           </body>
