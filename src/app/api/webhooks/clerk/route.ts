@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { sql } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { convertPendingInvites } from "@/actions/shares";
+import { convertPendingWorkspaceInvites } from "@/actions/workspaces";
 
 export async function POST(req: Request) {
   const secret = process.env.SVIX_SECRET;
@@ -76,10 +77,21 @@ export async function POST(req: Request) {
         try {
           const { converted } = await convertPendingInvites(email, clerkUserId);
           if (converted > 0) {
-            console.log(`[Webhook] Converted ${converted} pending invites for ${email}`);
+            console.log(`[Webhook] Converted ${converted} pending flavour invites for ${email}`);
           }
         } catch (inviteErr) {
-          console.error("[Webhook] Error converting invites:", inviteErr);
+          console.error("[Webhook] Error converting flavour invites:", inviteErr);
+          // Don't fail user creation if invite conversion fails
+        }
+
+        // Convert any pending workspace invites for this email
+        try {
+          const { converted } = await convertPendingWorkspaceInvites(email, clerkUserId);
+          if (converted > 0) {
+            console.log(`[Webhook] Converted ${converted} pending workspace invites for ${email}`);
+          }
+        } catch (inviteErr) {
+          console.error("[Webhook] Error converting workspace invites:", inviteErr);
           // Don't fail user creation if invite conversion fails
         }
       }

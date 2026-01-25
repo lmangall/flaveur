@@ -5,6 +5,12 @@ import type {
   EmploymentTypeValue,
   ExperienceLevelValue,
   ContactPerson,
+  VerificationStatusValue,
+  FeedbackTypeValue,
+  FeedbackStatusValue,
+  WorkspaceRoleValue,
+  DocumentTypeValue,
+  WorkspaceInviteStatusValue,
 } from "@/constants";
 
 // ===========================================
@@ -58,6 +64,15 @@ export type Substance = {
 
   // Full-text search (added by migration 006)
   search_vector?: string;
+
+  // User contribution fields (added by migration 018)
+  verification_status: VerificationStatusValue;
+  submitted_by_user_id: string | null;
+  submitted_at: string | null;
+  reviewed_by_admin_email: string | null;
+  reviewed_at: string | null;
+  admin_notes: string | null;
+  source_reference: string | null;
 
   // Junction table fields (when joined with substance_flavour)
   concentration?: number;
@@ -242,4 +257,101 @@ export type SubstanceUsageGuideline = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+};
+
+// ===========================================
+// SUBSTANCE FEEDBACK
+// ===========================================
+export type SubstanceFeedback = {
+  feedback_id: number;
+  substance_id: number;
+  submitted_by_user_id: string;
+  submitted_at: string;
+  feedback_type: FeedbackTypeValue;
+  target_field: string | null;
+  current_value: string | null;
+  suggested_value: string | null;
+  commentary: string;
+  source_reference: string | null;
+  status: FeedbackStatusValue;
+  reviewed_by_admin_email: string | null;
+  admin_notes: string | null;
+  resolution: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Relations (when loaded)
+  substance?: Substance;
+};
+
+// ===========================================
+// WORKSPACE
+// ===========================================
+export type Workspace = {
+  workspace_id: number;
+  name: string;
+  description: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+
+  // Relations (when loaded)
+  members?: WorkspaceMember[];
+  documents?: WorkspaceDocument[];
+  flavours?: WorkspaceFlavour[];
+};
+
+export type WorkspaceMember = {
+  member_id: number;
+  workspace_id: number;
+  user_id: string;
+  role: WorkspaceRoleValue;
+  created_at: string;
+
+  // Relations (when loaded)
+  user?: User;
+};
+
+export type WorkspaceInvite = {
+  invite_id: number;
+  workspace_id: number;
+  invited_email: string;
+  invited_by_user_id: string;
+  invite_token: string;
+  role: WorkspaceRoleValue;
+  status: WorkspaceInviteStatusValue;
+  created_at: string;
+
+  // Relations (when loaded)
+  workspace?: Workspace;
+  invited_by?: User;
+};
+
+export type WorkspaceDocument = {
+  document_id: number;
+  workspace_id: number;
+  name: string;
+  description: string | null;
+  type: DocumentTypeValue;
+  content: string | null; // For markdown/csv
+  url: string | null; // For images (Vercel Blob URL)
+  file_size: number | null;
+  mime_type: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Relations (when loaded)
+  creator?: User;
+};
+
+export type WorkspaceFlavour = {
+  workspace_id: number;
+  flavour_id: number;
+  added_by: string | null;
+  added_at: string;
+
+  // Relations (when loaded)
+  flavour?: Flavour;
+  added_by_user?: User;
 };
