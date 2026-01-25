@@ -75,7 +75,20 @@ export async function checkEUCompliance(
 
     // Try alternative names if not found
     if (!euData && sub.alternative_names) {
-      const altNames = sub.alternative_names as string[];
+      // Handle JSONB that may come as string or already-parsed array
+      let altNames: string[];
+      if (typeof sub.alternative_names === "string") {
+        try {
+          altNames = JSON.parse(sub.alternative_names);
+        } catch {
+          altNames = [];
+        }
+      } else if (Array.isArray(sub.alternative_names)) {
+        altNames = sub.alternative_names;
+      } else {
+        altNames = [];
+      }
+
       for (const altName of altNames) {
         euData = await getEUComplianceData(String(altName));
         if (euData) break;
