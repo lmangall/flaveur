@@ -518,7 +518,13 @@
 		"regulatoryDataQuestion": "Where does the regulatory data come from?",
 		"regulatoryDataAnswer": "All EU regulatory data is sourced directly from the official EU FLAVIS database maintained by the European Commission. This ensures you always have access to accurate and up-to-date information about flavouring substance regulations in the European Union.",
 		"additiveVsFlavouringQuestion": "What is the difference between additives and flavourings in regulations?",
-		"additiveVsFlavouringAnswer": "The same molecule can be classified either as an additive or as a flavouring substance, and this classification determines which regulation applies. Our database draws from two sources: the additives list and the flavourings list. This distinction is crucial for flavorists, as choosing whether to use a substance as an additive or a flavouring has significant regulatory implications. Understanding these differences is essential for making informed decisions in flavor formulation."
+		"additiveVsFlavouringAnswer": "The same molecule can be classified either as an additive or as a flavouring substance, and this classification determines which regulation applies. Our database draws from two sources: the additives list and the flavourings list. This distinction is crucial for flavorists, as choosing whether to use a substance as an additive or a flavouring has significant regulatory implications. Understanding these differences is essential for making informed decisions in flavor formulation.",
+		"contributeSubstanceQuestion": "How can I contribute new substances?",
+		"contributeSubstanceAnswer": "You can submit new substances through the Contribute page. You'll need to provide the substance name, at least one identifier (CAS number, FEMA number, or PubChem ID), and at least one sensory property (odor, taste, or flavor profile). Your submission will be available immediately in your own flavors while awaiting verification.",
+		"feedbackQuestion": "How can I report errors or suggest improvements?",
+		"feedbackAnswer": "On any substance page, you can submit feedback to report errors, request changes, or suggest data enhancements. Choose the feedback type, specify which field needs attention, and provide your suggested correction along with a source reference if available.",
+		"contributionProcessQuestion": "What happens after I submit a contribution?",
+		"contributionProcessAnswer": "New substance submissions start with 'User Entry' status and can be used immediately in your flavors. Our team reviews submissions and may verify them for the entire community. You can track the status of your contributions and edit unverified submissions at any time."
 	  }
   }
   

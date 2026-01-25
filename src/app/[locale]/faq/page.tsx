@@ -31,6 +31,15 @@ const faqItems: FAQItem[] = [
     questionKey: "additiveVsFlavouringQuestion",
     answerKey: "additiveVsFlavouringAnswer",
   },
+  {
+    questionKey: "contributeSubstanceQuestion",
+    answerKey: "contributeSubstanceAnswer",
+  },
+  { questionKey: "feedbackQuestion", answerKey: "feedbackAnswer" },
+  {
+    questionKey: "contributionProcessQuestion",
+    answerKey: "contributionProcessAnswer",
+  },
 ];
 
 export default function FAQ() {
