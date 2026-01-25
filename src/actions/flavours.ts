@@ -8,14 +8,91 @@ import {
 } from "@/constants";
 import { createFlavourSchema, updateFlavourSchema } from "@/lib/validations/flavour";
 
-export async function getFlavours() {
+export type FlavourAccessSource = "own" | "shared" | "workspace";
+
+export type FlavourWithAccess = {
+  flavour_id: number;
+  name: string;
+  description: string | null;
+  is_public: boolean;
+  user_id: string | null;
+  category_id: number | null;
+  status: string;
+  version: number;
+  base_unit: string;
+  flavor_profile: Record<string, number> | null;
+  created_at: string;
+  updated_at: string;
+  // Access info
+  access_source: FlavourAccessSource;
+  shared_by_username?: string | null;
+  shared_by_email?: string | null;
+  workspace_name?: string | null;
+  workspace_id?: number | null;
+  can_edit: boolean;
+};
+
+export async function getFlavours(): Promise<FlavourWithAccess[]> {
   const { userId } = await auth();
-  console.log("[DEBUG getFlavours] userId from auth:", userId);
   if (!userId) throw new Error("Unauthorized");
 
-  const result = await sql`SELECT * FROM flavour WHERE user_id = ${userId}`;
-  console.log("[DEBUG getFlavours] Found", result.length, "flavours for user", userId);
-  return result;
+  // Get all flavours user has access to: owned, shared, or via workspace
+  const result = await sql`
+    SELECT DISTINCT ON (f.flavour_id)
+      f.*,
+      CASE
+        WHEN f.user_id = ${userId} THEN 'own'
+        WHEN fs.share_id IS NOT NULL THEN 'shared'
+        WHEN wm.member_id IS NOT NULL THEN 'workspace'
+      END as access_source,
+      sharer.username as shared_by_username,
+      sharer.email as shared_by_email,
+      w.name as workspace_name,
+      w.workspace_id as access_workspace_id,
+      CASE
+        WHEN f.user_id = ${userId} THEN true
+        WHEN wm.role IN ('owner', 'editor') THEN true
+        ELSE false
+      END as can_edit
+    FROM flavour f
+    LEFT JOIN flavour_shares fs ON f.flavour_id = fs.flavour_id
+      AND fs.shared_with_user_id = ${userId}
+    LEFT JOIN users sharer ON fs.shared_by_user_id = sharer.user_id
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    LEFT JOIN workspace w ON wf.workspace_id = w.workspace_id
+    WHERE f.user_id = ${userId}
+      OR fs.share_id IS NOT NULL
+      OR wm.member_id IS NOT NULL
+    ORDER BY f.flavour_id,
+      CASE
+        WHEN f.user_id = ${userId} THEN 1
+        WHEN wm.member_id IS NOT NULL THEN 2
+        ELSE 3
+      END
+  `;
+
+  return result.map((f) => ({
+    flavour_id: Number(f.flavour_id),
+    name: String(f.name),
+    description: f.description ? String(f.description) : null,
+    is_public: Boolean(f.is_public),
+    user_id: f.user_id ? String(f.user_id) : null,
+    category_id: f.category_id ? Number(f.category_id) : null,
+    status: String(f.status),
+    version: Number(f.version),
+    base_unit: String(f.base_unit),
+    flavor_profile: f.flavor_profile as Record<string, number> | null,
+    created_at: String(f.created_at),
+    updated_at: String(f.updated_at),
+    access_source: String(f.access_source) as FlavourAccessSource,
+    shared_by_username: f.shared_by_username ? String(f.shared_by_username) : null,
+    shared_by_email: f.shared_by_email ? String(f.shared_by_email) : null,
+    workspace_name: f.workspace_name ? String(f.workspace_name) : null,
+    workspace_id: f.access_workspace_id ? Number(f.access_workspace_id) : null,
+    can_edit: Boolean(f.can_edit),
+  }));
 }
 
 export async function getFlavourById(flavourId: number) {

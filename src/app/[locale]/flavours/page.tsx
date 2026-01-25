@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/[locale]/components/ui/select";
-import { PlusCircle, Search, MoreHorizontal, Filter } from "lucide-react";
+import { PlusCircle, Search, MoreHorizontal, Filter, LayoutGrid, List, Users, Share2, User } from "lucide-react";
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import {
   ChartConfig,
@@ -37,9 +37,16 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/app/[locale]/components/ui/chart";
-import { Flavour } from "@/app/type";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { getFlavours, duplicateFlavour, deleteFlavour } from "@/actions/flavours";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/app/[locale]/components/ui/table";
+import { getFlavours, duplicateFlavour, deleteFlavour, type FlavourWithAccess } from "@/actions/flavours";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -158,9 +165,36 @@ function RadarFlavorProfile({
   );
 }
 
+// Source Badge Component
+function SourceBadge({ flavour }: { flavour: FlavourWithAccess }) {
+  switch (flavour.access_source) {
+    case "own":
+      return (
+        <Badge variant="outline" className="text-[10px] gap-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
+          <User className="h-3 w-3" />
+          Own
+        </Badge>
+      );
+    case "shared":
+      return (
+        <Badge variant="outline" className="text-[10px] gap-1 bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
+          <Share2 className="h-3 w-3" />
+          {flavour.shared_by_username || "Shared"}
+        </Badge>
+      );
+    case "workspace":
+      return (
+        <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800">
+          <Users className="h-3 w-3" />
+          {flavour.workspace_name || "Workspace"}
+        </Badge>
+      );
+  }
+}
+
 // Flavour Card Component
 type FlavourCardProps = {
-  flavour: Flavour;
+  flavour: FlavourWithAccess;
   translations: {
     showProfile: string;
     noDescription: string;
@@ -177,7 +211,7 @@ type FlavourCardProps = {
     intensity: string;
   };
   onDuplicate: (flavourId: number) => void;
-  onDelete: (flavour: Flavour) => void;
+  onDelete: (flavour: FlavourWithAccess) => void;
 };
 
 function FlavourCard({ flavour, translations, onDuplicate, onDelete }: FlavourCardProps) {
@@ -191,7 +225,7 @@ function FlavourCard({ flavour, translations, onDuplicate, onDelete }: FlavourCa
 
   return (
     <Card className="w-full">
-      <CardHeader>
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">
             <Link
@@ -206,7 +240,10 @@ function FlavourCard({ flavour, translations, onDuplicate, onDelete }: FlavourCa
             <Switch checked={showChart} onCheckedChange={setShowChart} />
           </div>
         </div>
-        <CardDescription>{translations.version} {flavour.version}</CardDescription>
+        <div className="flex items-center gap-2 mt-1">
+          <SourceBadge flavour={flavour} />
+          <span className="text-xs text-muted-foreground">v{flavour.version}</span>
+        </div>
       </CardHeader>
       <CardContent>
         {showChart ? (
@@ -214,7 +251,7 @@ function FlavourCard({ flavour, translations, onDuplicate, onDelete }: FlavourCa
         ) : (
           <div className="space-y-2">
             <p className="text-sm">{flavour.description || translations.noDescription}</p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <span
                 className={`px-2 py-1 rounded text-xs ${getStatusBadgeClasses(
                   flavour.status || "draft"
@@ -247,24 +284,28 @@ function FlavourCard({ flavour, translations, onDuplicate, onDelete }: FlavourCa
             >
               {translations.view}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                router.push(`/flavours/${flavour.flavour_id}/edit`)
-              }
-            >
-              {translations.edit}
-            </DropdownMenuItem>
+            {flavour.can_edit && (
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(`/flavours/${flavour.flavour_id}/edit`)
+                }
+              >
+                {translations.edit}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={() => onDuplicate(flavour.flavour_id)}
             >
               {translations.duplicate}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => onDelete(flavour)}
-            >
-              {translations.delete}
-            </DropdownMenuItem>
+            {flavour.access_source === "own" && (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onDelete(flavour)}
+              >
+                {translations.delete}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </CardFooter>
@@ -290,57 +331,20 @@ export default function FlavoursPage() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
   const t = useTranslations("Flavours");
-  const [flavours, setFlavours] = useState<Flavour[]>([]);
+  const [flavours, setFlavours] = useState<FlavourWithAccess[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deletingFlavour, setDeletingFlavour] = useState<Flavour | null>(null);
+  const [deletingFlavour, setDeletingFlavour] = useState<FlavourWithAccess | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchFlavoursData = async () => {
     try {
       const data = await getFlavours();
-
-      // Map the API response to match our Flavour type
-      const transformedData = (data as Array<{
-        flavour_id: number;
-        name: string;
-        description: string;
-        status: string;
-        is_public: boolean;
-        version: number | null;
-        base_unit: string;
-        category_id: number | null;
-        created_at: string;
-        updated_at: string;
-        user_id: string;
-        substances?: Array<{
-          substance_id: number;
-          concentration: number;
-          unit: string;
-          order_index: number;
-        }>;
-      }>).map(
-        (item) =>
-          ({
-            flavour_id: item.flavour_id,
-            name: item.name || "Unnamed",
-            description: item.description || "",
-            substances: item.substances || [],
-            status: item.status || "draft",
-            is_public: Boolean(item.is_public),
-            version: item.version !== null ? Number(item.version) : null,
-            base_unit: item.base_unit || "",
-            category_id:
-              item.category_id !== null ? Number(item.category_id) : null,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
-            user_id: item.user_id || "Unknown",
-          } as Flavour)
-      );
-
-      setFlavours(transformedData);
+      setFlavours(data);
     } catch (err) {
       console.error("Failed to fetch flavours:", err);
       setError(err instanceof Error ? err.message : "Failed to load flavours");
@@ -393,7 +397,9 @@ export default function FlavoursPage() {
       .includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || flavour.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesSource =
+      sourceFilter === "all" || flavour.access_source === sourceFilter;
+    return matchesSearch && matchesStatus && matchesSource;
   });
 
   if (!isLoaded || !isSignedIn) return null;
@@ -435,9 +441,32 @@ export default function FlavoursPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2 ml-auto flex-wrap">
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All sources</SelectItem>
+              <SelectItem value="own">
+                <span className="flex items-center gap-2">
+                  <User className="h-3 w-3" /> My own
+                </span>
+              </SelectItem>
+              <SelectItem value="shared">
+                <span className="flex items-center gap-2">
+                  <Share2 className="h-3 w-3" /> Shared
+                </span>
+              </SelectItem>
+              <SelectItem value="workspace">
+                <span className="flex items-center gap-2">
+                  <Users className="h-3 w-3" /> Workspace
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[140px]">
               <Filter className="mr-2 h-4 w-4" />
               <SelectValue placeholder={t("allStatuses")} />
             </SelectTrigger>
@@ -448,6 +477,24 @@ export default function FlavoursPage() {
               <SelectItem value="archived">{t("archived")}</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex border rounded-md">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              className="rounded-r-none"
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "table" ? "secondary" : "ghost"}
+              size="sm"
+              className="rounded-l-none"
+              onClick={() => setViewMode("table")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -461,17 +508,102 @@ export default function FlavoursPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
       ) : filteredFlavours.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredFlavours.map((flavour) => (
-            <FlavourCard
-              key={flavour.flavour_id}
-              flavour={flavour}
-              translations={cardTranslations}
-              onDuplicate={handleDuplicate}
-              onDelete={setDeletingFlavour}
-            />
-          ))}
-        </div>
+        viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredFlavours.map((flavour) => (
+              <FlavourCard
+                key={flavour.flavour_id}
+                flavour={flavour}
+                translations={cardTranslations}
+                onDuplicate={handleDuplicate}
+                onDelete={setDeletingFlavour}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Version</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredFlavours.map((flavour) => (
+                  <TableRow key={flavour.flavour_id}>
+                    <TableCell>
+                      <Link
+                        href={`/flavours/${flavour.flavour_id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {flavour.name}
+                      </Link>
+                      {flavour.description && (
+                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                          {flavour.description}
+                        </p>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <SourceBadge flavour={flavour} />
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${getStatusBadgeClasses(
+                          flavour.status || "draft"
+                        )}`}
+                      >
+                        {(flavour.status || "draft").charAt(0).toUpperCase() +
+                          (flavour.status || "draft").slice(1)}
+                      </span>
+                    </TableCell>
+                    <TableCell>v{flavour.version}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => router.push(`/flavours/${flavour.flavour_id}`)}
+                          >
+                            {cardTranslations.view}
+                          </DropdownMenuItem>
+                          {flavour.can_edit && (
+                            <DropdownMenuItem
+                              onClick={() => router.push(`/flavours/${flavour.flavour_id}/edit`)}
+                            >
+                              {cardTranslations.edit}
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => handleDuplicate(flavour.flavour_id)}
+                          >
+                            {cardTranslations.duplicate}
+                          </DropdownMenuItem>
+                          {flavour.access_source === "own" && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDeletingFlavour(flavour)}
+                            >
+                              {cardTranslations.delete}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )
       ) : (
         <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted/30">
           <p className="text-muted-foreground mb-4">
