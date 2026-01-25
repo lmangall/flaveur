@@ -15,11 +15,16 @@ const isPublicRoute = createRouteMatcher([
   "/:locale/terms-of-service",
   "/:locale/auth/(.*)",
   "/:locale/invite",
-  "/api/webhooks/clerk",
+  "/api/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   const { pathname } = req.nextUrl;
+
+  // Skip proxy entirely for API routes - let them handle their own auth
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
 
   // Handle root path redirect
   if (pathname === "/") {

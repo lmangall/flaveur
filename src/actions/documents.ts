@@ -138,20 +138,22 @@ export async function createTextDocument(data: {
 }
 
 /**
- * Create an image document (after Vercel Blob upload).
+ * Create a file document (after Vercel Blob upload).
+ * Works for images, PDFs, and any other file type.
  */
-export async function createImageDocument(data: {
+export async function createFileDocument(data: {
   workspaceId: number;
   name: string;
   description?: string;
   url: string;
-  fileSize: number;
+  fileSize?: number;
   mimeType: string;
+  type: DocumentTypeValue;
 }): Promise<WorkspaceDocument> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const { workspaceId, name, description, url, fileSize, mimeType } = data;
+  const { workspaceId, name, description, url, fileSize, mimeType, type } = data;
 
   // Verify edit permission
   const canEdit = await canEditInWorkspace(workspaceId);
@@ -165,7 +167,7 @@ export async function createImageDocument(data: {
     )
     VALUES (
       ${workspaceId}, ${name.trim()}, ${description?.trim() || null},
-      'image', ${url}, ${fileSize}, ${mimeType}, ${userId}
+      ${type}, ${url}, ${fileSize || null}, ${mimeType}, ${userId}
     )
     RETURNING *
   `;
@@ -176,15 +178,29 @@ export async function createImageDocument(data: {
     workspace_id: Number(d.workspace_id),
     name: String(d.name),
     description: d.description ? String(d.description) : null,
-    type: "image",
+    type: String(d.type) as DocumentTypeValue,
     content: null,
     url: String(d.url),
-    file_size: Number(d.file_size),
+    file_size: d.file_size ? Number(d.file_size) : null,
     mime_type: String(d.mime_type),
     created_by: d.created_by ? String(d.created_by) : null,
     created_at: String(d.created_at),
     updated_at: String(d.updated_at),
   };
+}
+
+/**
+ * @deprecated Use createFileDocument instead
+ */
+export async function createImageDocument(data: {
+  workspaceId: number;
+  name: string;
+  description?: string;
+  url: string;
+  fileSize: number;
+  mimeType: string;
+}): Promise<WorkspaceDocument> {
+  return createFileDocument({ ...data, type: "image" });
 }
 
 /**

@@ -26,8 +26,8 @@ import { Input } from "@/app/[locale]/components/ui/input";
 import { Label } from "@/app/[locale]/components/ui/label";
 import { Textarea } from "@/app/[locale]/components/ui/textarea";
 import { toast } from "sonner";
-import { createTextDocument } from "@/actions/documents";
-import { MAX_FILE_SIZE_MB } from "@/constants/workspace";
+import { createTextDocument, createFileDocument } from "@/actions/documents";
+import { MAX_FILE_SIZE_MB, getDocumentTypeFromMime } from "@/constants/workspace";
 import { cn } from "@/app/lib/utils";
 
 type ActionType = "upload" | "create-doc" | "create-csv";
@@ -116,13 +116,28 @@ export function DocumentUploadDialog({
       setUploadProgress(0);
 
       try {
-        await upload(file.name, file, {
+        // Upload to Vercel Blob
+        const blob = await upload(file.name, file, {
           access: "public",
           handleUploadUrl: "/api/workspace/upload",
           clientPayload: JSON.stringify({ workspaceId }),
           onUploadProgress: (progress) => {
             setUploadProgress(Math.round(progress.percentage));
           },
+        });
+
+        // Create document record in database
+        const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+        const mimeType = file.type || "application/octet-stream";
+        const docType = getDocumentTypeFromMime(mimeType);
+
+        await createFileDocument({
+          workspaceId,
+          name: fileName,
+          url: blob.url,
+          fileSize: file.size,
+          mimeType,
+          type: docType,
         });
 
         toast.success("File uploaded successfully");
