@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { useTranslations } from "next-intl";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Card,
@@ -15,7 +16,13 @@ import {
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Skeleton } from "@/app/[locale]/components/ui/skeleton";
-import { PlusCircle, Users, Crown, Pencil, Eye } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/app/[locale]/components/ui/accordion";
+import { PlusCircle, Users, Crown, Pencil, Eye, FileText, Beaker, UserPlus, Shield } from "lucide-react";
 import { getMyWorkspaces } from "@/actions/workspaces";
 import type { Workspace } from "@/app/type";
 import type { WorkspaceRoleValue } from "@/constants";
@@ -110,6 +117,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceWithRole }) {
 export default function WorkspacesPage() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
+  const t = useTranslations("Workspaces");
   const [workspaces, setWorkspaces] = useState<WorkspaceWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +136,7 @@ export default function WorkspacesPage() {
       } catch (err) {
         console.error("Failed to fetch workspaces:", err);
         setError(
-          err instanceof Error ? err.message : "Failed to load workspaces"
+          err instanceof Error ? err.message : t("errorLoading")
         );
       } finally {
         setIsLoading(false);
@@ -136,23 +144,60 @@ export default function WorkspacesPage() {
     }
 
     fetchWorkspaces();
-  }, [isLoaded, isSignedIn, router]);
+  }, [isLoaded, isSignedIn, router, t]);
 
   if (!isLoaded || !isSignedIn) return null;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Workspaces</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <Button onClick={() => router.push("/workspaces/new")}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          New Workspace
+          {t("newWorkspace")}
         </Button>
       </div>
 
+      {/* Explanation accordion */}
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="what-are-workspaces" className="border rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline">
+            <span className="flex items-center gap-2 text-base font-medium">
+              <Users className="h-5 w-5 text-primary" />
+              {t("whatAreWorkspaces")}
+            </span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-4 pt-2">
+              <p className="text-muted-foreground">
+                {t("workspacesDescription")}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-start gap-2">
+                  <FileText className="h-4 w-4 mt-0.5 text-blue-500" />
+                  <span className="text-sm">{t("featureDocuments")}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Beaker className="h-4 w-4 mt-0.5 text-green-500" />
+                  <span className="text-sm">{t("featureFlavors")}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <UserPlus className="h-4 w-4 mt-0.5 text-purple-500" />
+                  <span className="text-sm">{t("featureMembers")}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Shield className="h-4 w-4 mt-0.5 text-amber-500" />
+                  <span className="text-sm">{t("featureRoles")}</span>
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
       {error ? (
         <div className="p-4 border border-red-300 bg-red-50 rounded-lg text-red-800">
-          <p className="font-medium">Error loading workspaces</p>
+          <p className="font-medium">{t("errorLoading")}</p>
           <p className="text-sm">{error}</p>
         </div>
       ) : isLoading ? (
@@ -170,12 +215,11 @@ export default function WorkspacesPage() {
       ) : (
         <Card className="p-8 text-center">
           <p className="text-muted-foreground mb-4">
-            You don&apos;t have any workspaces yet. Create one to start
-            collaborating!
+            {t("noWorkspacesYet")}
           </p>
           <Button onClick={() => router.push("/workspaces/new")}>
             <PlusCircle className="mr-2 h-4 w-4" />
-            Create your first workspace
+            {t("createFirstWorkspace")}
           </Button>
         </Card>
       )}

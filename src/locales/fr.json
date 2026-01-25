@@ -199,11 +199,31 @@
 	  },
 	  "Navbar": {
 		"myFlavours": "Mes arômes",
+		"workspaces": "Espaces",
 		"substances": "Substances",
 		"molecules": "Molécules",
 		"calculator": "Calculateur",
 		"jobs": "Emplois",
 		"about": "À propos"
+	  },
+	  "Workspaces": {
+		"title": "Espaces de travail",
+		"newWorkspace": "Nouvel espace",
+		"openWorkspace": "Ouvrir l'espace",
+		"noWorkspacesYet": "Vous n'avez pas encore d'espace de travail. Créez-en un pour commencer à collaborer !",
+		"createFirstWorkspace": "Créer votre premier espace",
+		"errorLoading": "Erreur lors du chargement des espaces",
+		"members": "membres",
+		"member": "membre",
+		"owner": "Propriétaire",
+		"editor": "Éditeur",
+		"viewer": "Lecteur",
+		"whatAreWorkspaces": "Qu'est-ce qu'un espace de travail ?",
+		"workspacesDescription": "Les espaces de travail sont des environnements collaboratifs où vous pouvez travailler en équipe sur vos projets d'arômes. Partagez des documents, liez vos compositions et collaborez en temps réel.",
+		"featureDocuments": "Créez et modifiez des documents ensemble",
+		"featureFlavors": "Liez et partagez vos compositions d'arômes",
+		"featureMembers": "Invitez des membres avec différents niveaux d'accès",
+		"featureRoles": "Contrôlez l'accès avec les rôles Propriétaire, Éditeur et Lecteur"
 	  },
 	  "Flavours": {
 		"myFlavors": "Mes arômes",

@@ -20,6 +20,7 @@ const ADMIN_EMAILS = ["l.mangallon@gmail.com"];
 const authRoutes = [
   // { href: "/dashboard", label: "Dashboard" },
   { href: "/flavours", label: "myFlavours" },
+  { href: "/workspaces", label: "workspaces" },
   { href: "/substances", label: "substances" },
   { href: "/molecules", label: "molecules" },
   { href: "/calculator", label: "calculator" },
@@ -53,7 +54,7 @@ export default function Navbar() {
     // If the route requires auth and user is not signed in, redirect to sign in
     if (
       !isSignedIn &&
-      ["/dashboard", "/flavours", "/substances"].includes(href)
+      ["/dashboard", "/flavours", "/substances", "/workspaces"].includes(href)
     ) {
       router.push(`/${locale}/auth/sign-in`);
       return;

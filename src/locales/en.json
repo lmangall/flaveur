@@ -204,11 +204,31 @@
 	  },
 	  "Navbar": {
 		"myFlavours": "My Flavours",
+		"workspaces": "Workspaces",
 		"substances": "Substances",
 		"molecules": "Molecules",
 		"calculator": "Calculator",
 		"jobs": "Jobs",
 		"about": "About"
+	  },
+	  "Workspaces": {
+		"title": "Workspaces",
+		"newWorkspace": "New Workspace",
+		"openWorkspace": "Open Workspace",
+		"noWorkspacesYet": "You don't have any workspaces yet. Create one to start collaborating!",
+		"createFirstWorkspace": "Create your first workspace",
+		"errorLoading": "Error loading workspaces",
+		"members": "members",
+		"member": "member",
+		"owner": "Owner",
+		"editor": "Editor",
+		"viewer": "Viewer",
+		"whatAreWorkspaces": "What are Workspaces?",
+		"workspacesDescription": "Workspaces are collaborative spaces where you can work with your team on flavor projects. Share documents, link flavors, and collaborate in real-time.",
+		"featureDocuments": "Create and edit documents together",
+		"featureFlavors": "Link and share your flavor compositions",
+		"featureMembers": "Invite team members with different permission levels",
+		"featureRoles": "Control access with Owner, Editor, and Viewer roles"
 	  },
 	  "Flavours": {
 		"myFlavors": "My Flavors",
