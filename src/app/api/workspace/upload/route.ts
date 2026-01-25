@@ -3,9 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { sql } from "@/lib/db";
 import {
-  MAX_IMAGE_SIZE_BYTES,
-  ALLOWED_IMAGE_TYPES,
-  isAllowedImageType,
+  MAX_FILE_SIZE_BYTES,
+  getDocumentTypeFromMime,
 } from "@/constants/workspace";
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -47,8 +46,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         }
 
         return {
-          allowedContentTypes: ALLOWED_IMAGE_TYPES as unknown as string[],
-          maximumSizeInBytes: MAX_IMAGE_SIZE_BYTES,
+          // Allow all content types
+          maximumSizeInBytes: MAX_FILE_SIZE_BYTES,
           tokenPayload: JSON.stringify({
             userId,
             workspaceId,
@@ -68,30 +67,18 @@ export async function POST(request: Request): Promise<NextResponse> {
         const filename = blob.pathname.split("/").pop() || "Untitled";
         const name = filename.replace(/\.[^/.]+$/, "");
 
-        // Detect mime type from content type or URL
-        let mimeType = blob.contentType || "image/jpeg";
-        if (!isAllowedImageType(mimeType)) {
-          // Try to infer from URL extension
-          const ext = blob.url.split(".").pop()?.toLowerCase();
-          const mimeMap: Record<string, string> = {
-            jpg: "image/jpeg",
-            jpeg: "image/jpeg",
-            png: "image/png",
-            gif: "image/gif",
-            webp: "image/webp",
-          };
-          mimeType = mimeMap[ext || ""] || "image/jpeg";
-        }
+        // Detect mime type and document type
+        const mimeType = blob.contentType || "application/octet-stream";
+        const documentType = getDocumentTypeFromMime(mimeType);
 
         // Create document record
-        // Note: Vercel Blob v2 doesn't return size in onUploadCompleted, so we leave it NULL
         try {
           await sql`
             INSERT INTO workspace_document (
               workspace_id, name, type, url, mime_type, created_by
             )
             VALUES (
-              ${workspaceId}, ${name}, 'image', ${blob.url}, ${mimeType}, ${userId}
+              ${workspaceId}, ${name}, ${documentType}, ${blob.url}, ${mimeType}, ${userId}
             )
           `;
           console.log(

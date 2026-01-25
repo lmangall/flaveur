@@ -33,6 +33,8 @@ import {
   Table,
   PlusCircle,
   UserPlus,
+  FileType,
+  File,
 } from "lucide-react";
 import {
   getWorkspaceById,
@@ -83,8 +85,33 @@ function getDocumentTypeStyle(type: string) {
       return { bg: "bg-emerald-50 dark:bg-emerald-950/30", icon: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" };
     case "markdown":
       return { bg: "bg-blue-50 dark:bg-blue-950/30", icon: "text-blue-600 dark:text-blue-400", badge: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" };
+    case "pdf":
+      return { bg: "bg-red-50 dark:bg-red-950/30", icon: "text-red-600 dark:text-red-400", badge: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" };
     default:
       return { bg: "bg-gray-50 dark:bg-gray-950/30", icon: "text-gray-600 dark:text-gray-400", badge: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300" };
+  }
+}
+
+function getDocumentIcon(type: string) {
+  switch (type) {
+    case "csv":
+      return <Table className="h-8 w-8" />;
+    case "pdf":
+      return <FileType className="h-8 w-8" />;
+    case "file":
+      return <File className="h-8 w-8" />;
+    default:
+      return <FileText className="h-8 w-8" />;
+  }
+}
+
+function getDocumentTypeLabel(type: string): string {
+  switch (type) {
+    case "image": return "Image";
+    case "csv": return "Table";
+    case "markdown": return "Doc";
+    case "pdf": return "PDF";
+    default: return "File";
   }
 }
 
@@ -120,11 +147,7 @@ function DocumentCard({ document }: { document: WorkspaceDocument }) {
         ) : (
           <div className={`flex items-center justify-center py-8 ${style.bg}`}>
             <div className={`rounded-full p-3 bg-white/80 dark:bg-black/20 ${style.icon}`}>
-              {document.type === "csv" ? (
-                <Table className="h-8 w-8" />
-              ) : (
-                <FileText className="h-8 w-8" />
-              )}
+              {getDocumentIcon(document.type)}
             </div>
           </div>
         )}
@@ -135,7 +158,7 @@ function DocumentCard({ document }: { document: WorkspaceDocument }) {
               {document.name}
             </CardTitle>
             <Badge variant="secondary" className={`shrink-0 text-xs ${style.badge} border-0`}>
-              {document.type === "markdown" ? "Doc" : document.type === "csv" ? "Table" : "Image"}
+              {getDocumentTypeLabel(document.type)}
             </Badge>
           </div>
           {document.description && (
