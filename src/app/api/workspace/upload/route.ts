@@ -84,13 +84,14 @@ export async function POST(request: Request): Promise<NextResponse> {
         }
 
         // Create document record
+        // Note: Vercel Blob v2 doesn't return size in onUploadCompleted, so we leave it NULL
         try {
           await sql`
             INSERT INTO workspace_document (
-              workspace_id, name, type, url, file_size, mime_type, created_by
+              workspace_id, name, type, url, mime_type, created_by
             )
             VALUES (
-              ${workspaceId}, ${name}, 'image', ${blob.url}, ${blob.size}, ${mimeType}, ${userId}
+              ${workspaceId}, ${name}, 'image', ${blob.url}, ${mimeType}, ${userId}
             )
           `;
           console.log(

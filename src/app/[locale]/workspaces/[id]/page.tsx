@@ -42,12 +42,17 @@ import {
   getWorkspaceInvites,
 } from "@/actions/workspaces";
 import { getWorkspaceDocuments } from "@/actions/documents";
+import { WorkspaceMemberDialog } from "@/app/[locale]/components/workspace-member-dialog";
+import { DocumentUploadDialog } from "@/app/[locale]/components/document-upload-dialog";
+import { LinkFlavourDialog } from "@/app/[locale]/components/link-flavour-dialog";
 import type { Workspace, WorkspaceMember, WorkspaceDocument, WorkspaceFlavour, Flavour, WorkspaceInvite } from "@/app/type";
 import type { WorkspaceRoleValue } from "@/constants";
 
-type WorkspaceWithMembers = Workspace & {
+type MemberWithDetails = WorkspaceMember & { email: string; username: string | null };
+
+type WorkspaceWithMembers = Omit<Workspace, 'members'> & {
   role: WorkspaceRoleValue;
-  members: (WorkspaceMember & { email: string; username: string | null })[];
+  members: MemberWithDetails[];
 };
 
 function getRoleIcon(role: WorkspaceRoleValue) {
@@ -154,7 +159,7 @@ function FlavourCard({
 function MemberRow({
   member,
 }: {
-  member: WorkspaceMember & { email: string; username: string | null };
+  member: MemberWithDetails;
 }) {
   return (
     <div className="flex items-center justify-between py-3 border-b last:border-0">
@@ -192,7 +197,7 @@ function InviteRow({ invite }: { invite: WorkspaceInvite }) {
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useUser();
+  const { user, isSignedIn, isLoaded } = useUser();
   const workspaceId = Number(params.id);
 
   const [workspace, setWorkspace] = useState<WorkspaceWithMembers | null>(null);
@@ -204,6 +209,9 @@ export default function WorkspaceDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("documents");
+  const [memberDialogOpen, setMemberDialogOpen] = useState(false);
+  const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [flavourDialogOpen, setFlavourDialogOpen] = useState(false);
 
   const canEdit = workspace?.role === "owner" || workspace?.role === "editor";
 
@@ -366,7 +374,7 @@ export default function WorkspaceDetailPage() {
         <TabsContent value="documents" className="space-y-4">
           {canEdit && (
             <div className="flex justify-end">
-              <Button size="sm">
+              <Button size="sm" onClick={() => setDocumentDialogOpen(true)}>
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Document
               </Button>
@@ -385,19 +393,28 @@ export default function WorkspaceDetailPage() {
                 No documents yet. {canEdit && "Add images, spreadsheets, or documents to get started."}
               </p>
               {canEdit && (
-                <Button>
+                <Button onClick={() => setDocumentDialogOpen(true)}>
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Add First Document
                 </Button>
               )}
             </Card>
           )}
+
+          {workspace && (
+            <DocumentUploadDialog
+              open={documentDialogOpen}
+              onOpenChange={setDocumentDialogOpen}
+              workspaceId={workspace.workspace_id}
+              onDocumentCreated={fetchDocuments}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="flavours" className="space-y-4">
           {canEdit && (
             <div className="flex justify-end">
-              <Button size="sm">
+              <Button size="sm" onClick={() => setFlavourDialogOpen(true)}>
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Link Flavour
               </Button>
@@ -416,12 +433,22 @@ export default function WorkspaceDetailPage() {
                 No flavours linked. {canEdit && "Link your personal flavours to collaborate on them."}
               </p>
               {canEdit && (
-                <Button>
+                <Button onClick={() => setFlavourDialogOpen(true)}>
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Link First Flavour
                 </Button>
               )}
             </Card>
+          )}
+
+          {workspace && (
+            <LinkFlavourDialog
+              open={flavourDialogOpen}
+              onOpenChange={setFlavourDialogOpen}
+              workspaceId={workspace.workspace_id}
+              linkedFlavourIds={flavourLinks.map((l) => l.flavour_id)}
+              onFlavourLinked={fetchFlavours}
+            />
           )}
         </TabsContent>
 
@@ -437,9 +464,9 @@ export default function WorkspaceDetailPage() {
                   </CardDescription>
                 </div>
                 {canEdit && (
-                  <Button size="sm">
+                  <Button size="sm" onClick={() => setMemberDialogOpen(true)}>
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Invite
+                    Manage Members
                   </Button>
                 )}
               </div>
@@ -466,6 +493,19 @@ export default function WorkspaceDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {user && workspace && (
+            <WorkspaceMemberDialog
+              open={memberDialogOpen}
+              onOpenChange={setMemberDialogOpen}
+              workspaceId={workspace.workspace_id}
+              workspaceName={workspace.name}
+              currentUserRole={workspace.role}
+              members={workspace.members}
+              currentUserId={user.id}
+              onMembersChange={fetchWorkspace}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

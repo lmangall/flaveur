@@ -22,20 +22,28 @@ export async function getFlavourById(flavourId: number) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Check if user is owner OR has shared access
+  // Check if user is owner OR has shared access OR has workspace access
   const accessCheck = await sql`
     SELECT
       f.*,
       CASE WHEN f.user_id = ${userId} THEN true ELSE false END as is_owner,
       CASE WHEN fs.share_id IS NOT NULL THEN true ELSE false END as is_shared_with_me,
       sharer.username as shared_by_username,
-      sharer.email as shared_by_email
+      sharer.email as shared_by_email,
+      CASE WHEN wm.member_id IS NOT NULL THEN true ELSE false END as has_workspace_access,
+      wm.role as workspace_role,
+      w.name as workspace_name,
+      w.workspace_id as access_workspace_id
     FROM flavour f
     LEFT JOIN flavour_shares fs ON f.flavour_id = fs.flavour_id
       AND fs.shared_with_user_id = ${userId}
     LEFT JOIN users sharer ON fs.shared_by_user_id = sharer.user_id
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    LEFT JOIN workspace w ON wf.workspace_id = w.workspace_id
     WHERE f.flavour_id = ${flavourId}
-      AND (f.user_id = ${userId} OR fs.share_id IS NOT NULL)
+      AND (f.user_id = ${userId} OR fs.share_id IS NOT NULL OR wm.member_id IS NOT NULL)
   `;
 
   if (accessCheck.length === 0) {
@@ -45,9 +53,22 @@ export async function getFlavourById(flavourId: number) {
   const flavourData = accessCheck[0];
   const isOwner = Boolean(flavourData.is_owner);
   const isSharedWithMe = Boolean(flavourData.is_shared_with_me);
+  const hasWorkspaceAccess = Boolean(flavourData.has_workspace_access);
+  const workspaceRole = flavourData.workspace_role as string | null;
+  const canEditViaWorkspace = hasWorkspaceAccess && (workspaceRole === "owner" || workspaceRole === "editor");
 
   // Extract flavour fields (without the computed fields)
-  const { is_owner, is_shared_with_me, shared_by_username, shared_by_email, ...flavour } = flavourData;
+  const {
+    is_owner,
+    is_shared_with_me,
+    shared_by_username,
+    shared_by_email,
+    has_workspace_access,
+    workspace_role,
+    workspace_name,
+    access_workspace_id,
+    ...flavour
+  } = flavourData;
 
   const substanceLinks = await sql`
     SELECT substance_id FROM substance_flavour WHERE flavour_id = ${flavourId}
@@ -72,6 +93,13 @@ export async function getFlavourById(flavourId: number) {
     sharedBy: isSharedWithMe ? {
       username: shared_by_username,
       email: shared_by_email,
+    } : null,
+    hasWorkspaceAccess,
+    canEditViaWorkspace,
+    workspace: hasWorkspaceAccess ? {
+      workspace_id: access_workspace_id,
+      name: workspace_name,
+      role: workspaceRole,
     } : null,
   };
 }
@@ -173,12 +201,18 @@ export async function addSubstanceToFlavour(
 
   const substanceId = substanceCheck[0].substance_id;
 
-  // Check flavour exists and belongs to user
-  const flavourCheck = await sql`
-    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  // Check flavour exists and user has edit access (owner OR workspace editor/owner)
+  const accessCheck = await sql`
+    SELECT f.*
+    FROM public.flavour f
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
   `;
 
-  if (flavourCheck.length === 0) {
+  if (accessCheck.length === 0) {
     throw new Error("Flavour not found or access denied");
   }
 
@@ -198,12 +232,18 @@ export async function removeSubstanceFromFlavour(
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Check flavour belongs to user
-  const flavourCheck = await sql`
-    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  // Check flavour exists and user has edit access (owner OR workspace editor/owner)
+  const accessCheck = await sql`
+    SELECT f.*
+    FROM public.flavour f
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
   `;
 
-  if (flavourCheck.length === 0) {
+  if (accessCheck.length === 0) {
     throw new Error("Flavour not found or access denied");
   }
 
@@ -238,19 +278,25 @@ export async function updateFlavourStatus(
     throw new Error(`Invalid status: ${status}`);
   }
 
-  // Check flavour belongs to user
-  const flavourCheck = await sql`
-    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  // Check flavour exists and user has edit access (owner OR workspace editor/owner)
+  const accessCheck = await sql`
+    SELECT f.*
+    FROM public.flavour f
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
   `;
 
-  if (flavourCheck.length === 0) {
+  if (accessCheck.length === 0) {
     throw new Error("Flavour not found or access denied");
   }
 
   const result = await sql`
     UPDATE public.flavour
     SET status = ${status}, updated_at = CURRENT_TIMESTAMP
-    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+    WHERE flavour_id = ${flavourId}
     RETURNING *
   `;
 
@@ -280,16 +326,25 @@ export async function updateFlavour(
 
   const validatedData = validation.data;
 
-  // Check flavour exists and belongs to user
-  const flavourCheck = await sql`
-    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  // Check flavour exists and user has edit access (owner OR workspace editor/owner)
+  const accessCheck = await sql`
+    SELECT
+      f.*,
+      CASE WHEN f.user_id = ${userId} THEN true ELSE false END as is_owner,
+      wm.role as workspace_role
+    FROM public.flavour f
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
   `;
 
-  if (flavourCheck.length === 0) {
+  if (accessCheck.length === 0) {
     throw new Error("Flavour not found or access denied");
   }
 
-  const existing = flavourCheck[0];
+  const existing = accessCheck[0];
 
   // Merge validated data with existing values
   // undefined = keep existing, null = clear, value = update
@@ -312,7 +367,7 @@ export async function updateFlavour(
       status = ${finalData.status},
       base_unit = ${finalData.base_unit},
       updated_at = CURRENT_TIMESTAMP
-    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+    WHERE flavour_id = ${flavourId}
     RETURNING *
   `;
 
@@ -323,13 +378,16 @@ export async function duplicateFlavour(flavourId: number, newName?: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Get original flavour - check if user owns it OR has shared access
+  // Get original flavour - check if user owns it, has shared access, OR has workspace access
   const originalFlavour = await sql`
     SELECT f.*
     FROM public.flavour f
     LEFT JOIN flavour_shares fs ON f.flavour_id = fs.flavour_id AND fs.shared_with_user_id = ${userId}
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
     WHERE f.flavour_id = ${flavourId}
-      AND (f.user_id = ${userId} OR fs.share_id IS NOT NULL)
+      AND (f.user_id = ${userId} OR fs.share_id IS NOT NULL OR wm.member_id IS NOT NULL)
   `;
 
   if (originalFlavour.length === 0) {
@@ -406,19 +464,25 @@ export async function updateFlavorProfile(
     }
   }
 
-  // Check flavour exists and belongs to user
-  const flavourCheck = await sql`
-    SELECT * FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  // Check flavour exists and user has edit access (owner OR workspace editor/owner)
+  const accessCheck = await sql`
+    SELECT f.*
+    FROM public.flavour f
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
   `;
 
-  if (flavourCheck.length === 0) {
+  if (accessCheck.length === 0) {
     throw new Error("Flavour not found or access denied");
   }
 
   const result = await sql`
     UPDATE public.flavour
     SET flavor_profile = ${JSON.stringify(flavorProfile)}::jsonb, updated_at = CURRENT_TIMESTAMP
-    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+    WHERE flavour_id = ${flavourId}
     RETURNING *
   `;
 
