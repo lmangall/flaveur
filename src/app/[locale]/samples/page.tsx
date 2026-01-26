@@ -70,7 +70,7 @@ export default async function SamplesPage() {
   const samplesWithoutVariations = samples.filter((s) => s.variation_count <= 1);
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Sample Flavors</h1>
         <p className="text-muted-foreground max-w-2xl">

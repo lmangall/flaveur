@@ -750,7 +750,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
   };
 
   return (
-    <div className="container py-8 space-y-6">
+    <div className="container mx-auto px-4 md:px-6 py-8 space-y-6">
       {/* Shared with you banner */}
       {isSharedWithMe && sharedBy && (
         <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-center gap-2">

@@ -67,7 +67,7 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-      <div className="flex h-16 items-center px-4 md:px-8">
+      <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
         <Link href={`/${locale}`} className="flex items-center space-x-2">
           <div className="relative h-12 w-12">
             <Image

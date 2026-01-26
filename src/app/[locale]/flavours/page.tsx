@@ -428,7 +428,7 @@ export default function FlavoursPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 md:px-6 py-8 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold tracking-tight">{t("myFlavors")}</h1>
         <div className="flex gap-2">

@@ -241,7 +241,7 @@ export default function Dashboard() {
   if (!isLoaded || !isSignedIn) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <Button onClick={() => router.push("/flavours/new")}>

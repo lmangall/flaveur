@@ -91,7 +91,7 @@ export default function NewFlavourPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="container max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-6">
       <div className="flex items-center">
         <Button variant="ghost" onClick={() => router.back()} className="mr-4">
           <ArrowLeft className="mr-2 h-4 w-4" />

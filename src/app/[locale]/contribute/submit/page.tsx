@@ -193,7 +193,7 @@ export default function SubmitSubstancePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="container max-w-2xl mx-auto px-4 md:px-6 py-8 space-y-6">
       <Button variant="ghost" onClick={() => router.back()}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back

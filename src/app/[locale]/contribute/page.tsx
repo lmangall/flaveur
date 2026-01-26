@@ -259,7 +259,7 @@ export default function ContributePage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Contributions</h1>

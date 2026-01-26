@@ -163,7 +163,7 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="container py-8">
+    <div className="container mx-auto px-4 md:px-6 py-8">
       <div className="flex flex-col space-y-6">
         <div>
           <h1 className="text-3xl font-bold">{t("jobListingHeading")}</h1>

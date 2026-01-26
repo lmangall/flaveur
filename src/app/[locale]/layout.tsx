@@ -148,7 +148,7 @@ export default async function RootLayout({
                     Skip to main content
                   </a>
                   <Navbar />
-                  <main id="main-content" className="flex-1 px-4 md:px-8 py-8 pt-20 min-h-screen">
+                  <main id="main-content" className="flex-1 pt-16 min-h-screen">
                     {children}
                   </main>
                   <Footer />
