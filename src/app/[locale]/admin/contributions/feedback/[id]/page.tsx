@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Card,
@@ -106,7 +106,9 @@ export default function AdminFeedbackReviewPage() {
   const router = useRouter();
   const params = useParams();
   const feedbackId = parseInt(params.id as string);
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
+  const isSignedIn = !!session;
+  const isLoaded = !isPending;
 
   const [feedback, setFeedback] = useState<FeedbackWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useTranslations, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Sun, Moon, Monitor, User, Mail, Globe, Palette, Bell, X } from "lucide-react";
+import { Sun, Moon, Monitor, User, Mail, Globe, Palette, Bell, X, Info, ExternalLink, Database } from "lucide-react";
 
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -47,9 +47,11 @@ import {
 } from "@/constants";
 
 export default function SettingsPage() {
-  const { user, isLoaded, isSignedIn } = useUser();
-  const { openUserProfile } = useClerk();
+  const { data: session, isPending } = useSession();
   const t = useTranslations("Settings");
+  const user = session?.user;
+  const isLoaded = !isPending;
+  const isSignedIn = !!session;
   const locale = useLocale();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
@@ -80,11 +82,11 @@ export default function SettingsPage() {
   }, []);
 
   const fetchNewsletterStatus = useCallback(async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) return;
+    if (!user?.email) return;
 
     setIsLoadingNewsletter(true);
     try {
-      const result = await getNewsletterStatus(user.primaryEmailAddress.emailAddress);
+      const result = await getNewsletterStatus(user.email);
       setNewsletterStatus(result.status);
       setConfirmationToken(result.confirmationToken);
     } catch {
@@ -92,13 +94,13 @@ export default function SettingsPage() {
     } finally {
       setIsLoadingNewsletter(false);
     }
-  }, [user?.primaryEmailAddress?.emailAddress]);
+  }, [user?.email]);
 
   useEffect(() => {
-    if (isLoaded && isSignedIn && user?.primaryEmailAddress?.emailAddress) {
+    if (isLoaded && isSignedIn && user?.email) {
       fetchNewsletterStatus();
     }
-  }, [isLoaded, isSignedIn, user?.primaryEmailAddress?.emailAddress, fetchNewsletterStatus]);
+  }, [isLoaded, isSignedIn, user?.email, fetchNewsletterStatus]);
 
   const fetchJobAlertPreferences = useCallback(async () => {
     setIsLoadingJobAlerts(true);
@@ -135,7 +137,7 @@ export default function SettingsPage() {
   };
 
   const handleNewsletterToggle = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) return;
+    if (!user?.email) return;
 
     setIsUpdatingNewsletter(true);
     try {
@@ -149,7 +151,7 @@ export default function SettingsPage() {
         }
       } else {
         const result = await subscribeUserToNewsletter(
-          user.primaryEmailAddress.emailAddress,
+          user.email,
           locale
         );
         if (result.success) {
@@ -241,7 +243,7 @@ export default function SettingsPage() {
 
   if (!isLoaded) {
     return (
-      <div className="container max-w-2xl mx-auto py-8">
+      <div className="container mx-auto px-4 md:px-6 py-8">
         <Skeleton className="h-10 w-48 mb-2" />
         <Skeleton className="h-5 w-64 mb-8" />
         <div className="space-y-6">
@@ -255,7 +257,7 @@ export default function SettingsPage() {
 
   if (!isSignedIn) {
     return (
-      <div className="container max-w-2xl mx-auto py-8">
+      <div className="container mx-auto px-4 md:px-6 py-8">
         <Card>
           <CardHeader className="text-center">
             <CardTitle>{t("signInRequired")}</CardTitle>
@@ -270,11 +272,11 @@ export default function SettingsPage() {
     );
   }
 
-  const displayName = user?.fullName || user?.username || user?.primaryEmailAddress?.emailAddress || "";
-  const email = user?.primaryEmailAddress?.emailAddress || "";
+  const displayName = user?.name || user?.email || "";
+  const email = user?.email || "";
 
   return (
-    <div className="container max-w-2xl mx-auto py-8">
+    <div className="container mx-auto px-4 md:px-6 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground mt-1">{t("subtitle")}</p>
@@ -303,14 +305,7 @@ export default function SettingsPage() {
               </span>
               <span className="text-sm">{email}</span>
             </div>
-            <p className="text-xs text-muted-foreground">{t("managedByClerk")}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openUserProfile()}
-            >
-              {t("manageAccount")}
-            </Button>
+            <p className="text-xs text-muted-foreground">{t("managedByProvider")}</p>
           </CardContent>
         </Card>
 
@@ -600,6 +595,99 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* How It Works - EU Compliance Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              <CardTitle>{t("howItWorks")}</CardTitle>
+            </div>
+            <CardDescription>{t("howItWorksDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* EU Compliance Data Sources */}
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <span className="text-sm font-medium">{t("euComplianceTitle")}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {t("euComplianceDesc")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Data Sources List */}
+              <div className="pl-8 space-y-3">
+                <div className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{t("euFlavouringsDb")}</span>
+                    <a
+                      href="https://webgate.ec.europa.eu/foods_system/main/?sector=FFL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    >
+                      {t("viewSource")}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("euFlavouringsDbDesc")}
+                  </p>
+                </div>
+
+                <div className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{t("euAdditivesDb")}</span>
+                    <a
+                      href="https://webgate.ec.europa.eu/foods_system/main/?sector=FAD"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                    >
+                      {t("viewSource")}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("euAdditivesDbDesc")}
+                  </p>
+                </div>
+              </div>
+
+              {/* How Matching Works */}
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <span className="text-sm font-medium">{t("matchingTitle")}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {t("matchingDesc")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Data Freshness */}
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <span className="text-sm font-medium">{t("dataFreshnessTitle")}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {t("dataFreshnessDesc")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Disclaimer */}
+              <div className="bg-muted/50 rounded-lg p-3 mt-4">
+                <p className="text-xs text-muted-foreground">
+                  <strong>{t("disclaimer")}:</strong> {t("disclaimerText")}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

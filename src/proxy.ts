@@ -1,4 +1,3 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 import { NextRequest, NextResponse } from "next/server";
@@ -7,18 +6,27 @@ import { NextRequest, NextResponse } from "next/server";
 const intlMiddleware = createIntlMiddleware(routing);
 
 // Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
+const publicRoutes = [
   "/",
-  "/:locale",
-  "/:locale/about",
-  "/:locale/privacy-policy",
-  "/:locale/terms-of-service",
-  "/:locale/auth/(.*)",
-  "/:locale/invite",
-  "/api/(.*)",
-]);
+  "/about",
+  "/privacy-policy",
+  "/terms-of-service",
+  "/auth",
+  "/invite",
+  "/api/auth",
+];
 
-export default clerkMiddleware(async (auth, req: NextRequest) => {
+function isPublicRoute(pathname: string): boolean {
+  // Remove locale prefix for checking
+  const pathWithoutLocale = pathname.replace(/^\/(en|fr)/, "") || "/";
+
+  return publicRoutes.some((route) => {
+    if (route === "/") return pathWithoutLocale === "/";
+    return pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`);
+  });
+}
+
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Skip proxy entirely for API routes - let them handle their own auth
@@ -31,29 +39,28 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(new URL(`/${routing.defaultLocale}`, req.url));
   }
 
-  // Skip localization for auth routes and handle redirects
+  // Skip localization for auth routes
   if (pathname.startsWith("/auth")) {
-    // Only redirect to production auth URL in production environment
-    if (process.env.NODE_ENV === "production") {
-      // If we're coming from accounts.oumamie.xyz, redirect to home
-      const referer = req.headers.get("referer");
-      if (referer?.includes("accounts.oumamie.xyz")) {
-        return NextResponse.redirect(
-          new URL(`/${routing.defaultLocale}`, req.url)
-        );
-      }
-    }
     return NextResponse.next();
   }
 
-  // Protect non-public routes
-  if (!isPublicRoute(req)) {
-    await auth.protect();
+  // Check if route is public
+  if (!isPublicRoute(pathname)) {
+    // Check for Better Auth session cookie
+    const sessionCookie = req.cookies.get("better-auth.session_token");
+
+    if (!sessionCookie) {
+      // Redirect to sign-in page
+      const locale = pathname.match(/^\/(en|fr)/)?.[1] || routing.defaultLocale;
+      const signInUrl = new URL(`/${locale}/auth/sign-in`, req.url);
+      signInUrl.searchParams.set("redirect_url", pathname);
+      return NextResponse.redirect(signInUrl);
+    }
   }
 
   // Use the next-intl middleware for all other routes
   return intlMiddleware(req);
-});
+}
 
 export const config = {
   // Match all pathnames except for

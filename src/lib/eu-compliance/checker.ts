@@ -102,7 +102,7 @@ export async function checkEUCompliance(
         substanceName: sub.common_name as string,
         severity: "warning",
         type: "not_found",
-        message: "Not found in EU Food Additives database",
+        message: "Not found in EU Food Flavourings or Additives databases",
       });
       continue;
     }
@@ -112,11 +112,16 @@ export async function checkEUCompliance(
       continue;
     }
 
-    // Check restrictions
+    // Check restrictions - group by severity to avoid duplicate entries
     const usedPpm = convertToPpm(
       sub.concentration as number | null,
       sub.unit as string | null
     );
+
+    const exceededCategories: string[] = [];
+    const withinLimitCategories: string[] = [];
+    const qualitativeCategories: string[] = [];
+    let minMaxPpm: number | null = null;
 
     for (const restriction of euData.restrictions) {
       if (restriction.value && usedPpm) {
@@ -126,51 +131,62 @@ export async function checkEUCompliance(
         );
 
         if (maxPpm && usedPpm > maxPpm) {
-          issues.push({
-            substanceId: sub.substance_id as number,
-            substanceName: sub.common_name as string,
-            severity: "error",
-            type: "exceeds_limit",
-            message: `Exceeds EU limit: ${usedPpm.toFixed(1)} ppm used, max ${maxPpm} ppm allowed`,
-            details: {
-              usedPpm,
-              maxPpm,
-              foodCategory: restriction.foodCategory,
-            },
-            euUrl: euData.detailsUrl,
-          });
+          exceededCategories.push(restriction.foodCategory);
+          if (minMaxPpm === null || maxPpm < minMaxPpm) {
+            minMaxPpm = maxPpm;
+          }
         } else {
-          // Under limit but restricted - info only
-          issues.push({
-            substanceId: sub.substance_id as number,
-            substanceName: sub.common_name as string,
-            severity: "info",
-            type: "restricted",
-            message: "Restricted in EU (within limits)",
-            details: {
-              usedPpm,
-              maxPpm: maxPpm ?? undefined,
-              restriction: restriction.comment || undefined,
-              foodCategory: restriction.foodCategory,
-            },
-            euUrl: euData.detailsUrl,
-          });
+          withinLimitCategories.push(restriction.foodCategory);
         }
       } else if (restriction.type) {
-        // Qualitative restriction (no numeric limit)
-        issues.push({
-          substanceId: sub.substance_id as number,
-          substanceName: sub.common_name as string,
-          severity: "warning",
-          type: "category_restriction",
-          message: `EU restriction: ${restriction.type}`,
-          details: {
-            restriction: restriction.comment || restriction.type,
-            foodCategory: restriction.foodCategory,
-          },
-          euUrl: euData.detailsUrl,
-        });
+        qualitativeCategories.push(restriction.foodCategory);
       }
+    }
+
+    // Create one issue per severity level (grouped)
+    if (exceededCategories.length > 0) {
+      issues.push({
+        substanceId: sub.substance_id as number,
+        substanceName: sub.common_name as string,
+        severity: "error",
+        type: "exceeds_limit",
+        message: `Exceeds EU limit: ${usedPpm?.toFixed(1)} ppm used, max ${minMaxPpm} ppm allowed in ${exceededCategories.length} food ${exceededCategories.length === 1 ? "category" : "categories"}`,
+        details: {
+          usedPpm: usedPpm ?? undefined,
+          maxPpm: minMaxPpm ?? undefined,
+          foodCategory: exceededCategories.join(", "),
+        },
+        euUrl: euData.detailsUrl,
+      });
+    }
+
+    if (withinLimitCategories.length > 0) {
+      issues.push({
+        substanceId: sub.substance_id as number,
+        substanceName: sub.common_name as string,
+        severity: "info",
+        type: "restricted",
+        message: `Restricted in EU (within limits for ${withinLimitCategories.length} food ${withinLimitCategories.length === 1 ? "category" : "categories"})`,
+        details: {
+          usedPpm: usedPpm ?? undefined,
+          foodCategory: withinLimitCategories.slice(0, 3).join(", ") + (withinLimitCategories.length > 3 ? ` (+${withinLimitCategories.length - 3} more)` : ""),
+        },
+        euUrl: euData.detailsUrl,
+      });
+    }
+
+    if (qualitativeCategories.length > 0) {
+      issues.push({
+        substanceId: sub.substance_id as number,
+        substanceName: sub.common_name as string,
+        severity: "warning",
+        type: "category_restriction",
+        message: `EU restriction applies to ${qualitativeCategories.length} food ${qualitativeCategories.length === 1 ? "category" : "categories"}`,
+        details: {
+          foodCategory: qualitativeCategories.slice(0, 3).join(", ") + (qualitativeCategories.length > 3 ? ` (+${qualitativeCategories.length - 3} more)` : ""),
+        },
+        euUrl: euData.detailsUrl,
+      });
     }
   }
 

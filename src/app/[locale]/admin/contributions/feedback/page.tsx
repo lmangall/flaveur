@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -115,8 +115,10 @@ function getTypeBadge(type: string) {
 }
 
 export default function AdminFeedbackPage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
+  const isSignedIn = !!session;
+  const isLoaded = !isPending;
   const [feedback, setFeedback] = useState<FeedbackWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

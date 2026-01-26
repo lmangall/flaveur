@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/app/[locale]/components/ui/button";
@@ -41,7 +41,9 @@ const STEPS: Step[] = ["basic", "identifiers", "sensory", "additional", "review"
 
 export default function SubmitSubstancePage() {
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
+  const isLoaded = !isPending;
+  const isSignedIn = !!session;
   const [currentStep, setCurrentStep] = useState<Step>("basic");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);

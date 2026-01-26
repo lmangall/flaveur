@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -213,7 +213,7 @@ function CardSkeleton() {
 }
 
 export default function ContributePage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const [submissions, setSubmissions] = useState<Substance[]>([]);
   const [feedback, setFeedback] = useState<
@@ -239,14 +239,15 @@ export default function ContributePage() {
   }, []);
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (isPending) return;
+    if (!session) {
       router.push("/");
-    } else if (isLoaded && isSignedIn) {
+    } else {
       fetchData();
     }
-  }, [isSignedIn, isLoaded, router, fetchData]);
+  }, [session, isPending, router, fetchData]);
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (isPending || !session) return null;
 
   const pendingSubmissions = submissions.filter(
     (s) => s.verification_status !== "verified"

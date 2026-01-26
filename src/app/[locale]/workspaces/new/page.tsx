@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +41,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function NewWorkspacePage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const { fire: fireConfetti } = useConfetti();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,8 +74,8 @@ export default function NewWorkspacePage() {
     }
   }
 
-  if (!isLoaded) return null;
-  if (!isSignedIn) {
+  if (isPending) return null;
+  if (!session) {
     router.push("/");
     return null;
   }

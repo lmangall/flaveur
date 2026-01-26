@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/app/[locale]/components/ui/button";
@@ -44,7 +44,9 @@ export default function SubstanceFeedbackPage() {
   const router = useRouter();
   const params = useParams();
   const substanceId = parseInt(params.id as string);
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
+  const isSignedIn = !!session;
+  const isLoaded = !isPending;
 
   const [substance, setSubstance] = useState<Substance | null>(null);
   const [isLoadingSubstance, setIsLoadingSubstance] = useState(true);

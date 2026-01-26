@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -49,7 +49,7 @@ import { LEARNING_STATUS_OPTIONS } from "@/constants";
 import type { SubstanceLearningProgress, Substance } from "@/app/type";
 
 export default function SubstanceStudyPage() {
-  const { isLoaded, isSignedIn } = useUser();
+  const { data: session, isPending } = useSession();
   const t = useTranslations("Learn");
   const locale = useLocale();
   const router = useRouter();
@@ -97,10 +97,10 @@ export default function SubstanceStudyPage() {
   }, [substanceId, t]);
 
   useEffect(() => {
-    if (isLoaded && isSignedIn && substanceId) {
+    if (!isPending && session && substanceId) {
       fetchData();
     }
-  }, [isLoaded, isSignedIn, substanceId, fetchData]);
+  }, [isPending, session, substanceId, fetchData]);
 
   const handleSensoryCheck = async (type: "smell" | "taste") => {
     try {
@@ -151,7 +151,7 @@ export default function SubstanceStudyPage() {
     }
   };
 
-  if (!isLoaded || isLoading) {
+  if (isPending || isLoading) {
     return (
       <div className="container max-w-4xl mx-auto py-8 px-4">
         <Skeleton className="h-8 w-32 mb-4" />
@@ -165,7 +165,7 @@ export default function SubstanceStudyPage() {
     );
   }
 
-  if (!isSignedIn) {
+  if (!session) {
     return (
       <div className="container max-w-2xl mx-auto py-8">
         <Card>

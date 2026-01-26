@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth-server";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -15,7 +15,8 @@ export default async function InvitePage({ searchParams, params }: Props) {
   const { token } = await searchParams;
   const { locale } = await params;
   const t = await getTranslations("Sharing");
-  const { userId } = await auth();
+  const session = await getSession();
+  const userId = session?.user?.id;
 
   // No token provided
   if (!token) {

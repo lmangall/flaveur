@@ -1,490 +1,837 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Card } from "@/app/[locale]/components/ui/card";
 import { Input } from "@/app/[locale]/components/ui/input";
 import { Label } from "@/app/[locale]/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/[locale]/components/ui/select";
-import { Switch } from "@/app/[locale]/components/ui/switch";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/app/[locale]/components/ui/table";
+import { RadioGroup, RadioGroupItem } from "@/app/[locale]/components/ui/radio-group";
+import { Textarea } from "@/app/[locale]/components/ui/textarea";
 import {
   ArrowLeft,
-  Upload,
-  FileSpreadsheet,
+  ArrowRight,
   Check,
   X,
-  AlertCircle,
   Loader2,
-  Search,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 import {
-  type SubstanceMatchResult,
-  previewFormulationImport,
-  importFormulation,
+  type SubstanceMatch,
+  searchSubstanceMatches,
+  createSubstanceFromImport,
+  createFlavourWithSubstancesById,
 } from "@/actions/formulation-import";
-import {
-  type FormulationData,
-  parseFormulationSheet,
-} from "@/lib/formulation-parser";
-import * as XLSX from "xlsx";
 
-type ImportStep = "upload" | "preview" | "result";
+// ===========================================
+// TYPES
+// ===========================================
+
+type IngredientRow = {
+  id: number;
+  name: string;
+  supplier: string;
+  dilution: string;
+  pricePerKg: string;
+  concentrationA: string;
+  concentrationB: string;
+  concentrationC: string;
+  concentrationD: string;
+};
+
+type ConfirmedIngredient = {
+  rowId: number;
+  ingredientName: string;
+  substanceId: number;
+  substanceName: string;
+  concentration: number;
+  supplier: string | null;
+  dilution: string | null;
+  pricePerKg: number | null;
+  isNewlyCreated: boolean;
+};
+
+type ImportStep = "entry" | "confirm" | "result";
+
+// ===========================================
+// CONSTANTS
+// ===========================================
+
+const EMPTY_ROW: Omit<IngredientRow, "id"> = {
+  name: "",
+  supplier: "",
+  dilution: "",
+  pricePerKg: "",
+  concentrationA: "",
+  concentrationB: "",
+  concentrationC: "",
+  concentrationD: "",
+};
+
+const createEmptyRows = (count: number, startId: number): IngredientRow[] =>
+  Array.from({ length: count }, (_, i) => ({
+    id: startId + i,
+    ...EMPTY_ROW,
+  }));
+
+// ===========================================
+// MAIN COMPONENT
+// ===========================================
 
 export default function ImportFormulationPage() {
   const router = useRouter();
-  const t = useTranslations("ImportFormulation");
   const { fire: fireConfetti } = useConfetti();
 
-  const [step, setStep] = useState<ImportStep>("upload");
+  // Step state
+  const [step, setStep] = useState<ImportStep>("entry");
   const [isLoading, setIsLoading] = useState(false);
-  const [fileName, setFileName] = useState<string | null>(null);
 
-  // Parsed data
-  const [formulationData, setFormulationData] = useState<FormulationData | null>(null);
-  const [selectedVersion, setSelectedVersion] = useState<string>("");
-  const [autoCreateSubstances, setAutoCreateSubstances] = useState(true);
-  const [fuzzyThreshold, setFuzzyThreshold] = useState(0.4);
+  // Entry form state
+  const [studentName, setStudentName] = useState("");
+  const [formulaName, setFormulaName] = useState("");
+  const [formulationDate, setFormulationDate] = useState("");
+  const [rows, setRows] = useState<IngredientRow[]>(() => createEmptyRows(18, 1));
+  const [selectedVersion, setSelectedVersion] = useState<"A" | "B" | "C" | "D">("A");
 
-  // Preview results
-  const [previewMatches, setPreviewMatches] = useState<SubstanceMatchResult[]>([]);
-  const [isPreviewing, setIsPreviewing] = useState(false);
+  // Confirmation state
+  const [currentConfirmIndex, setCurrentConfirmIndex] = useState(0);
+  const [ingredientsToConfirm, setIngredientsToConfirm] = useState<
+    Array<{ row: IngredientRow; concentration: number }>
+  >([]);
+  const [matches, setMatches] = useState<SubstanceMatch[]>([]);
+  const [selectedMatch, setSelectedMatch] = useState<string>("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newSubstanceOdor, setNewSubstanceOdor] = useState("");
+  const [newSubstanceTaste, setNewSubstanceTaste] = useState("");
+  const [confirmedIngredients, setConfirmedIngredients] = useState<ConfirmedIngredient[]>([]);
 
-  // Import results
-  const [importResult, setImportResult] = useState<{
-    success: boolean;
-    flavour_id?: number;
-    flavour_name?: string;
-    substance_matches: SubstanceMatchResult[];
-    errors: string[];
-  } | null>(null);
+  // Result state
+  const [createdFlavourId, setCreatedFlavourId] = useState<number | null>(null);
+  const [createdFlavourName, setCreatedFlavourName] = useState<string | null>(null);
 
-  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // ===========================================
+  // ENTRY FORM HANDLERS
+  // ===========================================
 
-    setIsLoading(true);
-    setFileName(file.name);
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as (string | number | null | undefined)[][];
-
-      const parsed = parseFormulationSheet(rows);
-      setFormulationData(parsed);
-
-      // Auto-select first version
-      if (parsed.versions.length > 0) {
-        setSelectedVersion(parsed.versions[0].version_label);
-      }
-
-      setStep("preview");
-      toast.success(`File "${file.name}" parsed successfully`);
-    } catch (error) {
-      console.error("Error parsing file:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to parse file");
-    } finally {
-      setIsLoading(false);
-    }
+  const updateRow = useCallback((id: number, field: keyof IngredientRow, value: string) => {
+    setRows((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+    );
   }, []);
 
-  const handlePreview = async () => {
-    if (!formulationData || !selectedVersion) return;
+  const addRow = useCallback(() => {
+    setRows((prev) => {
+      const maxId = Math.max(...prev.map((r) => r.id));
+      return [...prev, { id: maxId + 1, ...EMPTY_ROW }];
+    });
+  }, []);
 
-    setIsPreviewing(true);
-    try {
-      const result = await previewFormulationImport(formulationData, {
-        version_to_import: selectedVersion,
-        fuzzy_threshold: fuzzyThreshold,
-      });
+  const removeRow = useCallback((id: number) => {
+    setRows((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((row) => row.id !== id);
+    });
+  }, []);
 
-      setPreviewMatches(result.substance_matches);
-    } catch (error) {
-      console.error("Error previewing:", error);
-      toast.error("Failed to preview matches");
-    } finally {
-      setIsPreviewing(false);
+  const getConcentrationField = (version: "A" | "B" | "C" | "D"): keyof IngredientRow => {
+    const map: Record<"A" | "B" | "C" | "D", keyof IngredientRow> = {
+      A: "concentrationA",
+      B: "concentrationB",
+      C: "concentrationC",
+      D: "concentrationD",
+    };
+    return map[version];
+  };
+
+  const calculateTotal = (version: "A" | "B" | "C" | "D"): number => {
+    const field = getConcentrationField(version);
+    return rows.reduce((sum, row) => {
+      const val = parseFloat(row[field] as string);
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0);
+  };
+
+  const handleContinueToConfirm = () => {
+    if (!formulaName.trim()) {
+      toast.error("Please enter a formula name");
+      return;
+    }
+
+    const concentrationField = getConcentrationField(selectedVersion);
+    const ingredientsWithConcentration = rows
+      .filter((row) => {
+        const name = row.name.trim();
+        const concentration = parseFloat(row[concentrationField] as string);
+        return name && !isNaN(concentration) && concentration > 0;
+      })
+      .map((row) => ({
+        row,
+        concentration: parseFloat(row[concentrationField] as string),
+      }));
+
+    if (ingredientsWithConcentration.length === 0) {
+      toast.error("Please add at least one ingredient with a concentration");
+      return;
+    }
+
+    setIngredientsToConfirm(ingredientsWithConcentration);
+    setCurrentConfirmIndex(0);
+    setConfirmedIngredients([]);
+    setStep("confirm");
+  };
+
+  // ===========================================
+  // CONFIRMATION HANDLERS
+  // ===========================================
+
+  const currentIngredient = ingredientsToConfirm[currentConfirmIndex];
+
+  // Search for matches when current ingredient changes
+  useEffect(() => {
+    if (step !== "confirm" || !currentIngredient) return;
+
+    const searchMatches = async () => {
+      setIsSearching(true);
+      setMatches([]);
+      setSelectedMatch("");
+      setShowCreateForm(false);
+      setNewSubstanceOdor("");
+      setNewSubstanceTaste("");
+
+      try {
+        const results = await searchSubstanceMatches(currentIngredient.row.name, {
+          fuzzyThreshold: 0.3,
+          limit: 5,
+        });
+        setMatches(results);
+
+        // Auto-select exact match if found
+        const exactMatch = results.find((m) => m.match_type === "exact");
+        if (exactMatch) {
+          setSelectedMatch(`existing-${exactMatch.substance_id}`);
+        }
+      } catch (error) {
+        console.error("Error searching substances:", error);
+        toast.error("Failed to search for substances");
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    searchMatches();
+  }, [step, currentConfirmIndex, currentIngredient]);
+
+  const handleConfirmCurrent = async () => {
+    if (!currentIngredient) return;
+
+    const { row, concentration } = currentIngredient;
+
+    if (selectedMatch === "create-new") {
+      // Create new substance
+      if (!newSubstanceOdor.trim() && !newSubstanceTaste.trim()) {
+        toast.error("Please provide at least an odor or taste description");
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const created = await createSubstanceFromImport({
+          name: row.name.trim(),
+          odor: newSubstanceOdor.trim() || undefined,
+          taste: newSubstanceTaste.trim() || undefined,
+        });
+
+        setConfirmedIngredients((prev) => [
+          ...prev,
+          {
+            rowId: row.id,
+            ingredientName: row.name,
+            substanceId: created.substance_id,
+            substanceName: created.common_name,
+            concentration,
+            supplier: row.supplier.trim() || null,
+            dilution: row.dilution.trim() || null,
+            pricePerKg: row.pricePerKg ? parseFloat(row.pricePerKg) : null,
+            isNewlyCreated: true,
+          },
+        ]);
+
+        toast.success(`Created substance "${created.common_name}"`);
+        moveToNextIngredient();
+      } catch (error) {
+        console.error("Error creating substance:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to create substance");
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (selectedMatch.startsWith("existing-")) {
+      // Use existing substance
+      const substanceId = parseInt(selectedMatch.replace("existing-", ""), 10);
+      const match = matches.find((m) => m.substance_id === substanceId);
+
+      if (!match) {
+        toast.error("Please select a substance");
+        return;
+      }
+
+      setConfirmedIngredients((prev) => [
+        ...prev,
+        {
+          rowId: row.id,
+          ingredientName: row.name,
+          substanceId: match.substance_id,
+          substanceName: match.common_name,
+          concentration,
+          supplier: row.supplier.trim() || null,
+          dilution: row.dilution.trim() || null,
+          pricePerKg: row.pricePerKg ? parseFloat(row.pricePerKg) : null,
+          isNewlyCreated: false,
+        },
+      ]);
+
+      moveToNextIngredient();
+    } else {
+      toast.error("Please select a substance or create a new one");
     }
   };
 
+  const moveToNextIngredient = () => {
+    if (currentConfirmIndex < ingredientsToConfirm.length - 1) {
+      setCurrentConfirmIndex((prev) => prev + 1);
+    } else {
+      // All ingredients confirmed, move to import
+      handleImport();
+    }
+  };
+
+  const handleSkipIngredient = () => {
+    toast.info(`Skipped "${currentIngredient?.row.name}"`);
+    moveToNextIngredient();
+  };
+
+  // ===========================================
+  // IMPORT HANDLER
+  // ===========================================
+
   const handleImport = async () => {
-    if (!formulationData || !selectedVersion) return;
+    if (confirmedIngredients.length === 0) {
+      toast.error("No ingredients to import");
+      setStep("entry");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const result = await importFormulation(formulationData, {
-        version_to_import: selectedVersion,
-        auto_create_substances: autoCreateSubstances,
-        fuzzy_threshold: fuzzyThreshold,
+      const substancesData = confirmedIngredients.map((ing, index) => ({
+        substance_id: ing.substanceId,
+        concentration: ing.concentration,
+        order_index: index + 1,
+        supplier: ing.supplier,
+        dilution: ing.dilution,
+        price_per_kg: ing.pricePerKg,
+      }));
+
+      const flavourResult = await createFlavourWithSubstancesById({
+        name: formulaName.trim(),
+        description: `Imported from formulation sheet.${studentName ? ` Student: ${studentName}` : ""}${formulationDate ? ` Date: ${formulationDate}` : ""} Version: ${selectedVersion}`,
+        substances: substancesData,
       });
 
-      setImportResult(result);
+      setCreatedFlavourId(flavourResult.flavour_id);
+      setCreatedFlavourName(flavourResult.name);
       setStep("result");
-
-      if (result.success) {
-        fireConfetti();
-        toast.success(`Flavour "${result.flavour_name}" created successfully!`);
-      } else {
-        toast.error("Import completed with errors");
-      }
+      fireConfetti();
+      toast.success(`Flavour "${flavourResult.name}" created successfully!`);
     } catch (error) {
-      console.error("Error importing:", error);
-      toast.error(error instanceof Error ? error.message : "Import failed");
+      console.error("Error creating flavour:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create flavour");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getStatusBadge = (status: SubstanceMatchResult["status"]) => {
-    switch (status) {
-      case "found":
-        return <Badge className="bg-green-500 hover:bg-green-600"><Check className="h-3 w-3 mr-1" /> Found</Badge>;
-      case "fuzzy_match":
-        return <Badge className="bg-yellow-500 hover:bg-yellow-600"><Search className="h-3 w-3 mr-1" /> Fuzzy</Badge>;
-      case "created":
-        return <Badge className="bg-blue-500 hover:bg-blue-600"><Check className="h-3 w-3 mr-1" /> Created</Badge>;
-      case "not_found":
-        return <Badge variant="destructive"><X className="h-3 w-3 mr-1" /> Not Found</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
+  // ===========================================
+  // RENDER
+  // ===========================================
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-6">
-      <div className="flex items-center">
-        <Button variant="ghost" onClick={() => router.back()} className="mr-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight">Import Formulation</h1>
+    <div className="container max-w-6xl mx-auto px-4 md:px-6 py-8 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <Button variant="ghost" onClick={() => router.back()} className="mr-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">Fiche de formulation</h1>
+        </div>
+        {step === "entry" && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Version:</span>
+            {(["A", "B", "C", "D"] as const).map((v) => (
+              <Button
+                key={v}
+                variant={selectedVersion === v ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedVersion(v)}
+              >
+                {v}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Step 1: Upload */}
-      {step === "upload" && (
-        <Card className="p-8">
-          <div className="flex flex-col items-center justify-center space-y-6">
-            <div className="p-6 rounded-full bg-muted">
-              <FileSpreadsheet className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-semibold">Upload Formulation Sheet</h2>
-              <p className="text-muted-foreground max-w-md">
-                Upload an Excel file (.xlsx) with your formulation data.
-                The file should follow the &quot;Fiche de formulation&quot; template format.
-              </p>
-            </div>
-            <div className="w-full max-w-sm">
-              <Label htmlFor="file-upload" className="sr-only">Choose file</Label>
-              <Input
-                id="file-upload"
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleFileUpload}
-                disabled={isLoading}
-                className="cursor-pointer"
-              />
-            </div>
-            {isLoading && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Parsing file...</span>
-              </div>
-            )}
+      {/* Step indicator */}
+      <div className="flex items-center justify-center gap-4 text-sm">
+        <div className={`flex items-center gap-2 ${step === "entry" ? "text-primary font-medium" : "text-muted-foreground"}`}>
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === "entry" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+            1
           </div>
-        </Card>
-      )}
+          Entry
+        </div>
+        <div className="w-8 h-px bg-border" />
+        <div className={`flex items-center gap-2 ${step === "confirm" ? "text-primary font-medium" : "text-muted-foreground"}`}>
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === "confirm" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+            2
+          </div>
+          Confirm
+        </div>
+        <div className="w-8 h-px bg-border" />
+        <div className={`flex items-center gap-2 ${step === "result" ? "text-primary font-medium" : "text-muted-foreground"}`}>
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === "result" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+            3
+          </div>
+          Done
+        </div>
+      </div>
 
-      {/* Step 2: Preview */}
-      {step === "preview" && formulationData && (
+      {/* Step 1: Entry Form */}
+      {step === "entry" && (
         <div className="space-y-6">
+          {/* Metadata */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Formulation Details</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <Label className="text-xs text-muted-foreground">File</Label>
-                <p className="font-medium truncate">{fileName}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Formula Name</Label>
-                <p className="font-medium">{formulationData.formula_name}</p>
-              </div>
-              {formulationData.student_name && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Student</Label>
-                  <p className="font-medium">{formulationData.student_name}</p>
-                </div>
-              )}
-              {formulationData.formulation_date && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Date</Label>
-                  <p className="font-medium">{formulationData.formulation_date}</p>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Import Options</h2>
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="version-select">Version to Import</Label>
-                <Select value={selectedVersion} onValueChange={setSelectedVersion}>
-                  <SelectTrigger id="version-select">
-                    <SelectValue placeholder="Select version" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {formulationData.versions.map((v) => (
-                      <SelectItem key={v.version_label} value={v.version_label}>
-                        Version {v.version_label} ({v.ingredients.length} ingredients)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fuzzy-threshold">Fuzzy Match Threshold</Label>
-                <Select
-                  value={fuzzyThreshold.toString()}
-                  onValueChange={(v) => setFuzzyThreshold(parseFloat(v))}
-                >
-                  <SelectTrigger id="fuzzy-threshold">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0.3">30% (More matches, less accuracy)</SelectItem>
-                    <SelectItem value="0.4">40% (Balanced)</SelectItem>
-                    <SelectItem value="0.5">50% (Moderate)</SelectItem>
-                    <SelectItem value="0.6">60% (Stricter)</SelectItem>
-                    <SelectItem value="0.7">70% (Very strict)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="auto-create"
-                  checked={autoCreateSubstances}
-                  onCheckedChange={setAutoCreateSubstances}
+                <Label htmlFor="student">Etudiant</Label>
+                <Input
+                  id="student"
+                  value={studentName}
+                  onChange={(e) => setStudentName(e.target.value)}
+                  placeholder="Nom de l'étudiant"
                 />
-                <Label htmlFor="auto-create">
-                  Auto-create missing substances
-                </Label>
               </div>
-
-              <div className="flex items-end">
-                <Button onClick={handlePreview} disabled={!selectedVersion || isPreviewing}>
-                  {isPreviewing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Checking...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Preview Matches
-                    </>
-                  )}
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="formula">Nom de la formule *</Label>
+                <Input
+                  id="formula"
+                  value={formulaName}
+                  onChange={(e) => setFormulaName(e.target.value)}
+                  placeholder="Nom de la formule"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formulationDate}
+                  onChange={(e) => setFormulationDate(e.target.value)}
+                />
               </div>
             </div>
           </Card>
 
-          {/* Version Ingredients Preview */}
-          {selectedVersion && (
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">
-                  Version {selectedVersion} Ingredients
-                </h2>
-                <Badge variant="outline">
-                  {formulationData.versions.find(v => v.version_label === selectedVersion)?.ingredients.length || 0} items
-                </Badge>
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Ingredient Name</TableHead>
-                    <TableHead>Concentration</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Match</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {formulationData.versions
-                    .find(v => v.version_label === selectedVersion)
-                    ?.ingredients.map((ing, idx) => {
-                      const match = previewMatches.find(m => m.ingredient_name === ing.name);
-                      return (
-                        <TableRow key={idx}>
-                          <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
-                          <TableCell className="font-medium">{ing.name}</TableCell>
-                          <TableCell>{ing.concentration}%</TableCell>
-                          <TableCell>
-                            {match ? getStatusBadge(match.status) : (
-                              <Badge variant="secondary">
-                                <AlertCircle className="h-3 w-3 mr-1" /> Not checked
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {match?.substance_name || match?.message || "-"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                </TableBody>
-              </Table>
-            </Card>
-          )}
+          {/* Ingredients Table */}
+          <Card className="p-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-2 w-10">N°</th>
+                  <th className="text-left p-2 min-w-[200px]">Constituants</th>
+                  <th className="text-left p-2 min-w-[120px]">Fournisseur</th>
+                  <th className="text-left p-2 w-24">Dilution</th>
+                  <th className="text-left p-2 w-24">Prix/Kg</th>
+                  <th className={`text-center p-2 w-20 ${selectedVersion === "A" ? "bg-primary/10" : ""}`}>A (%)</th>
+                  <th className={`text-center p-2 w-20 ${selectedVersion === "B" ? "bg-primary/10" : ""}`}>B (%)</th>
+                  <th className={`text-center p-2 w-20 ${selectedVersion === "C" ? "bg-primary/10" : ""}`}>C (%)</th>
+                  <th className={`text-center p-2 w-20 ${selectedVersion === "D" ? "bg-primary/10" : ""}`}>D (%)</th>
+                  <th className="w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={row.id} className="border-b hover:bg-muted/50">
+                    <td className="p-1 text-muted-foreground">{index + 1}</td>
+                    <td className="p-1">
+                      <Input
+                        value={row.name}
+                        onChange={(e) => updateRow(row.id, "name", e.target.value)}
+                        placeholder="Nom du constituant"
+                        className="h-8"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <Input
+                        value={row.supplier}
+                        onChange={(e) => updateRow(row.id, "supplier", e.target.value)}
+                        placeholder="Fournisseur"
+                        className="h-8"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <Input
+                        value={row.dilution}
+                        onChange={(e) => updateRow(row.id, "dilution", e.target.value)}
+                        placeholder="ex: 10%"
+                        className="h-8"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <Input
+                        value={row.pricePerKg}
+                        onChange={(e) => updateRow(row.id, "pricePerKg", e.target.value)}
+                        placeholder="€/kg"
+                        className="h-8"
+                        type="number"
+                        step="0.01"
+                      />
+                    </td>
+                    <td className={`p-1 ${selectedVersion === "A" ? "bg-primary/10" : ""}`}>
+                      <Input
+                        value={row.concentrationA}
+                        onChange={(e) => updateRow(row.id, "concentrationA", e.target.value)}
+                        className="h-8 text-center"
+                        type="number"
+                        step="0.01"
+                      />
+                    </td>
+                    <td className={`p-1 ${selectedVersion === "B" ? "bg-primary/10" : ""}`}>
+                      <Input
+                        value={row.concentrationB}
+                        onChange={(e) => updateRow(row.id, "concentrationB", e.target.value)}
+                        className="h-8 text-center"
+                        type="number"
+                        step="0.01"
+                      />
+                    </td>
+                    <td className={`p-1 ${selectedVersion === "C" ? "bg-primary/10" : ""}`}>
+                      <Input
+                        value={row.concentrationC}
+                        onChange={(e) => updateRow(row.id, "concentrationC", e.target.value)}
+                        className="h-8 text-center"
+                        type="number"
+                        step="0.01"
+                      />
+                    </td>
+                    <td className={`p-1 ${selectedVersion === "D" ? "bg-primary/10" : ""}`}>
+                      <Input
+                        value={row.concentrationD}
+                        onChange={(e) => updateRow(row.id, "concentrationD", e.target.value)}
+                        className="h-8 text-center"
+                        type="number"
+                        step="0.01"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeRow(row.id)}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                {/* Total row */}
+                <tr className="font-medium bg-muted/50">
+                  <td colSpan={5} className="p-2 text-right">TOTAL:</td>
+                  <td className={`p-2 text-center ${selectedVersion === "A" ? "bg-primary/10" : ""}`}>
+                    {calculateTotal("A").toFixed(2)}
+                  </td>
+                  <td className={`p-2 text-center ${selectedVersion === "B" ? "bg-primary/10" : ""}`}>
+                    {calculateTotal("B").toFixed(2)}
+                  </td>
+                  <td className={`p-2 text-center ${selectedVersion === "C" ? "bg-primary/10" : ""}`}>
+                    {calculateTotal("C").toFixed(2)}
+                  </td>
+                  <td className={`p-2 text-center ${selectedVersion === "D" ? "bg-primary/10" : ""}`}>
+                    {calculateTotal("D").toFixed(2)}
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
 
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep("upload")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+            <Button variant="outline" size="sm" onClick={addRow} className="mt-4">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Row
             </Button>
-            <Button onClick={handleImport} disabled={isLoading || !selectedVersion}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Import Formulation
-                </>
-              )}
+          </Card>
+
+          {/* Continue button */}
+          <div className="flex justify-end">
+            <Button onClick={handleContinueToConfirm} size="lg">
+              Continue to Confirmation
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* Step 3: Result */}
-      {step === "result" && importResult && (
+      {/* Step 2: Confirmation */}
+      {step === "confirm" && currentIngredient && (
         <div className="space-y-6">
-          <Card className={`p-6 ${importResult.success ? "border-green-500" : "border-red-500"}`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-full ${importResult.success ? "bg-green-100" : "bg-red-100"}`}>
-                {importResult.success ? (
-                  <Check className="h-8 w-8 text-green-600" />
+          {/* Progress */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span>
+                Confirming ingredient {currentConfirmIndex + 1} of {ingredientsToConfirm.length}
+              </span>
+              <span className="text-muted-foreground">
+                {confirmedIngredients.length} confirmed
+              </span>
+            </div>
+            <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{
+                  width: `${((currentConfirmIndex + 1) / ingredientsToConfirm.length) * 100}%`,
+                }}
+              />
+            </div>
+          </Card>
+
+          {/* Current ingredient */}
+          <Card className="p-6">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold">"{currentIngredient.row.name}"</h2>
+              <p className="text-muted-foreground">
+                Concentration: {currentIngredient.concentration}%
+                {currentIngredient.row.supplier && ` • Supplier: ${currentIngredient.row.supplier}`}
+                {currentIngredient.row.dilution && ` • Dilution: ${currentIngredient.row.dilution}`}
+              </p>
+            </div>
+
+            {isSearching ? (
+              <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Searching for matches...</span>
+              </div>
+            ) : (
+              <RadioGroup value={selectedMatch} onValueChange={setSelectedMatch}>
+                <div className="space-y-3">
+                  {matches.map((match) => (
+                    <div
+                      key={match.substance_id}
+                      className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                        selectedMatch === `existing-${match.substance_id}`
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      }`}
+                    >
+                      <RadioGroupItem
+                        value={`existing-${match.substance_id}`}
+                        id={`match-${match.substance_id}`}
+                        className="mt-1"
+                      />
+                      <Label
+                        htmlFor={`match-${match.substance_id}`}
+                        className="flex-1 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{match.common_name}</span>
+                          {match.match_type === "exact" ? (
+                            <Badge className="bg-green-500">Exact match</Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              {Math.round(match.similarity * 100)}% similar
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {match.fema_number && `FEMA ${match.fema_number}`}
+                          {match.cas_id && ` • CAS ${match.cas_id}`}
+                          {match.odor && ` • ${match.odor.slice(0, 80)}${match.odor.length > 80 ? "..." : ""}`}
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
+
+                  {/* Create new option */}
+                  <div
+                    className={`flex items-start space-x-3 p-3 rounded-lg border ${
+                      selectedMatch === "create-new"
+                        ? "border-primary bg-primary/5"
+                        : "border-border"
+                    }`}
+                  >
+                    <RadioGroupItem
+                      value="create-new"
+                      id="match-create-new"
+                      className="mt-1"
+                    />
+                    <Label
+                      htmlFor="match-create-new"
+                      className="flex-1 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          Create new substance "{currentIngredient.row.name}"
+                        </span>
+                        <Badge variant="outline">New</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Create a new substance entry (requires odor or taste description)
+                      </p>
+                    </Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            )}
+
+            {/* Create new form */}
+            {selectedMatch === "create-new" && (
+              <div className="mt-4 p-4 border rounded-lg space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-odor">Odor description</Label>
+                  <Textarea
+                    id="new-odor"
+                    value={newSubstanceOdor}
+                    onChange={(e) => setNewSubstanceOdor(e.target.value)}
+                    placeholder="Describe the odor characteristics..."
+                    rows={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-taste">Taste description</Label>
+                  <Textarea
+                    id="new-taste"
+                    value={newSubstanceTaste}
+                    onChange={(e) => setNewSubstanceTaste(e.target.value)}
+                    placeholder="Describe the taste characteristics..."
+                    rows={2}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  At least one description (odor or taste) is required
+                </p>
+              </div>
+            )}
+          </Card>
+
+          {/* Actions */}
+          <div className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStep("entry");
+                setConfirmedIngredients([]);
+              }}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Entry
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={handleSkipIngredient}>
+                Skip
+              </Button>
+              <Button onClick={handleConfirmCurrent} disabled={isLoading || !selectedMatch}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : currentConfirmIndex < ingredientsToConfirm.length - 1 ? (
+                  <>
+                    Confirm & Next
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
                 ) : (
-                  <X className="h-8 w-8 text-red-600" />
+                  <>
+                    Confirm & Import
+                    <Check className="ml-2 h-4 w-4" />
+                  </>
                 )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Result */}
+      {step === "result" && (
+        <div className="space-y-6">
+          <Card className="p-6 border-green-500">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-green-100">
+                <Check className="h-8 w-8 text-green-600" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold">
-                  {importResult.success ? "Import Successful!" : "Import Completed with Issues"}
-                </h2>
-                {importResult.success && (
-                  <p className="text-muted-foreground">
-                    Flavour &quot;{importResult.flavour_name}&quot; has been created.
-                  </p>
-                )}
+                <h2 className="text-xl font-semibold">Import Successful!</h2>
+                <p className="text-muted-foreground">
+                  Flavour "{createdFlavourName}" has been created with {confirmedIngredients.length} substances.
+                </p>
               </div>
             </div>
           </Card>
 
-          {importResult.errors.length > 0 && (
-            <Card className="p-6 border-yellow-500">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-yellow-500" />
-                Warnings/Errors
-              </h3>
-              <ul className="space-y-1 text-sm">
-                {importResult.errors.map((error, idx) => (
-                  <li key={idx} className="text-muted-foreground">- {error}</li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
+          {/* Summary */}
           <Card className="p-6">
-            <h3 className="font-semibold mb-4">Substance Matching Results</h3>
-            <div className="grid grid-cols-4 gap-4 mb-4">
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  {importResult.substance_matches.filter(m => m.status === "found").length}
+            <h3 className="font-semibold mb-4">Imported Substances</h3>
+            <div className="space-y-2">
+              {confirmedIngredients.map((ing, idx) => (
+                <div
+                  key={ing.rowId}
+                  className="flex items-center justify-between p-2 rounded border"
+                >
+                  <div>
+                    <span className="font-medium">{ing.substanceName}</span>
+                    <span className="text-muted-foreground ml-2">
+                      ({ing.concentration}%)
+                    </span>
+                    {ing.ingredientName !== ing.substanceName && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        from "{ing.ingredientName}"
+                      </span>
+                    )}
+                  </div>
+                  {ing.isNewlyCreated && (
+                    <Badge variant="outline">Newly created</Badge>
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground">Exact Match</div>
-              </div>
-              <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {importResult.substance_matches.filter(m => m.status === "fuzzy_match").length}
-                </div>
-                <div className="text-xs text-muted-foreground">Fuzzy Match</div>
-              </div>
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">
-                  {importResult.substance_matches.filter(m => m.status === "created").length}
-                </div>
-                <div className="text-xs text-muted-foreground">Created</div>
-              </div>
-              <div className="text-center p-3 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">
-                  {importResult.substance_matches.filter(m => m.status === "not_found").length}
-                </div>
-                <div className="text-xs text-muted-foreground">Not Found</div>
-              </div>
+              ))}
             </div>
-
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ingredient</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Matched To</TableHead>
-                  <TableHead>Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {importResult.substance_matches.map((match, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{match.ingredient_name}</TableCell>
-                    <TableCell>{getStatusBadge(match.status)}</TableCell>
-                    <TableCell>{match.substance_name || "-"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{match.message || "-"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
           </Card>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => {
-              setStep("upload");
-              setFormulationData(null);
-              setPreviewMatches([]);
-              setImportResult(null);
-              setFileName(null);
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStep("entry");
+                setRows(createEmptyRows(18, 1));
+                setStudentName("");
+                setFormulaName("");
+                setFormulationDate("");
+                setConfirmedIngredients([]);
+                setCreatedFlavourId(null);
+                setCreatedFlavourName(null);
+              }}
+            >
               Import Another
             </Button>
-            {importResult.success && importResult.flavour_id && (
-              <Button onClick={() => router.push(`/flavours/${importResult.flavour_id}`)}>
+            {createdFlavourId && (
+              <Button onClick={() => router.push(`/flavours/${createdFlavourId}`)}>
                 View Flavour
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}
           </div>

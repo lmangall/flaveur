@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -43,7 +43,7 @@ function StatsCardSkeleton() {
 }
 
 export default function AdminContributionsPage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<ContributionStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,14 +64,15 @@ export default function AdminContributionsPage() {
   }, []);
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (isPending) return;
+    if (!session) {
       router.push("/");
-    } else if (isLoaded && isSignedIn) {
+    } else {
       fetchStats();
     }
-  }, [isSignedIn, isLoaded, router, fetchStats]);
+  }, [session, isPending, router, fetchStats]);
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (isPending || !session) return null;
 
   if (error) {
     return (

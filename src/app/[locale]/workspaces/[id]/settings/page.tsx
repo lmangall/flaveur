@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,7 +58,9 @@ type FormData = z.infer<typeof formSchema>;
 export default function WorkspaceSettingsPage() {
   const params = useParams();
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
+  const isSignedIn = !!session;
+  const isLoaded = !isPending;
   const workspaceId = Number(params.id);
 
   const [isLoading, setIsLoading] = useState(true);

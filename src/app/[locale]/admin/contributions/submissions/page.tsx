@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -78,8 +78,10 @@ function getStatusBadge(status: string) {
 }
 
 export default function AdminSubmissionsPage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
+  const isSignedIn = !!session;
+  const isLoaded = !isPending;
   const [submissions, setSubmissions] = useState<PendingSubstanceWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

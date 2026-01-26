@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
@@ -87,7 +87,7 @@ function TableSkeleton() {
 }
 
 export default function CategoriesPage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const [categories, setCategories] = useState<CategoryWithDetails[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -122,12 +122,13 @@ export default function CategoriesPage() {
   }, []);
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (isPending) return;
+    if (!session) {
       router.push("/");
-    } else if (isLoaded && isSignedIn) {
+    } else {
       fetchCategories();
     }
-  }, [isSignedIn, isLoaded, router, fetchCategories]);
+  }, [session, isPending, router, fetchCategories]);
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -245,7 +246,7 @@ export default function CategoriesPage() {
     setOpenDeleteDialog(true);
   };
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (isPending || !session) return null;
 
   return (
     <div className="space-y-6">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
 import { Skeleton } from "@/app/[locale]/components/ui/skeleton";
@@ -87,7 +87,9 @@ function formatFileSize(bytes: number): string {
 export default function DocumentPage() {
   const params = useParams();
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
+  const isSignedIn = !!session;
+  const isLoaded = !isPending;
 
   const workspaceId = Number(params.id);
   const documentId = Number(params.docId);

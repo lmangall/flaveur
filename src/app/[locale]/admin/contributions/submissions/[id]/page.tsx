@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Card,
@@ -101,7 +101,9 @@ export default function AdminSubmissionReviewPage() {
   const router = useRouter();
   const params = useParams();
   const substanceId = parseInt(params.id as string);
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
+  const isSignedIn = !!session;
+  const isLoaded = !isPending;
 
   const [substance, setSubstance] = useState<PendingSubstanceWithUser | null>(
     null

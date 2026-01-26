@@ -69,7 +69,7 @@ async function fetchEUAdditives(): Promise<EUAdditiveRecord[]> {
   try {
     const response = await fetch(EU_ADDITIVES_API_URL, {
       signal: controller.signal,
-      cache: "force-cache",
+      cache: "no-store", // Use in-memory cache instead of Next.js fetch cache (responses are too large)
     });
 
     if (!response.ok) {
@@ -102,7 +102,7 @@ async function fetchEUFlavourings(): Promise<EUFlavouringRecord[]> {
   try {
     const response = await fetch(EU_FLAVOURINGS_API_URL, {
       signal: controller.signal,
-      cache: "force-cache",
+      cache: "no-store", // Use in-memory cache instead of Next.js fetch cache (responses are too large)
     });
 
     if (!response.ok) {
@@ -299,18 +299,68 @@ export interface EUAdditiveFullData {
 }
 
 /**
+ * Normalize a name for better matching
+ * - Lowercase and trim
+ * - Remove common suffixes like "extract", "oil", "essence"
+ * - Handle variations like "passion fruit" vs "passionfruit"
+ */
+function normalizeNameForMatching(name: string): string[] {
+  const base = name.toLowerCase().trim();
+  const variants: string[] = [base];
+
+  // Remove common suffixes and add as variant
+  const suffixes = [" extract", " oil", " essence", " absolute", " oleoresin", " concrete"];
+  for (const suffix of suffixes) {
+    if (base.endsWith(suffix)) {
+      variants.push(base.slice(0, -suffix.length).trim());
+    }
+  }
+
+  // Handle "oil of X" → "X" and "X oil" → "X"
+  if (base.startsWith("oil of ")) {
+    variants.push(base.slice(7).trim());
+  }
+  if (base.startsWith("extract of ")) {
+    variants.push(base.slice(11).trim());
+  }
+
+  // Handle compound words: "passion fruit" ↔ "passionfruit"
+  if (base.includes(" ")) {
+    variants.push(base.replace(/ /g, ""));
+  }
+
+  return [...new Set(variants)];
+}
+
+/**
+ * Check if a target name matches any of the search variants
+ */
+function matchesName(targetName: string, searchVariants: string[]): boolean {
+  const normalizedTarget = targetName.toLowerCase().trim();
+  const targetVariants = normalizeNameForMatching(normalizedTarget);
+
+  // Check if any search variant matches any target variant
+  for (const search of searchVariants) {
+    for (const target of targetVariants) {
+      if (search === target) return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Get detailed EU compliance data for a substance by name
  * Checks FLAVOURINGS database first (better for FEMA substances), then ADDITIVES
  */
 export async function getEUComplianceData(
   chemicalName: string
 ): Promise<EUComplianceData | null> {
-  const normalized = chemicalName.toLowerCase().trim();
+  const searchVariants = normalizeNameForMatching(chemicalName);
 
   // Try FLAVOURINGS database first (most FEMA substances are flavourings)
   const flavourings = await getEUFlavouringsList();
-  const flavouringMatches = flavourings.filter(
-    (r) => r.food_flavouring_name.toLowerCase().trim() === normalized
+  const flavouringMatches = flavourings.filter((r) =>
+    matchesName(r.food_flavouring_name, searchVariants)
   );
 
   if (flavouringMatches.length > 0) {
@@ -344,13 +394,14 @@ export async function getEUComplianceData(
   // Fall back to ADDITIVES database
   const additives = await getEUAdditives();
   const additiveMatches = additives.filter((r) => {
-    if (r.additive_name.toLowerCase().trim() === normalized) return true;
+    // Check main name
+    if (matchesName(r.additive_name, searchVariants)) return true;
+    // Check synonyms
     if (r.additive_synonyms) {
-      const synonyms = r.additive_synonyms
-        .toLowerCase()
-        .split(";")
-        .map((s) => s.trim());
-      if (synonyms.includes(normalized)) return true;
+      const synonyms = r.additive_synonyms.split(";").map((s) => s.trim());
+      for (const synonym of synonyms) {
+        if (matchesName(synonym, searchVariants)) return true;
+      }
     }
     return false;
   });
@@ -413,12 +464,12 @@ export async function searchEUByName(
 export async function getEUAdditiveFullData(
   chemicalName: string
 ): Promise<EUAdditiveFullData | null> {
-  const normalized = chemicalName.toLowerCase().trim();
+  const searchVariants = normalizeNameForMatching(chemicalName);
 
   // Try FLAVOURINGS database first
   const flavourings = await getEUFlavouringsList();
-  const flavouringMatches = flavourings.filter(
-    (r) => r.food_flavouring_name.toLowerCase().trim() === normalized
+  const flavouringMatches = flavourings.filter((r) =>
+    matchesName(r.food_flavouring_name, searchVariants)
   );
 
   if (flavouringMatches.length > 0) {
@@ -470,13 +521,14 @@ export async function getEUAdditiveFullData(
   // Fall back to ADDITIVES database
   const additives = await getEUAdditives();
   const additiveMatches = additives.filter((r) => {
-    if (r.additive_name.toLowerCase().trim() === normalized) return true;
+    // Check main name
+    if (matchesName(r.additive_name, searchVariants)) return true;
+    // Check synonyms
     if (r.additive_synonyms) {
-      const synonyms = r.additive_synonyms
-        .toLowerCase()
-        .split(";")
-        .map((s) => s.trim());
-      if (synonyms.includes(normalized)) return true;
+      const synonyms = r.additive_synonyms.split(";").map((s) => s.trim());
+      for (const synonym of synonyms) {
+        if (matchesName(synonym, searchVariants)) return true;
+      }
     }
     return false;
   });

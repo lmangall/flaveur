@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Card,
@@ -244,7 +244,7 @@ function InviteRow({ invite }: { invite: WorkspaceInvite }) {
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const workspaceId = Number(params.id);
 
   const [workspace, setWorkspace] = useState<WorkspaceWithMembers | null>(null);
@@ -309,13 +309,13 @@ export default function WorkspaceDetailPage() {
   }, [workspaceId, canEdit]);
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) {
+    if (isPending) return;
+    if (!session) {
       router.push("/");
       return;
     }
     fetchWorkspace();
-  }, [isLoaded, isSignedIn, router, fetchWorkspace]);
+  }, [isPending, session, router, fetchWorkspace]);
 
   useEffect(() => {
     if (!workspace) return;
@@ -339,7 +339,7 @@ export default function WorkspaceDetailPage() {
     fetchInvites,
   ]);
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (isPending || !session) return null;
 
   if (isLoading) {
     return (
@@ -541,7 +541,7 @@ export default function WorkspaceDetailPage() {
             </CardContent>
           </Card>
 
-          {user && workspace && (
+          {session?.user && workspace && (
             <WorkspaceMemberDialog
               open={memberDialogOpen}
               onOpenChange={setMemberDialogOpen}
@@ -549,7 +549,7 @@ export default function WorkspaceDetailPage() {
               workspaceName={workspace.name}
               currentUserRole={workspace.role}
               members={workspace.members}
-              currentUserId={user.id}
+              currentUserId={session.user.id}
               onMembersChange={fetchWorkspace}
             />
           )}

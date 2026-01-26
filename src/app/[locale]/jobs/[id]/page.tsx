@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useAuth } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import {
   BriefcaseBusiness,
   MapPin,
@@ -65,7 +65,9 @@ export default function JobDetailPage() {
   const t = useTranslations("JobDetail");
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { data: session, isPending } = useSession();
+  const isSignedIn = !!session;
+  const isLoaded = !isPending;
   const [job, setJob] = useState<JobOffer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

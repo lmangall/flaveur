@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
 import { groupFlavoursByVariation } from "@/lib/groupFlavours";
 import { FlavourCardStack } from "@/app/[locale]/components/FlavourCardStack";
@@ -331,7 +331,7 @@ const getStatusBadgeClasses = (status: string) => {
 
 // Main Page Component
 export default function FlavoursPage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const t = useTranslations("Flavours");
   const [flavours, setFlavours] = useState<FlavourWithAccess[]>([]);
@@ -357,13 +357,13 @@ export default function FlavoursPage() {
   };
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) {
+    if (isPending) return;
+    if (!session) {
       router.push("/");
       return;
     }
     fetchFlavoursData();
-  }, [isLoaded, isSignedIn, router]);
+  }, [isPending, session, router]);
 
   const handleDuplicate = async (flavourId: number) => {
     try {
@@ -409,7 +409,7 @@ export default function FlavoursPage() {
     return groupFlavoursByVariation(filtered);
   }, [flavours, searchQuery, statusFilter, sourceFilter]);
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (isPending || !session) return null;
 
   const cardTranslations = {
     showProfile: t("showProfile"),

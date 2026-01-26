@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -168,7 +168,7 @@ function EmptyState({ message, buttonText, onButtonClick }: {
 }
 
 export default function Dashboard() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentFlavors, setRecentFlavors] = useState<RecentFlavor[]>([]);
@@ -225,20 +225,21 @@ export default function Dashboard() {
   }, [favoriteFlavors.length, publicFlavors.length, sharedWithMe.length]);
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
+    if (isPending) return;
+    if (!session) {
       router.push("/");
-    } else if (isLoaded && isSignedIn) {
+    } else {
       fetchData();
     }
-  }, [isSignedIn, isLoaded, router, fetchData]);
+  }, [session, isPending, router, fetchData]);
 
   useEffect(() => {
-    if (isSignedIn && activeTab !== "recent") {
+    if (session && activeTab !== "recent") {
       fetchTabData(activeTab);
     }
-  }, [activeTab, isSignedIn, fetchTabData]);
+  }, [activeTab, session, fetchTabData]);
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (isPending || !session) return null;
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">

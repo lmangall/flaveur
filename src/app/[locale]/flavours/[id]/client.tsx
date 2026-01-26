@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { Flavour } from "@/app/type";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -14,19 +14,17 @@ import {
 } from "@/app/[locale]/components/ui/card";
 
 export default function FlavorClient({ flavor }: { flavor: Flavour }) {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   const { mutate } = useSWR(`/api/flavours/${flavor.flavour_id}`);
 
   const handleRemoveSubstance = async (substanceId: number) => {
     try {
-      const token = await getToken();
+      // Better Auth uses cookies for authentication, no need to pass token explicitly
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/flavours/${flavor.flavour_id}/substances/${substanceId}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include", // Include cookies for Better Auth session
         }
       );
 
