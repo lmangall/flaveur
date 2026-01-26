@@ -1,7 +1,9 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { flavour, flavour_shares, flavour_invites, users, substance_flavour } from "@/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { sendFlavourInviteEmail, sendFlavourShareNotification, sendShareAdminNotification } from "@/lib/email/resend";
 
 // Types
@@ -37,11 +39,6 @@ export interface SharedFlavour {
   };
 }
 
-/**
- * Share a flavour with a user by email.
- * If user exists -> create direct share + send notification
- * If user doesn't exist -> create invite + send invitation email
- */
 export async function shareFlavour(data: {
   flavourId: number;
   email: string;
@@ -53,59 +50,60 @@ export async function shareFlavour(data: {
   const { flavourId, email, locale = "en" } = data;
   const normalizedEmail = email.toLowerCase().trim();
 
-  // Verify ownership of the flavour
-  const flavourCheck = await sql`
+  const flavourCheck = await db.execute(sql`
     SELECT f.flavour_id, f.name, f.user_id, u.username, u.email as owner_email
     FROM flavour f
     JOIN users u ON f.user_id = u.user_id
     WHERE f.flavour_id = ${flavourId} AND f.user_id = ${userId}
-  `;
+  `);
 
-  if (flavourCheck.length === 0) {
+  if (flavourCheck.rows.length === 0) {
     throw new Error("Flavour not found or you don't own it");
   }
 
-  const flavour = flavourCheck[0];
-  const inviterName = flavour.username || flavour.owner_email || "Someone";
+  const flavourData = flavourCheck.rows[0] as Record<string, unknown>;
+  const inviterName = String(flavourData.username || flavourData.owner_email || "Someone");
 
-  // Prevent self-sharing
-  if (normalizedEmail === flavour.owner_email?.toLowerCase()) {
+  if (normalizedEmail === String(flavourData.owner_email).toLowerCase()) {
     throw new Error("You cannot share with yourself");
   }
 
-  // Check if user exists
-  const existingUser = await sql`
-    SELECT user_id, email, username FROM users
-    WHERE LOWER(email) = ${normalizedEmail}
-  `;
+  const existingUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, normalizedEmail));
 
   if (existingUser.length > 0) {
-    // User exists - create direct share
     const targetUser = existingUser[0];
 
-    // Check if already shared
-    const existingShare = await sql`
-      SELECT share_id FROM flavour_shares
-      WHERE flavour_id = ${flavourId} AND shared_with_user_id = ${targetUser.user_id}
-    `;
+    const existingShare = await db
+      .select({ share_id: flavour_shares.share_id })
+      .from(flavour_shares)
+      .where(
+        and(
+          eq(flavour_shares.flavour_id, flavourId),
+          eq(flavour_shares.shared_with_user_id, targetUser.user_id)
+        )
+      );
 
     if (existingShare.length > 0) {
       throw new Error("Already shared with this user");
     }
 
-    // Create share
-    const result = await sql`
-      INSERT INTO flavour_shares (flavour_id, shared_with_user_id, shared_by_user_id)
-      VALUES (${flavourId}, ${targetUser.user_id}, ${userId})
-      RETURNING *
-    `;
+    const result = await db
+      .insert(flavour_shares)
+      .values({
+        flavour_id: flavourId,
+        shared_with_user_id: targetUser.user_id,
+        shared_by_user_id: userId,
+      })
+      .returning();
 
-    // Send notification email
     try {
       await sendFlavourShareNotification(
-        targetUser.email,
+        targetUser.email!,
         inviterName,
-        flavour.name,
+        String(flavourData.name),
         flavourId,
         locale
       );
@@ -113,13 +111,12 @@ export async function shareFlavour(data: {
       console.error("[shareFlavour] Failed to send notification email:", emailError);
     }
 
-    // Notify admin
     try {
       await sendShareAdminNotification({
-        sharerEmail: flavour.owner_email,
+        sharerEmail: String(flavourData.owner_email),
         sharerName: inviterName,
-        recipientEmail: targetUser.email,
-        flavourName: flavour.name,
+        recipientEmail: targetUser.email!,
+        flavourName: String(flavourData.name),
         isNewUser: false,
       });
     } catch (adminEmailError) {
@@ -136,54 +133,59 @@ export async function shareFlavour(data: {
       },
     };
   } else {
-    // User doesn't exist - create invite
-    // Check if already invited
-    const existingInvite = await sql`
-      SELECT invite_id, status FROM flavour_invites
-      WHERE flavour_id = ${flavourId} AND LOWER(invited_email) = ${normalizedEmail}
-    `;
+    const existingInvite = await db
+      .select({ invite_id: flavour_invites.invite_id, status: flavour_invites.status })
+      .from(flavour_invites)
+      .where(
+        and(
+          eq(flavour_invites.flavour_id, flavourId),
+          eq(flavour_invites.invited_email, normalizedEmail)
+        )
+      );
 
     if (existingInvite.length > 0) {
       if (existingInvite[0].status === "pending") {
         throw new Error("Already invited this email");
       }
-      // If expired or accepted, allow re-invite by deleting old one
-      await sql`
-        DELETE FROM flavour_invites
-        WHERE flavour_id = ${flavourId} AND LOWER(invited_email) = ${normalizedEmail}
-      `;
+      await db
+        .delete(flavour_invites)
+        .where(
+          and(
+            eq(flavour_invites.flavour_id, flavourId),
+            eq(flavour_invites.invited_email, normalizedEmail)
+          )
+        );
     }
 
-    // Create invite
-    const result = await sql`
-      INSERT INTO flavour_invites (flavour_id, invited_email, invited_by_user_id)
-      VALUES (${flavourId}, ${normalizedEmail}, ${userId})
-      RETURNING *
-    `;
+    const result = await db
+      .insert(flavour_invites)
+      .values({
+        flavour_id: flavourId,
+        invited_email: normalizedEmail,
+        invited_by_user_id: userId,
+      })
+      .returning();
 
     const invite = result[0];
 
-    // Send invitation email
     try {
       await sendFlavourInviteEmail(
         normalizedEmail,
         inviterName,
-        flavour.name,
-        invite.invite_token,
+        String(flavourData.name),
+        invite.invite_token!,
         locale
       );
     } catch (emailError) {
       console.error("[shareFlavour] Failed to send invite email:", emailError);
-      // Don't throw - invite was created, email failure shouldn't block
     }
 
-    // Notify admin about potential new user
     try {
       await sendShareAdminNotification({
-        sharerEmail: flavour.owner_email,
+        sharerEmail: String(flavourData.owner_email),
         sharerName: inviterName,
         recipientEmail: normalizedEmail,
-        flavourName: flavour.name,
+        flavourName: String(flavourData.name),
         isNewUser: true,
       });
     } catch (adminEmailError) {
@@ -201,42 +203,39 @@ export async function shareFlavour(data: {
   }
 }
 
-/**
- * Get all shares and pending invites for a flavour (owner only)
- */
 export async function getFlavourShares(flavourId: number): Promise<(ShareInfo | InviteInfo)[]> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Verify ownership
-  const flavourCheck = await sql`
-    SELECT flavour_id FROM flavour
-    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
-  `;
+  const flavourCheck = await db
+    .select({ flavour_id: flavour.flavour_id })
+    .from(flavour)
+    .where(and(eq(flavour.flavour_id, flavourId), eq(flavour.user_id, userId)));
 
   if (flavourCheck.length === 0) {
     throw new Error("Flavour not found or you don't own it");
   }
 
-  // Get direct shares
-  const shares = await sql`
+  const shares = await db.execute(sql`
     SELECT fs.share_id, fs.shared_with_user_id, fs.created_at,
            u.email, u.username
     FROM flavour_shares fs
     JOIN users u ON fs.shared_with_user_id = u.user_id
     WHERE fs.flavour_id = ${flavourId}
     ORDER BY fs.created_at DESC
-  `;
+  `);
 
-  // Get pending invites
-  const invites = await sql`
-    SELECT invite_id, invited_email, status, created_at
-    FROM flavour_invites
-    WHERE flavour_id = ${flavourId} AND status = 'pending'
-    ORDER BY created_at DESC
-  `;
+  const invites = await db
+    .select()
+    .from(flavour_invites)
+    .where(
+      and(
+        eq(flavour_invites.flavour_id, flavourId),
+        eq(flavour_invites.status, "pending")
+      )
+    );
 
-  const shareInfos: ShareInfo[] = shares.map((s) => ({
+  const shareInfos: ShareInfo[] = (shares.rows as Record<string, unknown>[]).map((s) => ({
     type: "share" as const,
     share_id: Number(s.share_id),
     user_id: String(s.shared_with_user_id),
@@ -247,18 +246,15 @@ export async function getFlavourShares(flavourId: number): Promise<(ShareInfo | 
 
   const inviteInfos: InviteInfo[] = invites.map((i) => ({
     type: "invite" as const,
-    invite_id: Number(i.invite_id),
-    email: String(i.invited_email),
-    status: String(i.status),
-    created_at: String(i.created_at),
+    invite_id: i.invite_id,
+    email: i.invited_email,
+    status: i.status,
+    created_at: i.created_at!,
   }));
 
   return [...shareInfos, ...inviteInfos];
 }
 
-/**
- * Revoke a share or cancel an invite
- */
 export async function revokeShare(data: {
   flavourId: number;
   shareId?: number;
@@ -269,26 +265,33 @@ export async function revokeShare(data: {
 
   const { flavourId, shareId, inviteId } = data;
 
-  // Verify ownership
-  const flavourCheck = await sql`
-    SELECT flavour_id FROM flavour
-    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
-  `;
+  const flavourCheck = await db
+    .select({ flavour_id: flavour.flavour_id })
+    .from(flavour)
+    .where(and(eq(flavour.flavour_id, flavourId), eq(flavour.user_id, userId)));
 
   if (flavourCheck.length === 0) {
     throw new Error("Flavour not found or you don't own it");
   }
 
   if (shareId) {
-    await sql`
-      DELETE FROM flavour_shares
-      WHERE share_id = ${shareId} AND flavour_id = ${flavourId}
-    `;
+    await db
+      .delete(flavour_shares)
+      .where(
+        and(
+          eq(flavour_shares.share_id, shareId),
+          eq(flavour_shares.flavour_id, flavourId)
+        )
+      );
   } else if (inviteId) {
-    await sql`
-      DELETE FROM flavour_invites
-      WHERE invite_id = ${inviteId} AND flavour_id = ${flavourId}
-    `;
+    await db
+      .delete(flavour_invites)
+      .where(
+        and(
+          eq(flavour_invites.invite_id, inviteId),
+          eq(flavour_invites.flavour_id, flavourId)
+        )
+      );
   } else {
     throw new Error("Must provide either shareId or inviteId");
   }
@@ -296,14 +299,11 @@ export async function revokeShare(data: {
   return { success: true };
 }
 
-/**
- * Get all flavours shared with the current user
- */
 export async function getFlavoursSharedWithMe(): Promise<SharedFlavour[]> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const flavours = await sql`
+  const result = await db.execute(sql`
     SELECT
       f.flavour_id,
       f.name,
@@ -325,9 +325,9 @@ export async function getFlavoursSharedWithMe(): Promise<SharedFlavour[]> {
     ) sf ON f.flavour_id = sf.flavour_id
     WHERE fs.shared_with_user_id = ${userId}
     ORDER BY fs.created_at DESC
-  `;
+  `);
 
-  return flavours.map((f) => ({
+  return (result.rows as Record<string, unknown>[]).map((f) => ({
     flavour_id: Number(f.flavour_id),
     name: String(f.name),
     description: f.description ? String(f.description) : null,
@@ -343,17 +343,14 @@ export async function getFlavoursSharedWithMe(): Promise<SharedFlavour[]> {
   }));
 }
 
-/**
- * Accept an invite by token (called from invite page)
- */
 export async function acceptInvite(token: string): Promise<{ flavourId: number }> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized - please sign in first");
 
-  // Get user's email
-  const userResult = await sql`
-    SELECT email FROM users WHERE user_id = ${userId}
-  `;
+  const userResult = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.user_id, userId));
 
   if (userResult.length === 0) {
     throw new Error("User not found");
@@ -361,12 +358,10 @@ export async function acceptInvite(token: string): Promise<{ flavourId: number }
 
   const userEmail = userResult[0].email?.toLowerCase();
 
-  // Find the invite
-  const inviteResult = await sql`
-    SELECT invite_id, flavour_id, invited_email, invited_by_user_id, status
-    FROM flavour_invites
-    WHERE invite_token = ${token}
-  `;
+  const inviteResult = await db
+    .select()
+    .from(flavour_invites)
+    .where(eq(flavour_invites.invite_token, token));
 
   if (inviteResult.length === 0) {
     throw new Error("Invite not found or expired");
@@ -378,41 +373,38 @@ export async function acceptInvite(token: string): Promise<{ flavourId: number }
     throw new Error("This invite has already been used");
   }
 
-  // Verify email matches (case-insensitive)
-  if (invite.invited_email?.toLowerCase() !== userEmail) {
+  if (invite.invited_email.toLowerCase() !== userEmail) {
     throw new Error("This invite was sent to a different email address");
   }
 
-  // Prevent accepting invite to your own flavour
-  const flavourOwner = await sql`
-    SELECT user_id FROM flavour WHERE flavour_id = ${invite.flavour_id}
-  `;
+  const flavourOwner = await db
+    .select({ user_id: flavour.user_id })
+    .from(flavour)
+    .where(eq(flavour.flavour_id, invite.flavour_id));
+
   if (flavourOwner.length > 0 && flavourOwner[0].user_id === userId) {
     throw new Error("You cannot accept an invite to your own flavour");
   }
 
-  // Create the share
-  await sql`
+  await db.execute(sql`
     INSERT INTO flavour_shares (flavour_id, shared_with_user_id, shared_by_user_id)
     VALUES (${invite.flavour_id}, ${userId}, ${invite.invited_by_user_id})
     ON CONFLICT (flavour_id, shared_with_user_id) DO NOTHING
-  `;
+  `);
 
-  // Mark invite as accepted
-  await sql`
-    UPDATE flavour_invites
-    SET status = 'accepted', accepted_at = NOW()
-    WHERE invite_id = ${invite.invite_id}
-  `;
+  await db
+    .update(flavour_invites)
+    .set({
+      status: "accepted",
+      accepted_at: new Date().toISOString(),
+    })
+    .where(eq(flavour_invites.invite_id, invite.invite_id));
 
-  return { flavourId: Number(invite.flavour_id) };
+  return { flavourId: invite.flavour_id };
 }
 
-/**
- * Get invite details by token (public, for invite page)
- */
 export async function getInviteByToken(token: string) {
-  const inviteResult = await sql`
+  const result = await db.execute(sql`
     SELECT
       fi.invite_id,
       fi.flavour_id,
@@ -425,36 +417,35 @@ export async function getInviteByToken(token: string) {
     JOIN flavour f ON fi.flavour_id = f.flavour_id
     JOIN users u ON fi.invited_by_user_id = u.user_id
     WHERE fi.invite_token = ${token}
-  `;
+  `);
 
-  if (inviteResult.length === 0) {
+  if (result.rows.length === 0) {
     return null;
   }
 
-  const invite = inviteResult[0];
+  const invite = result.rows[0] as Record<string, unknown>;
   return {
     invite_id: Number(invite.invite_id),
     flavour_id: Number(invite.flavour_id),
     invited_email: String(invite.invited_email),
     status: String(invite.status),
     flavour_name: String(invite.flavour_name),
-    inviter_name: invite.inviter_username || invite.inviter_email,
+    inviter_name: String(invite.inviter_username || invite.inviter_email || "Unknown"),
   };
 }
 
-/**
- * Convert pending invites to shares for a newly registered user
- * Called from Clerk webhook on user.created
- */
 export async function convertPendingInvites(userEmail: string, newUserId: string) {
   const normalizedEmail = userEmail.toLowerCase();
 
-  // Find all pending invites for this email
-  const pendingInvites = await sql`
-    SELECT invite_id, flavour_id, invited_by_user_id
-    FROM flavour_invites
-    WHERE LOWER(invited_email) = ${normalizedEmail} AND status = 'pending'
-  `;
+  const pendingInvites = await db
+    .select()
+    .from(flavour_invites)
+    .where(
+      and(
+        eq(flavour_invites.invited_email, normalizedEmail),
+        eq(flavour_invites.status, "pending")
+      )
+    );
 
   if (pendingInvites.length === 0) {
     return { converted: 0 };
@@ -464,19 +455,19 @@ export async function convertPendingInvites(userEmail: string, newUserId: string
 
   for (const invite of pendingInvites) {
     try {
-      // Create share
-      await sql`
+      await db.execute(sql`
         INSERT INTO flavour_shares (flavour_id, shared_with_user_id, shared_by_user_id)
         VALUES (${invite.flavour_id}, ${newUserId}, ${invite.invited_by_user_id})
         ON CONFLICT (flavour_id, shared_with_user_id) DO NOTHING
-      `;
+      `);
 
-      // Mark invite as accepted
-      await sql`
-        UPDATE flavour_invites
-        SET status = 'accepted', accepted_at = NOW()
-        WHERE invite_id = ${invite.invite_id}
-      `;
+      await db
+        .update(flavour_invites)
+        .set({
+          status: "accepted",
+          accepted_at: new Date().toISOString(),
+        })
+        .where(eq(flavour_invites.invite_id, invite.invite_id));
 
       converted++;
     } catch (error) {

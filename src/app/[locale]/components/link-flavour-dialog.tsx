@@ -17,8 +17,7 @@ import { ScrollArea } from "@/app/[locale]/components/ui/scroll-area";
 import { toast } from "sonner";
 import { getFlavours } from "@/actions/flavours";
 import { linkFlavourToWorkspace } from "@/actions/workspaces";
-import type { Flavour, WorkspaceFlavour } from "@/app/type";
-import { cn } from "@/app/lib/utils";
+import type { Flavour } from "@/app/type";
 
 interface LinkFlavourDialogProps {
   open: boolean;
@@ -157,11 +156,11 @@ export function LinkFlavourDialog({
                     {availableFlavours.map((flavour) => (
                       <div
                         key={flavour.flavour_id}
-                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg overflow-hidden"
                       >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
                           <FlaskConical className="h-5 w-5 text-muted-foreground shrink-0" />
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="font-medium truncate">{flavour.name}</p>
                             {flavour.description && (
                               <p className="text-sm text-muted-foreground truncate">
@@ -200,11 +199,11 @@ export function LinkFlavourDialog({
                     {alreadyLinked.map((flavour) => (
                       <div
                         key={flavour.flavour_id}
-                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg opacity-60"
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg opacity-60 overflow-hidden"
                       >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
                           <FlaskConical className="h-5 w-5 text-muted-foreground shrink-0" />
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="font-medium truncate">{flavour.name}</p>
                           </div>
                         </div>

@@ -79,7 +79,7 @@ export function ShareFlavourDialog({ flavourId, flavourName }: ShareFlavourDialo
             type: "share",
             share_id: result.share.share_id,
             user_id: result.user.user_id,
-            email: result.user.email,
+            email: result.user.email || email.trim(),
             username: result.user.username,
             created_at: new Date().toISOString(),
           },

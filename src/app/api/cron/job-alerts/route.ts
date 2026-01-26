@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { job_alert_preferences } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { sendJobAlertEmail, type JobAlertJob } from "@/lib/email/resend";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://oumamie.xyz";
 
-// Vercel Cron secret to protect this endpoint
 const CRON_SECRET = process.env.CRON_SECRET;
 
 interface JobAlertPreference {
@@ -20,7 +21,6 @@ interface JobAlertPreference {
 }
 
 export async function GET(request: Request) {
-  // Verify cron secret if configured
   if (CRON_SECRET) {
     const authHeader = request.headers.get("authorization");
     if (authHeader !== `Bearer ${CRON_SECRET}`) {
@@ -41,8 +41,7 @@ export async function GET(request: Request) {
 }
 
 async function processJobAlerts() {
-  // Get all active job alert preferences
-  const preferences = (await sql`
+  const result = await db.execute(sql`
     SELECT
       id,
       user_id as "userId",
@@ -55,38 +54,44 @@ async function processJobAlerts() {
       last_notified_at as "lastNotifiedAt"
     FROM job_alert_preferences
     WHERE is_active = true
-  `) as JobAlertPreference[];
+  `);
+
+  const preferences = (result.rows as Record<string, unknown>[]).map((row) => ({
+    id: Number(row.id),
+    userId: String(row.userId),
+    email: String(row.email),
+    locations: (row.locations as string[]) || [],
+    employmentTypes: (row.employmentTypes as string[]) || [],
+    experienceLevels: (row.experienceLevels as string[]) || [],
+    keywords: (row.keywords as string[]) || [],
+    frequency: row.frequency as "instant" | "daily" | "weekly",
+    lastNotifiedAt: row.lastNotifiedAt ? String(row.lastNotifiedAt) : null,
+  })) satisfies JobAlertPreference[];
 
   let emailsSent = 0;
   let usersProcessed = 0;
 
   for (const pref of preferences) {
-    // Check if we should send based on frequency
     if (!shouldSendAlert(pref.frequency, pref.lastNotifiedAt)) {
       continue;
     }
 
-    // Find matching jobs since last notification
     const matchingJobs = await findMatchingJobs(pref);
 
     if (matchingJobs.length === 0) {
       continue;
     }
 
-    // Determine locale (default to 'en')
-    const locale = "en"; // Could be stored in preferences later
-
+    const locale = "en";
     const unsubscribeUrl = `${BASE_URL}/${locale}/settings`;
 
     try {
       await sendJobAlertEmail(pref.email, matchingJobs, locale, unsubscribeUrl);
 
-      // Update last_notified_at
-      await sql`
-        UPDATE job_alert_preferences
-        SET last_notified_at = NOW()
-        WHERE id = ${pref.id}
-      `;
+      await db
+        .update(job_alert_preferences)
+        .set({ last_notified_at: new Date().toISOString() })
+        .where(eq(job_alert_preferences.id, pref.id));
 
       emailsSent++;
     } catch (error) {
@@ -109,7 +114,7 @@ function shouldSendAlert(
   lastNotifiedAt: string | null
 ): boolean {
   if (!lastNotifiedAt) {
-    return true; // Never notified before
+    return true;
   }
 
   const lastNotified = new Date(lastNotifiedAt);
@@ -119,11 +124,11 @@ function shouldSendAlert(
 
   switch (frequency) {
     case "instant":
-      return true; // Always send for instant
+      return true;
     case "daily":
       return hoursSinceLastNotified >= 24;
     case "weekly":
-      return hoursSinceLastNotified >= 168; // 7 days
+      return hoursSinceLastNotified >= 168;
     default:
       return false;
   }
@@ -132,31 +137,37 @@ function shouldSendAlert(
 async function findMatchingJobs(
   pref: Pick<JobAlertPreference, "locations" | "employmentTypes" | "experienceLevels" | "keywords" | "lastNotifiedAt">
 ): Promise<JobAlertJob[]> {
-  // Build the query dynamically based on preferences
   const sinceDate = pref.lastNotifiedAt
     ? new Date(pref.lastNotifiedAt)
-    : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Default to last 7 days
+    : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  // Start with base query
-  let jobs = await sql`
+  const result = await db.execute(sql`
     SELECT
       id,
       title,
-      company,
+      company_name as company,
       location,
       employment_type as "employmentType",
       experience_level as "experienceLevel",
       description
-    FROM jobs
-    WHERE created_at > ${sinceDate}
-      AND status = 'active'
+    FROM job_offers
+    WHERE created_at > ${sinceDate.toISOString()}
+      AND status = true
     ORDER BY created_at DESC
     LIMIT 50
-  `;
+  `);
 
-  // Filter in memory for flexibility with array matching
+  const jobs = (result.rows as Record<string, unknown>[]).map((row) => ({
+    id: String(row.id),
+    title: String(row.title),
+    company: String(row.company ?? ""),
+    location: String(row.location ?? ""),
+    employmentType: String(row.employmentType ?? ""),
+    experienceLevel: String(row.experienceLevel ?? ""),
+    description: String(row.description ?? ""),
+  }));
+
   const filteredJobs = jobs.filter((job) => {
-    // Location filter
     if (pref.locations && pref.locations.length > 0) {
       const jobLocation = (job.location || "").toLowerCase();
       const matchesLocation = pref.locations.some((loc) =>
@@ -165,21 +176,18 @@ async function findMatchingJobs(
       if (!matchesLocation) return false;
     }
 
-    // Employment type filter
     if (pref.employmentTypes && pref.employmentTypes.length > 0) {
       if (!pref.employmentTypes.includes(job.employmentType)) {
         return false;
       }
     }
 
-    // Experience level filter
     if (pref.experienceLevels && pref.experienceLevels.length > 0) {
       if (!pref.experienceLevels.includes(job.experienceLevel)) {
         return false;
       }
     }
 
-    // Keyword filter
     if (pref.keywords && pref.keywords.length > 0) {
       const searchText =
         `${job.title} ${job.description} ${job.company}`.toLowerCase();
@@ -192,9 +200,8 @@ async function findMatchingJobs(
     return true;
   });
 
-  // Map to JobAlertJob format
   return filteredJobs.slice(0, 10).map((job) => ({
-    id: job.id,
+    id: Number(job.id),
     title: job.title,
     company: job.company,
     location: job.location || "Remote",

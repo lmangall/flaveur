@@ -1,11 +1,12 @@
 "use server";
 
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { newsletter_subscribers } from "@/db/schema";
+import { eq, and, isNull, isNotNull } from "drizzle-orm";
 import { sendWelcomeEmail, sendUnsubscribeConfirmationEmail, sendNewSubscriberNotification } from "@/lib/email/resend";
 import { newsletterSubscribeSchema, confirmationTokenSchema } from "@/lib/validations/newsletter";
 
 export async function subscribeToNewsletter(email: string, source: string, locale: string) {
-  // Validate with Zod
   const validation = newsletterSubscribeSchema.safeParse({ email, source, locale });
   if (!validation.success) {
     return { success: false, error: "invalid_email" };
@@ -13,34 +14,30 @@ export async function subscribeToNewsletter(email: string, source: string, local
 
   const normalizedEmail = validation.data.email;
 
-  // Check if email already exists
-  const existingSubscriber = await sql`
-    SELECT id, confirmed_at, unsubscribed_at, confirmation_token
-    FROM newsletter_subscribers
-    WHERE email = ${normalizedEmail}
-  `;
+  const existingSubscriber = await db
+    .select()
+    .from(newsletter_subscribers)
+    .where(eq(newsletter_subscribers.email, normalizedEmail));
 
   if (existingSubscriber.length > 0) {
     const subscriber = existingSubscriber[0];
 
-    // If already subscribed and not unsubscribed, return already subscribed
     if (subscriber.confirmed_at && !subscriber.unsubscribed_at) {
       return { success: false, error: "already_subscribed" };
     }
 
-    // If unsubscribed, allow resubscription
     if (subscriber.unsubscribed_at) {
-      await sql`
-        UPDATE newsletter_subscribers
-        SET unsubscribed_at = NULL,
-            confirmed_at = NOW(),
-            subscribed_at = NOW(),
-            source = ${source},
-            locale = ${locale}
-        WHERE email = ${normalizedEmail}
-      `;
+      await db
+        .update(newsletter_subscribers)
+        .set({
+          unsubscribed_at: null,
+          confirmed_at: new Date().toISOString(),
+          subscribed_at: new Date().toISOString(),
+          source,
+          locale,
+        })
+        .where(eq(newsletter_subscribers.email, normalizedEmail));
 
-      // Send welcome email to subscriber and notification to dev
       await Promise.all([
         sendWelcomeEmail(normalizedEmail, locale),
         sendNewSubscriberNotification(normalizedEmail, source, locale),
@@ -49,13 +46,13 @@ export async function subscribeToNewsletter(email: string, source: string, local
     }
   }
 
-  // Create new subscription (single opt-in: confirmed immediately)
-  await sql`
-    INSERT INTO newsletter_subscribers (email, source, locale, confirmed_at)
-    VALUES (${normalizedEmail}, ${source}, ${locale}, NOW())
-  `;
+  await db.insert(newsletter_subscribers).values({
+    email: normalizedEmail,
+    source,
+    locale,
+    confirmed_at: new Date().toISOString(),
+  });
 
-  // Send welcome email to subscriber and notification to dev
   await Promise.all([
     sendWelcomeEmail(normalizedEmail, locale),
     sendNewSubscriberNotification(normalizedEmail, source, locale),
@@ -65,18 +62,15 @@ export async function subscribeToNewsletter(email: string, source: string, local
 }
 
 export async function confirmSubscription(token: string) {
-  // Validate token with Zod
   const validation = confirmationTokenSchema.safeParse({ token });
   if (!validation.success) {
     return { success: false, error: "invalid_token" };
   }
 
-  // Find subscriber by token
-  const result = await sql`
-    SELECT id, email, confirmed_at, unsubscribed_at, locale
-    FROM newsletter_subscribers
-    WHERE confirmation_token = ${token}::uuid
-  `;
+  const result = await db
+    .select()
+    .from(newsletter_subscribers)
+    .where(eq(newsletter_subscribers.confirmation_token, token));
 
   if (result.length === 0) {
     return { success: false, error: "token_not_found" };
@@ -84,38 +78,33 @@ export async function confirmSubscription(token: string) {
 
   const subscriber = result[0];
 
-  // Check if already confirmed
   if (subscriber.confirmed_at && !subscriber.unsubscribed_at) {
     return { success: false, error: "already_confirmed" };
   }
 
-  // Confirm subscription
-  await sql`
-    UPDATE newsletter_subscribers
-    SET confirmed_at = NOW(),
-        unsubscribed_at = NULL
-    WHERE confirmation_token = ${token}::uuid
-  `;
+  await db
+    .update(newsletter_subscribers)
+    .set({
+      confirmed_at: new Date().toISOString(),
+      unsubscribed_at: null,
+    })
+    .where(eq(newsletter_subscribers.confirmation_token, token));
 
-  // Send welcome email
-  await sendWelcomeEmail(subscriber.email as string, (subscriber.locale as string) || 'fr');
+  await sendWelcomeEmail(subscriber.email, subscriber.locale || "fr");
 
   return { success: true, message: "subscription_confirmed" };
 }
 
 export async function unsubscribe(token: string) {
-  // Validate token with Zod
   const validation = confirmationTokenSchema.safeParse({ token });
   if (!validation.success) {
     return { success: false, error: "invalid_token" };
   }
 
-  // Find subscriber by token
-  const result = await sql`
-    SELECT id, email, confirmed_at, unsubscribed_at, locale
-    FROM newsletter_subscribers
-    WHERE confirmation_token = ${token}::uuid
-  `;
+  const result = await db
+    .select()
+    .from(newsletter_subscribers)
+    .where(eq(newsletter_subscribers.confirmation_token, token));
 
   if (result.length === 0) {
     return { success: false, error: "token_not_found" };
@@ -123,20 +112,16 @@ export async function unsubscribe(token: string) {
 
   const subscriber = result[0];
 
-  // Check if already unsubscribed
   if (subscriber.unsubscribed_at) {
     return { success: false, error: "already_unsubscribed" };
   }
 
-  // Mark as unsubscribed
-  await sql`
-    UPDATE newsletter_subscribers
-    SET unsubscribed_at = NOW()
-    WHERE confirmation_token = ${token}::uuid
-  `;
+  await db
+    .update(newsletter_subscribers)
+    .set({ unsubscribed_at: new Date().toISOString() })
+    .where(eq(newsletter_subscribers.confirmation_token, token));
 
-  // Send unsubscribe confirmation email
-  await sendUnsubscribeConfirmationEmail(subscriber.email as string, (subscriber.locale as string) || 'fr');
+  await sendUnsubscribeConfirmationEmail(subscriber.email, subscriber.locale || "fr");
 
   return { success: true, message: "unsubscribed" };
 }

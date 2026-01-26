@@ -22,6 +22,8 @@ const authRoutes = [
   { href: "/flavours", label: "myFlavours" },
   { href: "/workspaces", label: "workspaces" },
   { href: "/substances", label: "substances" },
+  { href: "/samples", label: "samples" },
+  { href: "/learn", label: "learn" },
   { href: "/molecules", label: "molecules" },
   { href: "/calculator", label: "calculator" },
   { href: "/jobs", label: "jobs" },
@@ -54,7 +56,7 @@ export default function Navbar() {
     // If the route requires auth and user is not signed in, redirect to sign in
     if (
       !isSignedIn &&
-      ["/dashboard", "/flavours", "/substances", "/workspaces"].includes(href)
+      ["/dashboard", "/flavours", "/substances", "/workspaces", "/learn"].includes(href)
     ) {
       router.push(`/${locale}/auth/sign-in`);
       return;

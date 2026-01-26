@@ -1,7 +1,9 @@
 "use server";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { job_alert_preferences } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { jobAlertPreferencesSchema, type JobAlertPreferencesInput } from "@/lib/validations/job-alerts";
 
 export interface JobAlertPreferences {
@@ -25,29 +27,30 @@ export async function getJobAlertPreferences(): Promise<JobAlertPreferences | nu
     throw new Error("Unauthorized");
   }
 
-  const result = await sql`
-    SELECT
-      id,
-      user_id as "userId",
-      email,
-      locations,
-      employment_types as "employmentTypes",
-      experience_levels as "experienceLevels",
-      keywords,
-      is_active as "isActive",
-      frequency,
-      last_notified_at as "lastNotifiedAt",
-      created_at as "createdAt",
-      updated_at as "updatedAt"
-    FROM job_alert_preferences
-    WHERE user_id = ${userId}
-  `;
+  const result = await db
+    .select()
+    .from(job_alert_preferences)
+    .where(eq(job_alert_preferences.user_id, userId));
 
   if (result.length === 0) {
     return null;
   }
 
-  return result[0] as JobAlertPreferences;
+  const row = result[0];
+  return {
+    id: row.id,
+    userId: row.user_id,
+    email: row.email,
+    locations: row.locations || [],
+    employmentTypes: row.employment_types || [],
+    experienceLevels: row.experience_levels || [],
+    keywords: row.keywords || [],
+    isActive: row.is_active ?? true,
+    frequency: (row.frequency as "instant" | "daily" | "weekly") || "daily",
+    lastNotifiedAt: row.last_notified_at,
+    createdAt: row.created_at!,
+    updatedAt: row.updated_at!,
+  };
 }
 
 export async function saveJobAlertPreferences(input: JobAlertPreferencesInput) {
@@ -63,7 +66,6 @@ export async function saveJobAlertPreferences(input: JobAlertPreferencesInput) {
     return { success: false, error: "no_email" };
   }
 
-  // Validate input
   const validation = jobAlertPreferencesSchema.safeParse(input);
   if (!validation.success) {
     return { success: false, error: "invalid_input" };
@@ -71,8 +73,7 @@ export async function saveJobAlertPreferences(input: JobAlertPreferencesInput) {
 
   const { locations, employmentTypes, experienceLevels, keywords, frequency, isActive } = validation.data;
 
-  // Upsert the preferences
-  const result = await sql`
+  const result = await db.execute(sql`
     INSERT INTO job_alert_preferences (
       user_id, email, locations, employment_types, experience_levels,
       keywords, frequency, is_active
@@ -91,9 +92,9 @@ export async function saveJobAlertPreferences(input: JobAlertPreferencesInput) {
       is_active = EXCLUDED.is_active,
       updated_at = NOW()
     RETURNING id
-  `;
+  `);
 
-  return { success: true, id: result[0].id };
+  return { success: true, id: (result.rows[0] as { id: number }).id };
 }
 
 export async function toggleJobAlerts(isActive: boolean) {
@@ -102,12 +103,11 @@ export async function toggleJobAlerts(isActive: boolean) {
     return { success: false, error: "unauthorized" };
   }
 
-  const result = await sql`
-    UPDATE job_alert_preferences
-    SET is_active = ${isActive}, updated_at = NOW()
-    WHERE user_id = ${userId}
-    RETURNING id
-  `;
+  const result = await db
+    .update(job_alert_preferences)
+    .set({ is_active: isActive, updated_at: new Date().toISOString() })
+    .where(eq(job_alert_preferences.user_id, userId))
+    .returning({ id: job_alert_preferences.id });
 
   if (result.length === 0) {
     return { success: false, error: "not_found" };
@@ -122,10 +122,9 @@ export async function deleteJobAlertPreferences() {
     return { success: false, error: "unauthorized" };
   }
 
-  await sql`
-    DELETE FROM job_alert_preferences
-    WHERE user_id = ${userId}
-  `;
+  await db
+    .delete(job_alert_preferences)
+    .where(eq(job_alert_preferences.user_id, userId));
 
   return { success: true };
 }

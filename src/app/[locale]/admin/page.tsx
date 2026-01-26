@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { sql } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/[locale]/components/ui/card";
 import { Briefcase, Users, Eye, MousePointerClick, UserPlus, Bell, Mail, FlaskConical, Share2, Clock } from "lucide-react";
 import {
@@ -14,41 +15,44 @@ import { Badge } from "@/app/[locale]/components/ui/badge";
 
 async function getStats() {
   const [jobsResult, interactionsResult] = await Promise.all([
-    sql`
+    db.execute(sql`
       SELECT
         COUNT(*) FILTER (WHERE status = TRUE) as active_jobs,
         COUNT(*) as total_jobs
       FROM job_offers
-    `,
-    sql`
+    `),
+    db.execute(sql`
       SELECT
         COUNT(*) FILTER (WHERE action = 'viewed') as views,
         COUNT(*) FILTER (WHERE action = 'applied') as applications,
         COUNT(*) FILTER (WHERE action = 'seen_contact') as contact_views,
         COUNT(DISTINCT user_id) as unique_users
       FROM job_offer_interactions
-    `,
+    `),
   ]);
 
+  const jobs = jobsResult.rows[0] as Record<string, unknown>;
+  const interactions = interactionsResult.rows[0] as Record<string, unknown>;
+
   return {
-    activeJobs: Number(jobsResult[0]?.active_jobs ?? 0),
-    totalJobs: Number(jobsResult[0]?.total_jobs ?? 0),
-    views: Number(interactionsResult[0]?.views ?? 0),
-    applications: Number(interactionsResult[0]?.applications ?? 0),
-    contactViews: Number(interactionsResult[0]?.contact_views ?? 0),
-    uniqueUsers: Number(interactionsResult[0]?.unique_users ?? 0),
+    activeJobs: Number(jobs?.active_jobs ?? 0),
+    totalJobs: Number(jobs?.total_jobs ?? 0),
+    views: Number(interactions?.views ?? 0),
+    applications: Number(interactions?.applications ?? 0),
+    contactViews: Number(interactions?.contact_views ?? 0),
+    uniqueUsers: Number(interactions?.unique_users ?? 0),
   };
 }
 
 async function getSharingStats() {
   const [sharesResult, invitesResult] = await Promise.all([
-    sql`SELECT COUNT(*) as count FROM flavour_shares`,
-    sql`SELECT COUNT(*) as count FROM flavour_invites WHERE status = 'pending'`,
+    db.execute(sql`SELECT COUNT(*) as count FROM flavour_shares`),
+    db.execute(sql`SELECT COUNT(*) as count FROM flavour_invites WHERE status = 'pending'`),
   ]);
 
   return {
-    totalShares: Number(sharesResult[0]?.count ?? 0),
-    pendingInvites: Number(invitesResult[0]?.count ?? 0),
+    totalShares: Number((sharesResult.rows[0] as Record<string, unknown>)?.count ?? 0),
+    pendingInvites: Number((invitesResult.rows[0] as Record<string, unknown>)?.count ?? 0),
   };
 }
 
@@ -62,7 +66,7 @@ type PendingInvite = {
 };
 
 async function getPendingInvites(): Promise<PendingInvite[]> {
-  const result = await sql`
+  const result = await db.execute(sql`
     SELECT
       fi.invite_id,
       fi.invited_email,
@@ -76,9 +80,9 @@ async function getPendingInvites(): Promise<PendingInvite[]> {
     WHERE fi.status = 'pending'
     ORDER BY fi.created_at DESC
     LIMIT 50
-  `;
+  `);
 
-  return result as PendingInvite[];
+  return result.rows as PendingInvite[];
 }
 
 async function getUserStats() {
@@ -89,19 +93,19 @@ async function getUserStats() {
     alertUsersResult,
     newsletterResult,
   ] = await Promise.all([
-    sql`SELECT COUNT(*) as count FROM users`,
-    sql`SELECT COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL '7 days'`,
-    sql`SELECT COUNT(DISTINCT user_id) as count FROM job_offer_interactions`,
-    sql`SELECT COUNT(*) as count FROM job_alert_preferences WHERE is_active = TRUE`,
-    sql`SELECT COUNT(*) as count FROM newsletter_subscribers WHERE confirmed_at IS NOT NULL AND unsubscribed_at IS NULL`,
+    db.execute(sql`SELECT COUNT(*) as count FROM users`),
+    db.execute(sql`SELECT COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL '7 days'`),
+    db.execute(sql`SELECT COUNT(DISTINCT user_id) as count FROM job_offer_interactions`),
+    db.execute(sql`SELECT COUNT(*) as count FROM job_alert_preferences WHERE is_active = TRUE`),
+    db.execute(sql`SELECT COUNT(*) as count FROM newsletter_subscribers WHERE confirmed_at IS NOT NULL AND unsubscribed_at IS NULL`),
   ]);
 
   return {
-    totalUsers: Number(totalUsersResult[0]?.count ?? 0),
-    newUsers: Number(newUsersResult[0]?.count ?? 0),
-    activeUsers: Number(activeUsersResult[0]?.count ?? 0),
-    alertUsers: Number(alertUsersResult[0]?.count ?? 0),
-    newsletterSubscribers: Number(newsletterResult[0]?.count ?? 0),
+    totalUsers: Number((totalUsersResult.rows[0] as Record<string, unknown>)?.count ?? 0),
+    newUsers: Number((newUsersResult.rows[0] as Record<string, unknown>)?.count ?? 0),
+    activeUsers: Number((activeUsersResult.rows[0] as Record<string, unknown>)?.count ?? 0),
+    alertUsers: Number((alertUsersResult.rows[0] as Record<string, unknown>)?.count ?? 0),
+    newsletterSubscribers: Number((newsletterResult.rows[0] as Record<string, unknown>)?.count ?? 0),
   };
 }
 
@@ -118,7 +122,7 @@ type UserWithStats = {
 };
 
 async function getUsersWithStats(): Promise<UserWithStats[]> {
-  const result = await sql`
+  const result = await db.execute(sql`
     SELECT
       u.user_id,
       u.email,
@@ -147,9 +151,9 @@ async function getUsersWithStats(): Promise<UserWithStats[]> {
     LEFT JOIN job_alert_preferences jap ON u.user_id = jap.user_id
     ORDER BY u.created_at DESC
     LIMIT 100
-  `;
+  `);
 
-  return result as UserWithStats[];
+  return result.rows as UserWithStats[];
 }
 
 export default async function AdminDashboard() {

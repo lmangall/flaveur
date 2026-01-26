@@ -1,6 +1,8 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { users } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { convertPendingInvites } from "@/actions/shares";
 import { convertPendingWorkspaceInvites } from "@/actions/workspaces";
@@ -58,19 +60,19 @@ export async function POST(req: Request) {
   if (eventType === "user.created") {
     const email = userData.email_addresses?.[0]?.email_address || null;
     const clerkUserId = userData.id;
-    const username = userData.username || userData.first_name || null;
+    const username = userData.username || userData.first_name || email?.split("@")[0] || "user";
     const createdAt = userData.created_at
-      ? new Date(userData.created_at)
-      : new Date();
+      ? new Date(userData.created_at).toISOString()
+      : new Date().toISOString();
 
     try {
-      const result = await sql`
+      const result = await db.execute(sql`
         INSERT INTO users (user_id, email, username, created_at)
         VALUES (${clerkUserId}, ${email}, ${username}, ${createdAt})
         ON CONFLICT (user_id) DO NOTHING
         RETURNING *
-      `;
-      console.log("[Webhook] User saved:", result[0]);
+      `);
+      console.log("[Webhook] User saved:", result.rows[0]);
 
       // Convert any pending flavour invites for this email
       if (email) {
@@ -81,10 +83,8 @@ export async function POST(req: Request) {
           }
         } catch (inviteErr) {
           console.error("[Webhook] Error converting flavour invites:", inviteErr);
-          // Don't fail user creation if invite conversion fails
         }
 
-        // Convert any pending workspace invites for this email
         try {
           const { converted } = await convertPendingWorkspaceInvites(email, clerkUserId);
           if (converted > 0) {
@@ -92,11 +92,10 @@ export async function POST(req: Request) {
           }
         } catch (inviteErr) {
           console.error("[Webhook] Error converting workspace invites:", inviteErr);
-          // Don't fail user creation if invite conversion fails
         }
       }
 
-      return NextResponse.json(result[0], { status: 201 });
+      return NextResponse.json(result.rows[0], { status: 201 });
     } catch (dbErr) {
       console.error("[Webhook] DB error:", dbErr);
       return NextResponse.json(
@@ -110,10 +109,10 @@ export async function POST(req: Request) {
     const clerkUserId = userData.id;
 
     try {
-      const result = await sql`
-        DELETE FROM users WHERE user_id = ${clerkUserId}
-        RETURNING *
-      `;
+      const result = await db
+        .delete(users)
+        .where(eq(users.user_id, clerkUserId))
+        .returning();
       console.log("[Webhook] User deleted:", result[0]);
       return NextResponse.json({ success: true }, { status: 200 });
     } catch (dbErr) {
@@ -125,6 +124,5 @@ export async function POST(req: Request) {
     }
   }
 
-  // For other event types, just acknowledge
   return NextResponse.json({ message: "Event ignored" }, { status: 200 });
 }

@@ -374,8 +374,11 @@ export type LearningQueueItem = {
   target_date: string | null;
   added_at: string;
 
-  // Relations (when loaded)
-  substance?: Substance;
+  // Relations (when loaded) - partial substance for queue display
+  substance?: Pick<Substance, 'substance_id' | 'common_name' | 'fema_number' | 'cas_id' | 'flavor_profile' | 'fema_flavor_profile'>;
+  progress_status?: string;
+  has_smelled?: boolean;
+  has_tasted?: boolean;
 };
 
 export type SubstanceLearningProgress = {

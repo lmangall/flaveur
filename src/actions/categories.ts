@@ -1,6 +1,8 @@
 "use server";
 
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { category, flavour } from "@/db/schema";
+import { eq, isNull, sql, count } from "drizzle-orm";
 import { auth } from "@clerk/nextjs/server";
 import { createCategorySchema, updateCategorySchema } from "@/lib/validations/category";
 
@@ -15,7 +17,7 @@ export interface CategoryWithDetails {
 }
 
 export async function getCategories(): Promise<CategoryWithDetails[]> {
-  const result = await sql`
+  const result = await db.execute(sql`
     SELECT
       c.category_id,
       c.name,
@@ -35,9 +37,9 @@ export async function getCategories(): Promise<CategoryWithDetails[]> {
     ORDER BY
       CASE WHEN c.parent_category_id IS NULL THEN 0 ELSE 1 END,
       c.name
-  `;
+  `);
 
-  return result.map((row) => ({
+  return (result.rows as Record<string, unknown>[]).map((row) => ({
     category_id: Number(row.category_id),
     name: String(row.name),
     description: row.description ? String(row.description) : null,
@@ -49,7 +51,7 @@ export async function getCategories(): Promise<CategoryWithDetails[]> {
 }
 
 export async function getCategoryById(categoryId: number): Promise<CategoryWithDetails | null> {
-  const result = await sql`
+  const result = await db.execute(sql`
     SELECT
       c.category_id,
       c.name,
@@ -67,11 +69,11 @@ export async function getCategoryById(categoryId: number): Promise<CategoryWithD
       GROUP BY parent_category_id
     ) ch ON c.category_id = ch.parent_category_id
     WHERE c.category_id = ${categoryId}
-  `;
+  `);
 
-  if (result.length === 0) return null;
+  if (result.rows.length === 0) return null;
 
-  const row = result[0];
+  const row = result.rows[0] as Record<string, unknown>;
   return {
     category_id: Number(row.category_id),
     name: String(row.name),
@@ -91,7 +93,6 @@ export async function createCategory(data: {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Validate with Zod
   const validation = createCategorySchema.safeParse(data);
   if (!validation.success) {
     const firstError = validation.error.issues[0];
@@ -100,31 +101,34 @@ export async function createCategory(data: {
 
   const { name, description, parent_category_id } = validation.data;
 
-  // Check if parent exists (if provided)
   if (parent_category_id) {
-    const parentExists = await sql`
-      SELECT category_id FROM category WHERE category_id = ${parent_category_id}
-    `;
+    const parentExists = await db
+      .select({ category_id: category.category_id })
+      .from(category)
+      .where(eq(category.category_id, parent_category_id));
     if (parentExists.length === 0) {
       throw new Error("Parent category not found");
     }
   }
 
-  const result = await sql`
-    INSERT INTO category (name, description, parent_category_id)
-    VALUES (${name.trim()}, ${description?.trim() || null}, ${parent_category_id || null})
-    RETURNING *
-  `;
+  const result = await db
+    .insert(category)
+    .values({
+      name: name.trim(),
+      description: description?.trim() || null,
+      parent_category_id: parent_category_id || null,
+    })
+    .returning();
 
   const row = result[0];
   return {
-    category_id: Number(row.category_id),
-    name: String(row.name),
-    description: row.description ? String(row.description) : null,
-    parent_category_id: row.parent_category_id ? Number(row.parent_category_id) : null,
-    parent_name: null, // New category, need to fetch parent name if needed
+    category_id: row.category_id,
+    name: row.name,
+    description: row.description,
+    parent_category_id: row.parent_category_id,
+    parent_name: null,
     children_count: 0,
-    updated_at: row.updated_at ? String(row.updated_at) : null,
+    updated_at: row.updated_at,
   };
 }
 
@@ -139,7 +143,6 @@ export async function updateCategory(
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Validate with Zod
   const validation = updateCategorySchema.safeParse(data);
   if (!validation.success) {
     const firstError = validation.error.issues[0];
@@ -148,30 +151,29 @@ export async function updateCategory(
 
   const { name, description, parent_category_id } = validation.data;
 
-  // Check if category exists
-  const existingCategory = await sql`
-    SELECT category_id FROM category WHERE category_id = ${categoryId}
-  `;
+  const existingCategory = await db
+    .select({ category_id: category.category_id })
+    .from(category)
+    .where(eq(category.category_id, categoryId));
   if (existingCategory.length === 0) {
     throw new Error("Category not found");
   }
 
-  // Prevent setting itself as parent
   if (parent_category_id === categoryId) {
     throw new Error("A category cannot be its own parent");
   }
 
-  // Check if new parent exists (if provided)
   if (parent_category_id) {
-    const parentExists = await sql`
-      SELECT category_id FROM category WHERE category_id = ${parent_category_id}
-    `;
+    const parentExists = await db
+      .select({ category_id: category.category_id })
+      .from(category)
+      .where(eq(category.category_id, parent_category_id));
     if (parentExists.length === 0) {
       throw new Error("Parent category not found");
     }
 
-    // Prevent circular references - check if new parent is a child of this category
-    const isCircular = await sql`
+    // Check circular references with recursive CTE
+    const isCircular = await db.execute(sql`
       WITH RECURSIVE children AS (
         SELECT category_id FROM category WHERE parent_category_id = ${categoryId}
         UNION ALL
@@ -179,44 +181,44 @@ export async function updateCategory(
         INNER JOIN children ch ON c.parent_category_id = ch.category_id
       )
       SELECT 1 FROM children WHERE category_id = ${parent_category_id}
-    `;
-    if (isCircular.length > 0) {
+    `);
+    if (isCircular.rows.length > 0) {
       throw new Error("Cannot set a child category as the parent (circular reference)");
     }
   }
 
-  const result = await sql`
-    UPDATE category
-    SET
-      name = COALESCE(${name?.trim() || null}, name),
-      description = ${description?.trim() ?? null},
-      parent_category_id = ${parent_category_id ?? null},
-      updated_at = NOW()
-    WHERE category_id = ${categoryId}
-    RETURNING *
-  `;
+  const result = await db
+    .update(category)
+    .set({
+      name: name?.trim() || undefined,
+      description: description?.trim() ?? null,
+      parent_category_id: parent_category_id ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .where(eq(category.category_id, categoryId))
+    .returning();
 
   const row = result[0];
 
-  // Fetch parent name if exists
   let parentName: string | null = null;
   if (row.parent_category_id) {
-    const parentResult = await sql`
-      SELECT name FROM category WHERE category_id = ${row.parent_category_id}
-    `;
+    const parentResult = await db
+      .select({ name: category.name })
+      .from(category)
+      .where(eq(category.category_id, row.parent_category_id));
     if (parentResult.length > 0) {
-      parentName = String(parentResult[0].name);
+      parentName = parentResult[0].name;
     }
   }
 
   return {
-    category_id: Number(row.category_id),
-    name: String(row.name),
-    description: row.description ? String(row.description) : null,
-    parent_category_id: row.parent_category_id ? Number(row.parent_category_id) : null,
+    category_id: row.category_id,
+    name: row.name,
+    description: row.description,
+    parent_category_id: row.parent_category_id,
     parent_name: parentName,
-    children_count: 0, // Not calculated here
-    updated_at: row.updated_at ? String(row.updated_at) : null,
+    children_count: 0,
+    updated_at: row.updated_at,
   };
 }
 
@@ -224,38 +226,37 @@ export async function deleteCategory(categoryId: number): Promise<{ success: boo
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  // Check if category exists
-  const existingCategory = await sql`
-    SELECT category_id, name FROM category WHERE category_id = ${categoryId}
-  `;
+  const existingCategory = await db
+    .select({ category_id: category.category_id, name: category.name })
+    .from(category)
+    .where(eq(category.category_id, categoryId));
   if (existingCategory.length === 0) {
     throw new Error("Category not found");
   }
 
-  // Check if category has children
-  const children = await sql`
-    SELECT COUNT(*) as count FROM category WHERE parent_category_id = ${categoryId}
-  `;
+  const children = await db
+    .select({ count: count() })
+    .from(category)
+    .where(eq(category.parent_category_id, categoryId));
   if (Number(children[0].count) > 0) {
     throw new Error("Cannot delete category with subcategories. Delete or reassign subcategories first.");
   }
 
-  // Check if category is used by any flavors
-  const flavorsUsingCategory = await sql`
-    SELECT COUNT(*) as count FROM flavour WHERE category_id = ${categoryId}
-  `;
+  const flavorsUsingCategory = await db
+    .select({ count: count() })
+    .from(flavour)
+    .where(eq(flavour.category_id, categoryId));
   if (Number(flavorsUsingCategory[0].count) > 0) {
     throw new Error("Cannot delete category that is assigned to flavors. Reassign flavors first.");
   }
 
-  // Delete the category
-  await sql`DELETE FROM category WHERE category_id = ${categoryId}`;
+  await db.delete(category).where(eq(category.category_id, categoryId));
 
   return { success: true, message: "Category deleted successfully" };
 }
 
 export async function getTopLevelCategories(): Promise<CategoryWithDetails[]> {
-  const result = await sql`
+  const result = await db.execute(sql`
     SELECT
       c.category_id,
       c.name,
@@ -272,9 +273,9 @@ export async function getTopLevelCategories(): Promise<CategoryWithDetails[]> {
     ) ch ON c.category_id = ch.parent_category_id
     WHERE c.parent_category_id IS NULL
     ORDER BY c.name
-  `;
+  `);
 
-  return result.map((row) => ({
+  return (result.rows as Record<string, unknown>[]).map((row) => ({
     category_id: Number(row.category_id),
     name: String(row.name),
     description: row.description ? String(row.description) : null,

@@ -1,7 +1,9 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { newsletter_subscribers } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { subscribeToNewsletter, unsubscribe } from "./newsletter";
 
 export type NewsletterStatus = "subscribed" | "pending" | "unsubscribed" | "not_found";
@@ -17,11 +19,15 @@ export async function getNewsletterStatus(email: string): Promise<NewsletterStat
     return { status: "not_found", email: null };
   }
 
-  const result = await sql`
-    SELECT email, confirmed_at, unsubscribed_at, confirmation_token
-    FROM newsletter_subscribers
-    WHERE email = ${email.toLowerCase().trim()}
-  `;
+  const result = await db
+    .select({
+      email: newsletter_subscribers.email,
+      confirmed_at: newsletter_subscribers.confirmed_at,
+      unsubscribed_at: newsletter_subscribers.unsubscribed_at,
+      confirmation_token: newsletter_subscribers.confirmation_token,
+    })
+    .from(newsletter_subscribers)
+    .where(eq(newsletter_subscribers.email, email.toLowerCase().trim()));
 
   if (result.length === 0) {
     return { status: "not_found", email };
@@ -37,14 +43,14 @@ export async function getNewsletterStatus(email: string): Promise<NewsletterStat
     return {
       status: "subscribed",
       email,
-      confirmationToken: subscriber.confirmation_token as string
+      confirmationToken: subscriber.confirmation_token ?? undefined,
     };
   }
 
   return {
     status: "pending",
     email,
-    confirmationToken: subscriber.confirmation_token as string
+    confirmationToken: subscriber.confirmation_token ?? undefined,
   };
 }
 

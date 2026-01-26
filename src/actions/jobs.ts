@@ -1,7 +1,9 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { job_offers, job_offer_interactions } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import {
   type JobInteractionValue,
   type EmploymentTypeValue,
@@ -13,34 +15,53 @@ import {
 export async function getJobs() {
   const { userId } = await auth();
 
-  let result;
   if (userId) {
-    // Authenticated: Return all public + user-specific job offers
-    result = await sql`
+    const result = await db.execute(sql`
       SELECT * FROM public.job_offers
       WHERE status = TRUE OR EXISTS (
         SELECT 1 FROM public.job_offer_interactions
         WHERE job_offer_id = public.job_offers.id AND user_id = ${userId}
       )
-    `;
+    `);
+    return result.rows;
   } else {
-    // Unauthenticated: Return only public job offers
-    result = await sql`SELECT * FROM public.job_offers WHERE status = TRUE`;
+    return await db.select().from(job_offers).where(eq(job_offers.status, true));
   }
-
-  return result;
 }
 
 export async function getJobById(jobId: number) {
-  const result = await sql`
+  const result = await db.execute(sql`
     SELECT * FROM public.job_offers WHERE id = ${jobId}
-  `;
+  `);
 
-  if (result.length === 0) {
+  if (result.rows.length === 0) {
     throw new Error("Job offer not found");
   }
 
-  return result[0];
+  const row = result.rows[0] as Record<string, unknown>;
+  return {
+    id: String(row.id),
+    title: String(row.title),
+    description: String(row.description ?? ""),
+    company_name: row.company_name ? String(row.company_name) : null,
+    original_company_name: row.original_company_name ? String(row.original_company_name) : null,
+    through_recruiter: Boolean(row.through_recruiter),
+    source_website: String(row.source_website ?? ""),
+    source_url: String(row.source_url ?? ""),
+    location: String(row.location ?? ""),
+    employment_type: row.employment_type as EmploymentTypeValue | null,
+    salary: row.salary ? String(row.salary) : null,
+    requirements: row.requirements as string[] | null,
+    tags: row.tags as string[] | null,
+    industry: String(row.industry ?? ""),
+    experience_level: row.experience_level as ExperienceLevelValue | null,
+    contact_person: row.contact_person as ContactPerson | null,
+    posted_at: String(row.posted_at),
+    expires_at: row.expires_at ? String(row.expires_at) : null,
+    status: Boolean(row.status),
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
+  };
 }
 
 export async function createJob(data: {
@@ -67,7 +88,7 @@ export async function createJob(data: {
     ? JSON.stringify(data.contact_person)
     : null;
 
-  const result = await sql`
+  const result = await db.execute(sql`
     INSERT INTO public.job_offers (
       title, description, company_name, original_company_name,
       through_recruiter, source_website, source_url, location,
@@ -82,13 +103,13 @@ export async function createJob(data: {
       ${data.salary ?? null}, ${data.requirements ?? null},
       ${data.tags ?? null}, ${data.posted_at ?? null},
       ${data.expires_at ?? null}, ${data.industry ?? null},
-      ${data.experience_level ?? null}, ${contactPersonJson},
+      ${data.experience_level ?? null}, ${contactPersonJson}::jsonb,
       ${data.status ?? true}
     )
     RETURNING *
-  `;
+  `);
 
-  return result[0];
+  return result.rows[0];
 }
 
 export async function addJobInteraction(
@@ -103,23 +124,25 @@ export async function addJobInteraction(
     throw new Error("Invalid action");
   }
 
-  const result = await sql`
-    INSERT INTO public.job_offer_interactions (user_id, job_offer_id, action, referrer)
-    VALUES (${userId}, ${jobId}, ${action}, ${referrer ?? null})
-    RETURNING *
-  `;
+  const result = await db
+    .insert(job_offer_interactions)
+    .values({
+      user_id: userId,
+      job_offer_id: jobId.toString(),
+      action,
+      referrer: referrer ?? null,
+    })
+    .returning();
 
   return result[0];
 }
 
-// Admin functions
-
 export async function getAllJobs() {
-  const result = await sql`
+  const result = await db.execute(sql`
     SELECT * FROM public.job_offers
     ORDER BY created_at DESC
-  `;
-  return result;
+  `);
+  return result.rows;
 }
 
 export async function updateJob(
@@ -148,7 +171,7 @@ export async function updateJob(
     ? JSON.stringify(data.contact_person)
     : null;
 
-  const result = await sql`
+  const result = await db.execute(sql`
     UPDATE public.job_offers SET
       title = COALESCE(${data.title ?? null}, title),
       description = COALESCE(${data.description ?? null}, description),
@@ -170,30 +193,28 @@ export async function updateJob(
       updated_at = NOW()
     WHERE id = ${jobId}
     RETURNING *
-  `;
+  `);
 
-  if (result.length === 0) {
+  if (result.rows.length === 0) {
     throw new Error("Job not found");
   }
 
-  return result[0];
+  return result.rows[0];
 }
 
 export async function deleteJob(jobId: number) {
-  // First delete interactions
-  await sql`
+  await db.execute(sql`
     DELETE FROM public.job_offer_interactions
     WHERE job_offer_id = ${jobId}
-  `;
+  `);
 
-  // Then delete the job
-  const result = await sql`
+  const result = await db.execute(sql`
     DELETE FROM public.job_offers
     WHERE id = ${jobId}
     RETURNING id
-  `;
+  `);
 
-  if (result.length === 0) {
+  if (result.rows.length === 0) {
     throw new Error("Job not found");
   }
 
@@ -201,16 +222,16 @@ export async function deleteJob(jobId: number) {
 }
 
 export async function toggleJobStatus(jobId: number, status: boolean) {
-  const result = await sql`
+  const result = await db.execute(sql`
     UPDATE public.job_offers
     SET status = ${status}, updated_at = NOW()
     WHERE id = ${jobId}
     RETURNING *
-  `;
+  `);
 
-  if (result.length === 0) {
+  if (result.rows.length === 0) {
     throw new Error("Job not found");
   }
 
-  return result[0];
+  return result.rows[0];
 }

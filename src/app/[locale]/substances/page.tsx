@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
 import {
@@ -33,12 +35,19 @@ import {
   MoreHorizontal,
   ChevronLeft,
   ChevronRight,
+  BookOpen,
 } from "lucide-react";
 import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
 import { MoleculeImage } from "@/app/[locale]/components/ui/molecule-image";
 import { EUStatusBadge } from "@/app/[locale]/components/eu-status-badge";
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/[locale]/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/[locale]/components/ui/tooltip";
 import {
   CheckCircle,
   AlertTriangle,
@@ -60,9 +69,11 @@ import {
 } from "@/actions/substances";
 import { addSubstanceToFlavour } from "@/actions/flavours";
 import { getSubstanceEUFullData } from "@/actions/regulatory";
+import { addToLearningQueue } from "@/actions/learning";
 import type { EUAdditiveFullData } from "@/lib/eu-api/client";
 
 type Substance = {
+  substance_id: number;
   fema_number: number;
   common_name: string;
   is_natural?: boolean;
@@ -96,6 +107,7 @@ type Substance = {
 
 export default function SubstancesPage() {
   const t = useTranslations("Substances");
+  const { isSignedIn } = useUser();
   const [substances, setSubstances] = useState<Substance[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<
@@ -122,6 +134,7 @@ export default function SubstancesPage() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactSubstance, setContactSubstance] = useState<Substance | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [addingToQueueId, setAddingToQueueId] = useState<number | null>(null);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -252,6 +265,23 @@ export default function SubstancesPage() {
     window.open(whatsappUrl, "_blank");
   };
 
+  // Handle adding substance to learning queue
+  const handleAddToLearningQueue = async (substance?: Substance) => {
+    const target = substance ?? viewDetailsSubstance;
+    if (!target || !isSignedIn) return;
+
+    setAddingToQueueId(target.substance_id);
+    try {
+      await addToLearningQueue(target.substance_id);
+      toast.success(t("addedToQueue") || "Added to learning queue!");
+    } catch (error) {
+      console.error("Failed to add to queue:", error);
+      toast.error(t("failedToAddToQueue") || "Failed to add to queue");
+    } finally {
+      setAddingToQueueId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -355,6 +385,17 @@ export default function SubstancesPage() {
         />
       </div>
 
+      {/* Learning feature tip */}
+      {isSignedIn && (
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
+          <BookOpen className="h-5 w-5 text-primary shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{t("learningTipTitle") || "Train your senses!"}</span>{" "}
+            {t("learningTipDescription") || "Add substances to your learning queue to track your sensory training progress. Use the menu on each row or open substance details."}
+          </p>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center items-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
@@ -410,25 +451,64 @@ export default function SubstancesPage() {
                     </TableCell>
                     <TableCell>{substance.flavor_profile || "-"}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
+                      <div className="flex items-center justify-end gap-1">
+                        {isSignedIn && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleAddToLearningQueue(substance)}
+                                  disabled={addingToQueueId === substance.substance_id}
+                                >
+                                  {addingToQueueId === substance.substance_id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <BookOpen className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="max-w-[240px]">
+                                <p className="text-xs">{t("addToQueueTooltipDesc") || "Add this substance to your queue, then visit the Learn page to track your sensory training progress."}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             onClick={() => openDetailsModal(substance)}
                           >
                             View Details
                           </DropdownMenuItem>
+                          {isSignedIn && (
+                            <DropdownMenuItem
+                              onClick={() => handleAddToLearningQueue(substance)}
+                              disabled={addingToQueueId === substance.substance_id}
+                            >
+                              {addingToQueueId === substance.substance_id ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <BookOpen className="h-4 w-4 mr-2" />
+                              )}
+                              {t("addToLearningQueue") || "Add to Learning Queue"}
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() => openContactModal(substance)}
                           >
                             Edit
                           </DropdownMenuItem>
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -930,7 +1010,29 @@ export default function SubstancesPage() {
                   </>
                 )}
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                {isSignedIn && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => handleAddToLearningQueue()}
+                          disabled={addingToQueueId === viewDetailsSubstance?.substance_id}
+                        >
+                          {addingToQueueId === viewDetailsSubstance?.substance_id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <BookOpen className="mr-2 h-4 w-4" />
+                          )}
+                          {t("addToLearningQueue") || "Add to Learning Queue"}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[240px]">
+                        <p className="text-xs">{t("addToQueueTooltipDesc") || "Add this substance to your queue, then visit the Learn page to track your sensory training progress."}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => setIsViewDetailsOpen(false)}

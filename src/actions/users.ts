@@ -1,17 +1,20 @@
 "use server";
 
-import { sql } from "@/lib/db";
+import { db } from "@/lib/db";
+import { users } from "@/db/schema";
 
 export async function getUsers() {
-  const result = await sql`SELECT * FROM users`;
-  return result;
+  return await db.select().from(users);
 }
 
 export async function createUser(data: { email: string; username?: string }) {
-  const result = await sql`
-    INSERT INTO users (email, username, created_at)
-    VALUES (${data.email}, ${data.username ?? null}, NOW())
-    RETURNING *
-  `;
+  const result = await db
+    .insert(users)
+    .values({
+      user_id: crypto.randomUUID(),
+      email: data.email,
+      username: data.username ?? data.email.split("@")[0],
+    })
+    .returning();
   return result[0];
 }
