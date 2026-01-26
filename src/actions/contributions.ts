@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId, getSession } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 import type { Substance, SubstanceFeedback } from "@/app/type";
 import type { FeedbackTypeValue } from "@/constants";
@@ -94,8 +94,7 @@ export type CreateUserSubstanceInput = {
 export async function createUserSubstance(
   data: CreateUserSubstanceInput
 ): Promise<Substance> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Validate required fields
   if (!data.common_name || data.common_name.trim().length === 0) {
@@ -197,8 +196,7 @@ export async function updateUserSubstance(
   substanceId: number,
   data: Partial<CreateUserSubstanceInput>
 ): Promise<Substance> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check substance exists, is owned by user, and is still editable
   const existing = await sql`
@@ -257,8 +255,7 @@ export async function updateUserSubstance(
  * Get all substances submitted by the current user
  */
 export async function getUserSubmissions(): Promise<Substance[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT * FROM substance
@@ -275,8 +272,7 @@ export async function getUserSubmissions(): Promise<Substance[]> {
 export async function getSubstanceForUser(
   substanceId: number
 ): Promise<Substance | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT * FROM substance
@@ -308,8 +304,7 @@ export type CreateFeedbackInput = {
 export async function createSubstanceFeedback(
   data: CreateFeedbackInput
 ): Promise<SubstanceFeedback> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Validate commentary length
   if (!data.commentary || data.commentary.trim().length < 10) {
@@ -386,8 +381,7 @@ export async function createSubstanceFeedback(
 export async function getUserFeedback(): Promise<
   (SubstanceFeedback & { substance_name: string })[]
 > {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT sf.*, s.common_name as substance_name
@@ -406,8 +400,7 @@ export async function getUserFeedback(): Promise<
 export async function getUserFeedbackById(
   feedbackId: number
 ): Promise<(SubstanceFeedback & { substance_name: string }) | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT sf.*, s.common_name as substance_name

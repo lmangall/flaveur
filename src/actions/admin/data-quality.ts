@@ -1,7 +1,7 @@
 "use server";
 
 import { sql } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 
 export interface DataQualityMetrics {
   totals: {
@@ -33,8 +33,7 @@ export interface DataQualityMetrics {
 }
 
 export async function getDataQualityMetrics(): Promise<DataQualityMetrics> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const [metrics] = await sql`
     SELECT

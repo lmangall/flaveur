@@ -1,9 +1,6 @@
-import { SignIn } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
+// Better Auth handles OAuth callbacks differently, so this page just redirects to home
 export default function SSOCallbackPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <SignIn redirectUrl="/" />
-    </div>
-  );
+  redirect("/");
 }

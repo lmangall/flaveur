@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId, getSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { flavour, substance, category, substance_flavour, users } from "@/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
@@ -39,8 +39,7 @@ export interface PublicFlavor {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const flavorStats = await db.execute(sql`
     SELECT
@@ -72,8 +71,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function getRecentFlavors(limit: number = 6): Promise<RecentFlavor[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await db.execute(sql`
     SELECT
@@ -107,8 +105,7 @@ export async function getRecentFlavors(limit: number = 6): Promise<RecentFlavor[
 }
 
 export async function getFavoriteFlavors(limit: number = 6): Promise<RecentFlavor[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await db.execute(sql`
     SELECT
@@ -142,8 +139,7 @@ export async function getFavoriteFlavors(limit: number = 6): Promise<RecentFlavo
 }
 
 export async function getPublicFlavors(limit: number = 6): Promise<RecentFlavor[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await db.execute(sql`
     SELECT
@@ -177,8 +173,7 @@ export async function getPublicFlavors(limit: number = 6): Promise<RecentFlavor[
 }
 
 export async function getCommunityFlavors(limit: number = 12): Promise<PublicFlavor[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await db.execute(sql`
     SELECT

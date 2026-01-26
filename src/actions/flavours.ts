@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 import {
   type FlavourStatusValue,
@@ -37,8 +37,7 @@ export type FlavourWithAccess = {
 };
 
 export async function getFlavours(): Promise<FlavourWithAccess[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get all flavours user has access to: owned, shared, or via workspace
   const result = await sql`
@@ -105,8 +104,7 @@ export async function getFlavours(): Promise<FlavourWithAccess[]> {
 }
 
 export async function getFlavourById(flavourId: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check if user is owner OR has shared access OR has workspace access
   const accessCheck = await sql`
@@ -217,8 +215,7 @@ export async function createFlavour(data: {
     price_per_kg?: number | null;
   }>;
 }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Validate with Zod
   const validation = createFlavourSchema.safeParse(data);
@@ -287,8 +284,7 @@ export async function addSubstanceToFlavour(
     price_per_kg?: number | null;
   }
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { fema_number, concentration, unit, order_index, supplier, dilution, price_per_kg } = data;
 
@@ -331,8 +327,7 @@ export async function removeSubstanceFromFlavour(
   flavourId: number,
   substanceId: number
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check flavour exists and user has edit access (owner OR workspace editor/owner)
   const accessCheck = await sql`
@@ -379,8 +374,7 @@ export async function updateSubstanceInFlavour(
     price_per_kg?: number | null;
   }
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { concentration, unit, supplier, dilution, price_per_kg } = data;
 
@@ -418,8 +412,7 @@ export async function updateFlavourStatus(
   flavourId: number,
   status: FlavourStatusValue
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Validate status
   if (!isValidFlavourStatus(status)) {
@@ -462,8 +455,7 @@ export async function updateFlavour(
     base_unit?: string;
   }
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Validate with Zod
   const validation = updateFlavourSchema.safeParse(data);
@@ -523,8 +515,7 @@ export async function updateFlavour(
 }
 
 export async function duplicateFlavour(flavourId: number, newName?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get original flavour - check if user owns it, has shared access, OR has workspace access
   const originalFlavour = await sql`
@@ -570,8 +561,7 @@ export async function duplicateFlavour(flavourId: number, newName?: string) {
 }
 
 export async function deleteFlavour(flavourId: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check flavour exists and belongs to user
   const flavourCheck = await sql`
@@ -595,8 +585,7 @@ export async function updateFlavorProfile(
   flavourId: number,
   flavorProfile: Array<{ attribute: string; value: number }>
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Validate the flavor profile structure
   if (!Array.isArray(flavorProfile)) {

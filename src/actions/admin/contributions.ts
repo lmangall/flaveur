@@ -1,6 +1,6 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { getSession, getUser } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 import type { Substance, SubstanceFeedback } from "@/app/type";
 import type {
@@ -12,17 +12,16 @@ import type {
 const ADMIN_EMAILS = ["l.mangallon@gmail.com"];
 
 async function requireAdmin() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const session = await getSession();
+  if (!session?.user) throw new Error("Unauthorized");
 
-  const user = await currentUser();
-  const email = user?.emailAddresses?.[0]?.emailAddress;
+  const email = session.user.email;
 
   if (!email || !ADMIN_EMAILS.includes(email)) {
     throw new Error("Forbidden: Admin access required");
   }
 
-  return { userId, email };
+  return { userId: session.user.id, email };
 }
 
 // ===========================================

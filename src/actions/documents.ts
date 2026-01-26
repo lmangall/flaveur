@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 import { del } from "@vercel/blob";
 import type { WorkspaceDocument } from "@/app/type";
@@ -17,8 +17,7 @@ import { canEditInWorkspace, getUserWorkspaceRole } from "./workspaces";
 export async function getWorkspaceDocuments(
   workspaceId: number
 ): Promise<WorkspaceDocument[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Verify membership
   const role = await getUserWorkspaceRole(workspaceId);
@@ -54,8 +53,7 @@ export async function getWorkspaceDocuments(
 export async function getDocumentById(
   documentId: number
 ): Promise<WorkspaceDocument | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT * FROM workspace_document
@@ -98,8 +96,7 @@ export async function createTextDocument(data: {
   type: "markdown" | "csv";
   content: string;
 }): Promise<WorkspaceDocument> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { workspaceId, name, description, type, content } = data;
 
@@ -150,8 +147,7 @@ export async function createFileDocument(data: {
   mimeType: string;
   type: DocumentTypeValue;
 }): Promise<WorkspaceDocument> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { workspaceId, name, description, url, fileSize, mimeType, type } = data;
 
@@ -212,8 +208,7 @@ export async function updateDocument(data: {
   description?: string;
   content?: string;
 }): Promise<WorkspaceDocument> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { documentId, name, description, content } = data;
 
@@ -272,8 +267,7 @@ export async function updateDocument(data: {
  * Delete a document. For images, also deletes the blob.
  */
 export async function deleteDocument(documentId: number): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get document
   const docResult = await sql`
@@ -315,8 +309,7 @@ export async function getWorkspaceDocumentsByType(
   workspaceId: number,
   type: DocumentTypeValue
 ): Promise<WorkspaceDocument[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Verify membership
   const role = await getUserWorkspaceRole(workspaceId);

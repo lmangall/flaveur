@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { Viewport } from "next";
 import "@/app/globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/app/[locale]/components/ui/sonner";
 import { ConfettiProvider } from "@/app/[locale]/components/ui/confetti";
 import Navbar from "@/app/[locale]/components/navbar";
@@ -124,41 +123,39 @@ export default async function RootLayout({
   }
 
   return (
-    <ClerkProvider>
-      <TooltipProvider>
-        <html lang={locale} suppressHydrationWarning>
-          <body
-            className={cn(
-              "min-h-screen bg-background font-sans antialiased",
-              fontSans.variable
-            )}
+    <TooltipProvider>
+      <html lang={locale} suppressHydrationWarning>
+        <body
+          className={cn(
+            "min-h-screen bg-background font-sans antialiased",
+            fontSans.variable
+          )}
+        >
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
           >
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <NextIntlClientProvider locale={locale} messages={messages}>
-                <ConfettiProvider>
-                  <a
-                    href="#main-content"
-                    className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-100 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    Skip to main content
-                  </a>
-                  <Navbar />
-                  <main id="main-content" className="flex-1 pt-16 min-h-screen">
-                    {children}
-                  </main>
-                  <Footer />
-                  <Toaster />
-                </ConfettiProvider>
-              </NextIntlClientProvider>
-            </ThemeProvider>
-          </body>
-        </html>
-      </TooltipProvider>
-    </ClerkProvider>
+            <NextIntlClientProvider locale={locale} messages={messages}>
+              <ConfettiProvider>
+                <a
+                  href="#main-content"
+                  className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-100 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  Skip to main content
+                </a>
+                <Navbar />
+                <main id="main-content" className="flex-1 pt-16 min-h-screen">
+                  {children}
+                </main>
+                <Footer />
+                <Toaster />
+              </ConfettiProvider>
+            </NextIntlClientProvider>
+          </ThemeProvider>
+        </body>
+      </html>
+    </TooltipProvider>
   );
 }

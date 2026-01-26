@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 import type { Substance } from "@/app/type";
 import { checkDuplicateSubstance } from "./contributions";
@@ -106,8 +106,7 @@ export async function importFormulation(
     fuzzy_threshold?: number; // Similarity threshold for fuzzy matching (0-1)
   }
 ): Promise<FormulationImportResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const errors: string[] = [];
   const substanceMatches: SubstanceMatchResult[] = [];
@@ -320,6 +319,273 @@ export async function importFormulation(
 }
 
 // ===========================================
+// PER-LINE SUBSTANCE SEARCH
+// ===========================================
+
+export type SubstanceMatch = {
+  substance_id: number;
+  common_name: string;
+  fema_number: number | null;
+  cas_id: string | null;
+  odor: string | null;
+  match_type: "exact" | "fuzzy";
+  similarity: number; // 1.0 for exact, 0-1 for fuzzy
+};
+
+/**
+ * Search for substance matches for a single ingredient name
+ * Returns exact matches first, then fuzzy matches sorted by similarity
+ */
+export async function searchSubstanceMatches(
+  name: string,
+  options?: { fuzzyThreshold?: number; limit?: number }
+): Promise<SubstanceMatch[]> {
+  const userId = await getUserId();
+
+  if (!name || name.trim().length < 2) {
+    return [];
+  }
+
+  const normalizedName = name.trim().toLowerCase();
+  const fuzzyThreshold = options?.fuzzyThreshold ?? 0.3;
+  const limit = options?.limit ?? 5;
+  const matches: SubstanceMatch[] = [];
+
+  // Step 1: Try exact match on common_name
+  const exactMatch = await sql`
+    SELECT substance_id, common_name, fema_number, cas_id, odor
+    FROM substance
+    WHERE LOWER(common_name) = ${normalizedName}
+    LIMIT 1
+  `;
+
+  if (exactMatch.length > 0) {
+    const s = exactMatch[0];
+    matches.push({
+      substance_id: Number(s.substance_id),
+      common_name: String(s.common_name),
+      fema_number: s.fema_number ? Number(s.fema_number) : null,
+      cas_id: s.cas_id ? String(s.cas_id) : null,
+      odor: s.odor ? String(s.odor) : null,
+      match_type: "exact",
+      similarity: 1.0,
+    });
+  }
+
+  // Step 2: Try exact match on alternative_names
+  if (matches.length === 0) {
+    const altMatch = await sql`
+      SELECT substance_id, common_name, fema_number, cas_id, odor
+      FROM substance
+      WHERE EXISTS (
+        SELECT 1 FROM jsonb_array_elements_text(alternative_names) AS alt_name
+        WHERE LOWER(alt_name) = ${normalizedName}
+      )
+      LIMIT 1
+    `;
+
+    if (altMatch.length > 0) {
+      const s = altMatch[0];
+      matches.push({
+        substance_id: Number(s.substance_id),
+        common_name: String(s.common_name),
+        fema_number: s.fema_number ? Number(s.fema_number) : null,
+        cas_id: s.cas_id ? String(s.cas_id) : null,
+        odor: s.odor ? String(s.odor) : null,
+        match_type: "exact",
+        similarity: 1.0,
+      });
+    }
+  }
+
+  // Step 3: Get fuzzy matches (excluding any exact match we already found)
+  const existingIds = matches.map((m) => m.substance_id);
+  const fuzzyResults = await sql`
+    SELECT * FROM search_substances_fuzzy(${name}, ${fuzzyThreshold}, ${limit + 1})
+  `;
+
+  for (const result of fuzzyResults) {
+    const substanceId = Number(result.substance_id);
+    if (existingIds.includes(substanceId)) continue;
+    if (matches.length >= limit) break;
+
+    matches.push({
+      substance_id: substanceId,
+      common_name: String(result.common_name),
+      fema_number: result.fema_number ? Number(result.fema_number) : null,
+      cas_id: result.cas_id ? String(result.cas_id) : null,
+      odor: result.odor ? String(result.odor) : null,
+      match_type: "fuzzy",
+      similarity: Number(result.similarity ?? 0),
+    });
+  }
+
+  return matches;
+}
+
+/**
+ * Create a minimal substance from formulation import (user_entry status)
+ */
+export async function createSubstanceFromImport(data: {
+  name: string;
+  odor?: string;
+  taste?: string;
+}): Promise<{ substance_id: number; common_name: string }> {
+  const userId = await getUserId();
+
+  if (!data.name || data.name.trim().length < 2) {
+    throw new Error("Substance name must be at least 2 characters");
+  }
+
+  if (!data.odor && !data.taste) {
+    throw new Error("Either odor or taste description is required");
+  }
+
+  // Check for duplicates
+  const duplicateCheck = await checkDuplicateSubstance(data.name);
+  if (
+    duplicateCheck.exists &&
+    duplicateCheck.matchedSubstance?.substance_id &&
+    duplicateCheck.matchedSubstance?.common_name
+  ) {
+    return {
+      substance_id: duplicateCheck.matchedSubstance.substance_id,
+      common_name: duplicateCheck.matchedSubstance.common_name,
+    };
+  }
+
+  const result = await sql`
+    INSERT INTO substance (
+      common_name,
+      odor,
+      taste,
+      verification_status,
+      submitted_by_user_id,
+      submitted_at,
+      source_reference
+    )
+    VALUES (
+      ${data.name.trim()},
+      ${data.odor || null},
+      ${data.taste || null},
+      'user_entry',
+      ${userId},
+      CURRENT_TIMESTAMP,
+      'Manual formulation import'
+    )
+    RETURNING substance_id, common_name
+  `;
+
+  return {
+    substance_id: Number(result[0].substance_id),
+    common_name: String(result[0].common_name),
+  };
+}
+
+// Default zeroed flavor profile for new flavours
+const DEFAULT_FLAVOR_PROFILE = [
+  { attribute: "Sweetness", value: 0 },
+  { attribute: "Sourness", value: 0 },
+  { attribute: "Bitterness", value: 0 },
+  { attribute: "Umami", value: 0 },
+  { attribute: "Saltiness", value: 0 },
+];
+
+/**
+ * Create a flavour with substances by substance_id (not FEMA number)
+ * Used by the manual formulation import flow
+ */
+export async function createFlavourWithSubstancesById(data: {
+  name: string;
+  description?: string;
+  substances: Array<{
+    substance_id: number;
+    concentration: number;
+    order_index: number;
+    supplier?: string | null;
+    dilution?: string | null;
+    price_per_kg?: number | null;
+  }>;
+}): Promise<{ flavour_id: number; name: string }> {
+  const userId = await getUserId();
+
+  if (!data.name || data.name.trim().length < 1) {
+    throw new Error("Flavour name is required");
+  }
+
+  if (!data.substances || data.substances.length === 0) {
+    throw new Error("At least one substance is required");
+  }
+
+  // Create the flavour
+  const flavourResult = await sql`
+    INSERT INTO flavour (
+      name,
+      description,
+      is_public,
+      status,
+      base_unit,
+      user_id,
+      flavor_profile
+    )
+    VALUES (
+      ${data.name.trim()},
+      ${data.description || null},
+      false,
+      'draft',
+      '%(v/v)',
+      ${userId},
+      ${JSON.stringify(DEFAULT_FLAVOR_PROFILE)}::jsonb
+    )
+    RETURNING flavour_id, name
+  `;
+
+  const newFlavour = flavourResult[0];
+  const flavourId = Number(newFlavour.flavour_id);
+
+  // Add all substances by their substance_id
+  for (const sub of data.substances) {
+    // Verify substance exists
+    const substanceCheck = await sql`
+      SELECT substance_id FROM substance WHERE substance_id = ${sub.substance_id}
+    `;
+
+    if (substanceCheck.length === 0) {
+      console.warn(`Substance ${sub.substance_id} not found, skipping`);
+      continue;
+    }
+
+    await sql`
+      INSERT INTO substance_flavour (
+        substance_id,
+        flavour_id,
+        concentration,
+        unit,
+        order_index,
+        supplier,
+        dilution,
+        price_per_kg
+      )
+      VALUES (
+        ${sub.substance_id},
+        ${flavourId},
+        ${sub.concentration},
+        '%(v/v)',
+        ${sub.order_index},
+        ${sub.supplier ?? null},
+        ${sub.dilution ?? null},
+        ${sub.price_per_kg ?? null}
+      )
+    `;
+  }
+
+  return {
+    flavour_id: flavourId,
+    name: String(newFlavour.name),
+  };
+}
+
+// ===========================================
 // PREVIEW HELPER (dry run)
 // ===========================================
 
@@ -337,8 +603,7 @@ export async function previewFormulationImport(
   ingredient_count: number;
   substance_matches: SubstanceMatchResult[];
 }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const fuzzyThreshold = options.fuzzy_threshold ?? 0.4;
   const substanceMatches: SubstanceMatchResult[] = [];

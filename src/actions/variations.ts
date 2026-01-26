@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 
 // Types for variation system
@@ -59,8 +59,7 @@ export async function createVariationGroup(data: {
   name: string;
   description?: string;
 }): Promise<VariationGroup> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { name, description } = data;
 
@@ -88,8 +87,7 @@ export async function createVariation(
   sourceFlavourId: number,
   label: string
 ): Promise<{ flavour: FlavourVariation; group: VariationGroup }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get the source flavour and check access
   const sourceResult = await sql`
@@ -213,8 +211,7 @@ export async function createVariation(
 export async function getVariationsForGroup(
   groupId: number
 ): Promise<ComparisonData> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get group and check access
   const groupResult = await sql`
@@ -316,8 +313,7 @@ export async function getVariationsForGroup(
 export async function getVariationsForFlavour(
   flavourId: number
 ): Promise<ComparisonData | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get flavour and its group
   const flavourResult = await sql`
@@ -351,8 +347,7 @@ export async function getVariationsForFlavour(
 export async function setMainVariation(
   flavourId: number
 ): Promise<FlavourVariation> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get the flavour and its group
   const flavourResult = await sql`
@@ -411,8 +406,7 @@ export async function updateVariationConcentration(
   substanceId: number,
   concentration: number
 ): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check access
   const accessCheck = await sql`
@@ -451,8 +445,7 @@ export async function bulkUpdateVariations(
     concentration: number;
   }>
 ): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   if (updates.length === 0) return;
 
@@ -502,8 +495,7 @@ export async function addSubstanceToVariation(
   concentration: number,
   unit: string
 ): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check access
   const accessCheck = await sql`
@@ -546,8 +538,7 @@ export async function removeSubstanceFromVariation(
   flavourId: number,
   substanceId: number
 ): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check access
   const accessCheck = await sql`
@@ -578,8 +569,7 @@ export async function removeSubstanceFromVariation(
  * Delete a variation (but not the main variation)
  */
 export async function deleteVariation(flavourId: number): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check flavour exists, is owned by user, and is not the main variation
   const flavourResult = await sql`
@@ -613,8 +603,7 @@ export async function updateVariationLabel(
   flavourId: number,
   label: string
 ): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const accessCheck = await sql`
     SELECT * FROM flavour
@@ -644,8 +633,7 @@ export async function updateVariationDetails(
     description?: string | null;
   }
 ): Promise<FlavourVariation> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const accessCheck = await sql`
     SELECT * FROM flavour
@@ -693,8 +681,7 @@ export async function updateVariationDetails(
 export async function syncVariationDescriptions(
   sourceFlavourId: number
 ): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get source flavour and its group
   const sourceResult = await sql`

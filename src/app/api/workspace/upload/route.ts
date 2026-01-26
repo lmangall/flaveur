@@ -1,6 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 import { MAX_FILE_SIZE_BYTES } from "@/constants/workspace";
 
@@ -13,10 +13,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       request,
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         // Authenticate user
-        const { userId } = await auth();
-        if (!userId) {
-          throw new Error("Unauthorized");
-        }
+        const userId = await getUserId();
 
         // Parse workspace ID from client payload
         const workspaceId = clientPayload

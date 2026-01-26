@@ -29,7 +29,7 @@ export const workspace = pgTable(
   (table) => [
     foreignKey({
       columns: [table.created_by],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "workspace_created_by_fkey",
     }).onDelete("cascade"),
   ]
@@ -56,7 +56,7 @@ export const workspace_member = pgTable(
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "workspace_member_user_id_fkey",
     }).onDelete("cascade"),
     unique("workspace_member_workspace_id_user_id_key").on(
@@ -98,7 +98,7 @@ export const workspace_invite = pgTable(
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.invited_by_user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "workspace_invite_invited_by_user_id_fkey",
     }).onDelete("cascade"),
     unique("workspace_invite_workspace_id_invited_email_key").on(
@@ -145,7 +145,7 @@ export const workspace_document = pgTable(
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.created_by],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "workspace_document_created_by_fkey",
     }).onDelete("set null"),
     check(
@@ -180,7 +180,7 @@ export const workspace_flavour = pgTable(
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.added_by],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "workspace_flavour_added_by_fkey",
     }).onDelete("set null"),
     primaryKey({

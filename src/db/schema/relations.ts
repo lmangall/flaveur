@@ -35,7 +35,7 @@ export const flavourRelations = relations(flavour, ({ one, many }) => ({
   }),
   user: one(users, {
     fields: [flavour.user_id],
-    references: [users.user_id],
+    references: [users.id],
   }),
   variation_group: one(variation_group, {
     fields: [flavour.variation_group_id],
@@ -58,7 +58,7 @@ export const variation_groupRelations = relations(
   ({ one, many }) => ({
     user: one(users, {
       fields: [variation_group.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
     flavours: many(flavour),
   })
@@ -110,7 +110,7 @@ export const job_offer_interactionsRelations = relations(
     }),
     user: one(users, {
       fields: [job_offer_interactions.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
   })
 );
@@ -122,7 +122,7 @@ export const job_offersRelations = relations(job_offers, ({ many }) => ({
 export const workspaceRelations = relations(workspace, ({ one, many }) => ({
   user: one(users, {
     fields: [workspace.created_by],
-    references: [users.user_id],
+    references: [users.id],
   }),
   workspace_members: many(workspace_member),
   workspace_invites: many(workspace_invite),
@@ -139,7 +139,7 @@ export const workspace_memberRelations = relations(
     }),
     user: one(users, {
       fields: [workspace_member.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
   })
 );
@@ -153,7 +153,7 @@ export const workspace_inviteRelations = relations(
     }),
     user: one(users, {
       fields: [workspace_invite.invited_by_user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
   })
 );
@@ -165,12 +165,12 @@ export const flavour_sharesRelations = relations(flavour_shares, ({ one }) => ({
   }),
   user_shared_with_user_id: one(users, {
     fields: [flavour_shares.shared_with_user_id],
-    references: [users.user_id],
+    references: [users.id],
     relationName: "flavour_shares_shared_with_user_id_users_user_id",
   }),
   user_shared_by_user_id: one(users, {
     fields: [flavour_shares.shared_by_user_id],
-    references: [users.user_id],
+    references: [users.id],
     relationName: "flavour_shares_shared_by_user_id_users_user_id",
   }),
 }));
@@ -184,7 +184,7 @@ export const flavour_invitesRelations = relations(
     }),
     user: one(users, {
       fields: [flavour_invites.invited_by_user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
   })
 );
@@ -198,7 +198,7 @@ export const workspace_documentRelations = relations(
     }),
     user: one(users, {
       fields: [workspace_document.created_by],
-      references: [users.user_id],
+      references: [users.id],
     }),
   })
 );
@@ -208,7 +208,7 @@ export const user_learning_queueRelations = relations(
   ({ one }) => ({
     user: one(users, {
       fields: [user_learning_queue.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
     substance: one(substance, {
       fields: [user_learning_queue.substance_id],
@@ -232,7 +232,7 @@ export const substance_learning_progressRelations = relations(
   ({ one }) => ({
     user: one(users, {
       fields: [substance_learning_progress.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
     substance: one(substance, {
       fields: [substance_learning_progress.substance_id],
@@ -246,7 +246,7 @@ export const learning_streakRelations = relations(
   ({ one }) => ({
     user: one(users, {
       fields: [learning_streak.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
   })
 );
@@ -256,7 +256,7 @@ export const learning_reviewRelations = relations(
   ({ one }) => ({
     user: one(users, {
       fields: [learning_review.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
     substance: one(substance, {
       fields: [learning_review.substance_id],
@@ -270,7 +270,7 @@ export const learning_quiz_attemptRelations = relations(
   ({ one }) => ({
     user: one(users, {
       fields: [learning_quiz_attempt.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
     substance: one(substance, {
       fields: [learning_quiz_attempt.substance_id],
@@ -284,7 +284,7 @@ export const learning_sessionRelations = relations(
   ({ one, many }) => ({
     user: one(users, {
       fields: [learning_session.user_id],
-      references: [users.user_id],
+      references: [users.id],
     }),
     learning_session_substances: many(learning_session_substance),
   })
@@ -293,7 +293,7 @@ export const learning_sessionRelations = relations(
 export const user_badgeRelations = relations(user_badge, ({ one }) => ({
   user: one(users, {
     fields: [user_badge.user_id],
-    references: [users.user_id],
+    references: [users.id],
   }),
 }));
 
@@ -331,7 +331,7 @@ export const workspace_flavourRelations = relations(
     }),
     user: one(users, {
       fields: [workspace_flavour.added_by],
-      references: [users.user_id],
+      references: [users.id],
     }),
   })
 );

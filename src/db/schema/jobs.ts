@@ -81,7 +81,7 @@ export const job_offer_interactions = pgTable(
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "job_offer_interactions_user_id_fkey",
     }).onDelete("cascade"),
     check(

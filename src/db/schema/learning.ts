@@ -36,7 +36,7 @@ export const user_learning_queue = pgTable(
       .using("btree", table.user_id.asc().nullsLast().op("text_ops")),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "user_learning_queue_user_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
@@ -82,7 +82,7 @@ export const substance_learning_progress = pgTable(
       .using("btree", table.user_id.asc().nullsLast().op("text_ops")),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "substance_learning_progress_user_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
@@ -114,7 +114,7 @@ export const learning_streak = pgTable(
   (table) => [
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "learning_streak_user_id_fkey",
     }).onDelete("cascade"),
     unique("learning_streak_user_id_key").on(table.user_id),
@@ -146,7 +146,7 @@ export const learning_review = pgTable(
       .using("btree", table.user_id.asc().nullsLast().op("text_ops")),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "learning_review_user_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
@@ -181,7 +181,7 @@ export const learning_quiz_attempt = pgTable(
       .using("btree", table.user_id.asc().nullsLast().op("text_ops")),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "learning_quiz_attempt_user_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
@@ -215,7 +215,7 @@ export const learning_session = pgTable(
       .using("btree", table.user_id.asc().nullsLast().op("text_ops")),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "learning_session_user_id_fkey",
     }).onDelete("cascade"),
   ]

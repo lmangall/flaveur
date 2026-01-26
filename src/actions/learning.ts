@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { REVIEW_INTERVALS, BADGE_DEFINITIONS, type BadgeKey } from "@/constants";
@@ -18,8 +18,7 @@ import type {
 // ─────────────────────────────────────────────────────────────
 
 export async function getMyLearningQueue(): Promise<LearningQueueItem[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT
@@ -66,8 +65,7 @@ export async function addToLearningQueue(
   priority: number = 0,
   targetDate?: string
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check substance exists
   const substanceCheck = await sql`
@@ -96,8 +94,7 @@ export async function addToLearningQueue(
 }
 
 export async function removeFromQueue(substanceId: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   await sql`
     DELETE FROM user_learning_queue
@@ -109,8 +106,7 @@ export async function removeFromQueue(substanceId: number) {
 }
 
 export async function reorderQueue(orderedIds: number[]) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Update priorities based on array order
   for (let i = 0; i < orderedIds.length; i++) {
@@ -130,8 +126,7 @@ export async function reorderQueue(orderedIds: number[]) {
 // ─────────────────────────────────────────────────────────────
 
 export async function getMyProgress(substanceId: number): Promise<SubstanceLearningProgress | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT p.*,
@@ -174,8 +169,7 @@ export async function getMyProgress(substanceId: number): Promise<SubstanceLearn
 }
 
 export async function getAllMyProgress(): Promise<SubstanceLearningProgress[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT p.*, s.common_name, s.fema_number, s.cas_id, s.flavor_profile
@@ -217,8 +211,7 @@ export async function recordSensoryExperience(
   substanceId: number,
   type: "smell" | "taste"
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Ensure progress record exists
   await sql`
@@ -260,8 +253,7 @@ export async function recordSensoryExperience(
 }
 
 export async function updateProgressStatus(substanceId: number, newStatus: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Validate: cannot advance to confident/mastered without sensory confirmation
   if (newStatus === "confident" || newStatus === "mastered") {
@@ -312,8 +304,7 @@ export async function updateProgressNotes(
     concentration_notes?: string;
   }
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Build dynamic update
   const updates: string[] = ["updated_at = NOW()"];
@@ -357,8 +348,7 @@ export async function updateProgressNotes(
 // ─────────────────────────────────────────────────────────────
 
 export async function getDueReviews(): Promise<LearningReview[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT r.*, s.common_name, s.fema_number, s.flavor_profile
@@ -396,8 +386,7 @@ export async function completeReview(
   confidenceAfter: number,
   notes?: string
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   await sql`
     UPDATE learning_review
@@ -429,8 +418,7 @@ export async function completeReview(
 // ─────────────────────────────────────────────────────────────
 
 export async function getRandomQuizSubstance() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get a random substance from user's learning queue that they've started
   const result = await sql`
@@ -452,8 +440,7 @@ export async function submitQuizAttempt(
   observations: string | null,
   result: string
 ) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   await sql`
     INSERT INTO learning_quiz_attempt (user_id, substance_id, guessed_name, observations, result)
@@ -478,8 +465,7 @@ export async function createStudySession(data: {
   duration_minutes?: number;
   substance_ids: number[];
 }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const session = await sql`
     INSERT INTO learning_session (user_id, name, description, scheduled_for, duration_minutes)
@@ -503,8 +489,7 @@ export async function createStudySession(data: {
 }
 
 export async function getMySessions(): Promise<LearningSession[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT ls.*,
@@ -532,8 +517,7 @@ export async function getMySessions(): Promise<LearningSession[]> {
 }
 
 export async function getSessionDetails(sessionId: number) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const session = await sql`
     SELECT * FROM learning_session
@@ -568,8 +552,7 @@ export async function getSessionDetails(sessionId: number) {
 }
 
 export async function completeSession(sessionId: number, reflectionNotes?: string) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   await sql`
     UPDATE learning_session
@@ -588,8 +571,7 @@ export async function completeSession(sessionId: number, reflectionNotes?: strin
 // ─────────────────────────────────────────────────────────────
 
 export async function getLearningDashboardStats(): Promise<LearningDashboardStats> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const stats = await sql`
     SELECT
@@ -623,8 +605,7 @@ export async function getLearningDashboardStats(): Promise<LearningDashboardStat
 // ─────────────────────────────────────────────────────────────
 
 export async function getMyBadges(): Promise<(UserBadge & { definition: typeof BADGE_DEFINITIONS[BadgeKey] })[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await sql`
     SELECT * FROM user_badge WHERE user_id = ${userId} ORDER BY earned_at DESC
@@ -739,8 +720,7 @@ async function updateStreak(userId: string) {
 // ─────────────────────────────────────────────────────────────
 
 export async function searchSubstancesForQueue(query: string, limit: number = 20) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   if (!query || query.trim().length < 2) {
     return [];

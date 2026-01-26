@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { category, flavour } from "@/db/schema";
 import { eq, isNull, sql, count } from "drizzle-orm";
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { createCategorySchema, updateCategorySchema } from "@/lib/validations/category";
 
 export interface CategoryWithDetails {
@@ -90,8 +90,7 @@ export async function createCategory(data: {
   description?: string;
   parent_category_id?: number | null;
 }): Promise<CategoryWithDetails> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const validation = createCategorySchema.safeParse(data);
   if (!validation.success) {
@@ -140,8 +139,7 @@ export async function updateCategory(
     parent_category_id?: number | null;
   }
 ): Promise<CategoryWithDetails> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const validation = updateCategorySchema.safeParse(data);
   if (!validation.success) {
@@ -223,8 +221,7 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(categoryId: number): Promise<{ success: boolean; message: string }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const existingCategory = await db
     .select({ category_id: category.category_id, name: category.name })

@@ -3,14 +3,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { UserButton, useUser } from "@clerk/nextjs";
-import { MenuIcon, Settings, Shield } from "lucide-react";
+import { useSession, signOut } from "@/lib/auth-client";
+import { MenuIcon, Settings, Shield, LogOut, User } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from "@/app/[locale]/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/app/[locale]/components/ui/dropdown-menu";
 import { useRouter, usePathname } from "next/navigation";
 
 // Admin emails - must match the server-side list in src/lib/admin.ts
@@ -34,14 +41,23 @@ export default function Navbar() {
   const locale = useLocale();
   const t = useTranslations("Navbar");
   const tAdmin = useTranslations("Admin");
-  const { isSignedIn, isLoaded, user } = useUser();
+  const { data: session, isPending } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
+  const isSignedIn = !!session?.user;
+  const isLoaded = !isPending;
+  const user = session?.user;
+
   // Check if user is admin
-  const userEmail = user?.primaryEmailAddress?.emailAddress;
+  const userEmail = user?.email;
   const isAdmin = userEmail ? ADMIN_EMAILS.includes(userEmail) : false;
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push(`/${locale}`);
+  };
 
   // Check if a route is active (handles locale prefix)
   const isActiveRoute = (href: string) => {
@@ -114,13 +130,41 @@ export default function Navbar() {
                     </Link>
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" asChild>
-                  <Link href={`/${locale}/settings`}>
-                    <Settings className="h-5 w-5" />
-                    <span className="sr-only">Settings</span>
-                  </Link>
-                </Button>
-                <UserButton afterSignOutUrl={`/${locale}`} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      {user?.image ? (
+                        <Image
+                          src={user.image}
+                          alt={user.name || "User"}
+                          width={32}
+                          height={32}
+                          className="rounded-full"
+                        />
+                      ) : (
+                        <User className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <div className="px-2 py-1.5 text-sm">
+                      <p className="font-medium">{user?.name}</p>
+                      <p className="text-muted-foreground text-xs">{user?.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={`/${locale}/settings`}>
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="flex items-center space-x-2">

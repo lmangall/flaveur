@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { flavour, flavour_shares, flavour_invites, users, substance_flavour } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -44,8 +44,7 @@ export async function shareFlavour(data: {
   email: string;
   locale?: string;
 }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { flavourId, email, locale = "en" } = data;
   const normalizedEmail = email.toLowerCase().trim();
@@ -82,7 +81,7 @@ export async function shareFlavour(data: {
       .where(
         and(
           eq(flavour_shares.flavour_id, flavourId),
-          eq(flavour_shares.shared_with_user_id, targetUser.user_id)
+          eq(flavour_shares.shared_with_user_id, targetUser.id)
         )
       );
 
@@ -94,7 +93,7 @@ export async function shareFlavour(data: {
       .insert(flavour_shares)
       .values({
         flavour_id: flavourId,
-        shared_with_user_id: targetUser.user_id,
+        shared_with_user_id: targetUser.id,
         shared_by_user_id: userId,
       })
       .returning();
@@ -127,9 +126,9 @@ export async function shareFlavour(data: {
       type: "share" as const,
       share: result[0],
       user: {
-        user_id: targetUser.user_id,
+        user_id: targetUser.id,
         email: targetUser.email,
-        username: targetUser.username,
+        username: targetUser.name,
       },
     };
   } else {
@@ -204,8 +203,7 @@ export async function shareFlavour(data: {
 }
 
 export async function getFlavourShares(flavourId: number): Promise<(ShareInfo | InviteInfo)[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const flavourCheck = await db
     .select({ flavour_id: flavour.flavour_id })
@@ -260,8 +258,7 @@ export async function revokeShare(data: {
   shareId?: number;
   inviteId?: number;
 }) {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { flavourId, shareId, inviteId } = data;
 
@@ -300,8 +297,7 @@ export async function revokeShare(data: {
 }
 
 export async function getFlavoursSharedWithMe(): Promise<SharedFlavour[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const result = await db.execute(sql`
     SELECT
@@ -344,13 +340,12 @@ export async function getFlavoursSharedWithMe(): Promise<SharedFlavour[]> {
 }
 
 export async function acceptInvite(token: string): Promise<{ flavourId: number }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized - please sign in first");
+  const userId = await getUserId();
 
   const userResult = await db
     .select({ email: users.email })
     .from(users)
-    .where(eq(users.user_id, userId));
+    .where(eq(users.id, userId));
 
   if (userResult.length === 0) {
     throw new Error("User not found");

@@ -38,7 +38,7 @@ export const variation_group = pgTable(
     ),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "variation_group_user_id_fkey",
     }).onDelete("cascade"),
   ]
@@ -92,7 +92,7 @@ export const flavour = pgTable(
     }).onDelete("set null"),
     foreignKey({
       columns: [table.user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "flavour_user_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
@@ -199,12 +199,12 @@ export const flavour_shares = pgTable(
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.shared_with_user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "flavour_shares_shared_with_user_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.shared_by_user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "flavour_shares_shared_by_user_id_fkey",
     }).onDelete("cascade"),
     unique("flavour_shares_flavour_id_shared_with_user_id_key").on(
@@ -242,7 +242,7 @@ export const flavour_invites = pgTable(
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.invited_by_user_id],
-      foreignColumns: [users.user_id],
+      foreignColumns: [users.id],
       name: "flavour_invites_invited_by_user_id_fkey",
     }).onDelete("cascade"),
     unique("flavour_invites_flavour_id_invited_email_key").on(

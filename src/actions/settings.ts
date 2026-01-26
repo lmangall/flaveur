@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { newsletter_subscribers } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -55,8 +55,8 @@ export async function getNewsletterStatus(email: string): Promise<NewsletterStat
 }
 
 export async function subscribeUserToNewsletter(email: string, locale: string) {
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await getSession();
+  if (!session?.user?.id) {
     return { success: false, error: "unauthorized" };
   }
 
@@ -64,8 +64,8 @@ export async function subscribeUserToNewsletter(email: string, locale: string) {
 }
 
 export async function unsubscribeUserFromNewsletter(confirmationToken: string) {
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await getSession();
+  if (!session?.user?.id) {
     return { success: false, error: "unauthorized" };
   }
 

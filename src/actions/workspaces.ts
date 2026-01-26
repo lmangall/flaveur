@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getUserId, getSession } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 import type {
   Workspace,
@@ -22,8 +22,7 @@ export async function createWorkspace(data: {
   name: string;
   description?: string;
 }): Promise<Workspace> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { name, description } = data;
 
@@ -62,8 +61,7 @@ export async function createWorkspace(data: {
 export async function getMyWorkspaces(): Promise<
   (Workspace & { role: WorkspaceRoleValue; member_count: number })[]
 > {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const workspaces = await sql`
     SELECT
@@ -103,8 +101,7 @@ export async function getWorkspaceById(workspaceId: number): Promise<
     })
   | null
 > {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get workspace and verify membership
   const workspaceResult = await sql`
@@ -168,8 +165,7 @@ export async function updateWorkspace(data: {
   name?: string;
   description?: string;
 }): Promise<Workspace> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { workspaceId, name, description } = data;
 
@@ -212,8 +208,7 @@ export async function updateWorkspace(data: {
  * Delete a workspace. Owner only.
  */
 export async function deleteWorkspace(workspaceId: number): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Verify owner role
   const roleCheck = await sql`
@@ -245,8 +240,7 @@ export async function addWorkspaceMember(data: {
   email: string;
   role: WorkspaceRoleValue;
 }): Promise<{ type: "member" | "invite"; email: string }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { workspaceId, email, role } = data;
   const normalizedEmail = email.toLowerCase().trim();
@@ -341,8 +335,7 @@ export async function removeWorkspaceMember(data: {
   workspaceId: number;
   targetUserId: string;
 }): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { workspaceId, targetUserId } = data;
 
@@ -413,8 +406,7 @@ export async function updateMemberRole(data: {
   targetUserId: string;
   newRole: WorkspaceRoleValue;
 }): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { workspaceId, targetUserId, newRole } = data;
 
@@ -456,8 +448,7 @@ export async function updateMemberRole(data: {
 export async function acceptWorkspaceInvite(
   token: string
 ): Promise<{ workspaceId: number }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized - please sign in first");
+  const userId = await getUserId();
 
   // Get user's email
   const userResult = await sql`
@@ -530,8 +521,7 @@ export async function acceptWorkspaceInvite(
 export async function getWorkspaceInvites(
   workspaceId: number
 ): Promise<WorkspaceInvite[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Verify caller has permission
   const callerRole = await sql`
@@ -568,8 +558,7 @@ export async function getWorkspaceInvites(
  * Cancel a pending invite. Owner/Editor only.
  */
 export async function cancelWorkspaceInvite(inviteId: number): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Get invite and workspace
   const inviteResult = await sql`
@@ -664,8 +653,7 @@ export async function convertPendingWorkspaceInvites(
 export async function getWorkspaceFlavours(
   workspaceId: number
 ): Promise<(WorkspaceFlavour & { flavour: Flavour })[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Verify membership
   const membership = await sql`
@@ -729,8 +717,7 @@ export async function linkFlavourToWorkspace(data: {
   flavourId: number;
   workspaceId: number;
 }): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { flavourId, workspaceId } = data;
 
@@ -781,8 +768,7 @@ export async function unlinkFlavourFromWorkspace(data: {
   flavourId: number;
   workspaceId: number;
 }): Promise<void> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   const { flavourId, workspaceId } = data;
 
@@ -816,8 +802,9 @@ export async function unlinkFlavourFromWorkspace(data: {
 export async function getUserWorkspaceRole(
   workspaceId: number
 ): Promise<WorkspaceRoleValue | null> {
-  const { userId } = await auth();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session?.user?.id) return null;
+  const userId = session.user.id;
 
   const result = await sql`
     SELECT role FROM workspace_member

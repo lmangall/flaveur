@@ -11,9 +11,9 @@ export async function createUser(data: { email: string; username?: string }) {
   const result = await db
     .insert(users)
     .values({
-      user_id: crypto.randomUUID(),
+      id: crypto.randomUUID(),
       email: data.email,
-      username: data.username ?? data.email.split("@")[0],
+      name: data.username ?? data.email.split("@")[0],
     })
     .returning();
   return result[0];

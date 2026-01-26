@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { job_offers, job_offer_interactions } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -13,7 +13,8 @@ import {
 } from "@/constants";
 
 export async function getJobs() {
-  const { userId } = await auth();
+  const session = await getSession();
+  const userId = session?.user?.id;
 
   if (userId) {
     const result = await db.execute(sql`
@@ -117,7 +118,8 @@ export async function addJobInteraction(
   action: JobInteractionValue,
   referrer?: string
 ) {
-  const { userId } = await auth();
+  const session = await getSession();
+  const userId = session?.user?.id;
   if (!userId) throw new Error("Unauthorized");
 
   if (!isValidJobInteraction(action)) {

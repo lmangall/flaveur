@@ -15,6 +15,13 @@
       "when": 1769456863747,
       "tag": "0001_melodic_lady_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769469017975,
+      "tag": "0002_misty_slipstream",
+      "breakpoints": true
     }
   ]
 }

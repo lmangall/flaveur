@@ -6,17 +6,24 @@ import {
   serial,
   text,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
+// User table - compatible with Better Auth via schema mapping in auth.ts
+// Better Auth fields are added as new columns
+// Note: 'id' is the JS field name, 'user_id' is the DB column name for Better Auth compatibility
 export const users = pgTable(
   "users",
   {
-    user_id: varchar({ length: 255 }).primaryKey().notNull(),
+    id: varchar("user_id", { length: 255 }).primaryKey().notNull(),
     email: varchar({ length: 255 }),
-    username: varchar({ length: 255 }).notNull(),
-    created_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
-    updated_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
+    name: varchar("username", { length: 255 }).notNull(),
+    // Better Auth required fields
+    emailVerified: boolean("email_verified").default(false),
+    image: text(),
+    createdAt: timestamp("created_at", { mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: timestamp("updated_at", { mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [unique("users_email_key").on(table.email)]
 );

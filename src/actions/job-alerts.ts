@@ -1,6 +1,6 @@
 "use server";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { getUserId, getUser, getSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { job_alert_preferences } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -22,10 +22,7 @@ export interface JobAlertPreferences {
 }
 
 export async function getJobAlertPreferences(): Promise<JobAlertPreferences | null> {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+  const userId = await getUserId();
 
   const result = await db
     .select()
@@ -54,14 +51,14 @@ export async function getJobAlertPreferences(): Promise<JobAlertPreferences | nu
 }
 
 export async function saveJobAlertPreferences(input: JobAlertPreferencesInput) {
-  const { userId } = await auth();
-  const user = await currentUser();
+  const session = await getSession();
 
-  if (!userId || !user) {
+  if (!session?.user) {
     return { success: false, error: "unauthorized" };
   }
 
-  const email = user.primaryEmailAddress?.emailAddress;
+  const userId = session.user.id;
+  const email = session.user.email;
   if (!email) {
     return { success: false, error: "no_email" };
   }
@@ -98,10 +95,11 @@ export async function saveJobAlertPreferences(input: JobAlertPreferencesInput) {
 }
 
 export async function toggleJobAlerts(isActive: boolean) {
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await getSession();
+  if (!session?.user?.id) {
     return { success: false, error: "unauthorized" };
   }
+  const userId = session.user.id;
 
   const result = await db
     .update(job_alert_preferences)
@@ -117,10 +115,11 @@ export async function toggleJobAlerts(isActive: boolean) {
 }
 
 export async function deleteJobAlertPreferences() {
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await getSession();
+  if (!session?.user?.id) {
     return { success: false, error: "unauthorized" };
   }
+  const userId = session.user.id;
 
   await db
     .delete(job_alert_preferences)

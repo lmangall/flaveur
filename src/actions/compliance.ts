@@ -4,7 +4,7 @@ import {
   checkEUCompliance,
   ComplianceResult,
 } from "@/lib/eu-compliance/checker";
-import { auth } from "@clerk/nextjs/server";
+import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
 
 /**
@@ -14,8 +14,7 @@ import { sql } from "@/lib/db";
 export async function checkFlavourEUCompliance(
   flavourId: number
 ): Promise<ComplianceResult> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const userId = await getUserId();
 
   // Check user has access to this flavour
   const accessCheck = await sql`
