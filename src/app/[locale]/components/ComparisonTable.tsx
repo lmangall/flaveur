@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Star, Loader2, Save, Plus, Minus } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Slider } from "@/app/[locale]/components/ui/slider";
@@ -21,6 +21,7 @@ import {
 } from "@/actions/variations";
 import type { VariationWithSubstances, ComparisonData } from "@/actions/variations";
 import { ColumnToggle } from "./ColumnToggle";
+import { useColumnVisibility } from "@/lib/hooks/useColumnVisibility";
 
 interface ComparisonTableProps {
   data: ComparisonData;
@@ -34,9 +35,13 @@ type ConcentrationUpdate = {
 };
 
 export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
-  const [visibleVariations, setVisibleVariations] = useState<Set<number>>(
-    new Set(data.variations.map((v) => v.flavour_id))
-  );
+  // Use persisted column visibility preferences
+  const { visibleIds: visibleVariations, toggleVisibility: toggleVariation } =
+    useColumnVisibility(
+      data.group.group_id,
+      data.variations.map((v) => v.flavour_id)
+    );
+
   const [pendingUpdates, setPendingUpdates] = useState<Map<string, ConcentrationUpdate>>(
     new Map()
   );
@@ -121,21 +126,6 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
     } finally {
       setIsSettingMain(null);
     }
-  };
-
-  // Toggle variation visibility
-  const toggleVariation = (flavourId: number) => {
-    setVisibleVariations((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(flavourId)) {
-        if (newSet.size > 1) {
-          newSet.delete(flavourId);
-        }
-      } else {
-        newSet.add(flavourId);
-      }
-      return newSet;
-    });
   };
 
   // Get visible variations
