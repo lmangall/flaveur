@@ -12,6 +12,8 @@ import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { FlaskConical, GitBranch, ArrowRight, Beaker } from "lucide-react";
 import { DEMO_USER } from "@/constants/samples";
+import { getTranslations } from "next-intl/server";
+import { SamplesHowItWorks } from "./SamplesHowItWorks";
 
 function SampleFlavorCard({ flavor }: { flavor: SampleFlavor }) {
   const hasVariations = flavor.variation_count > 1;
@@ -65,6 +67,7 @@ function SampleFlavorCard({ flavor }: { flavor: SampleFlavor }) {
 
 export default async function SamplesPage() {
   const samples = await getSampleFlavors();
+  const t = await getTranslations("Samples");
 
   const samplesWithVariations = samples.filter((s) => s.variation_count > 1);
   const samplesWithoutVariations = samples.filter((s) => s.variation_count <= 1);
@@ -72,20 +75,18 @@ export default async function SamplesPage() {
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Sample Flavors</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground max-w-2xl">
-          Explore example formulas created by {DEMO_USER.username}. These samples
-          demonstrate features like formula variations, allowing you to compare
-          different versions side-by-side.
+          {t("description")}
         </p>
       </div>
 
       {samples.length === 0 ? (
         <Card className="p-12 text-center">
           <FlaskConical className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No samples available yet</h2>
+          <h2 className="text-xl font-semibold mb-2">{t("noSamples")}</h2>
           <p className="text-muted-foreground">
-            Sample flavors will appear here once they&apos;re added by the administrator.
+            {t("noSamplesDesc")}
           </p>
         </Card>
       ) : (
@@ -95,12 +96,10 @@ export default async function SamplesPage() {
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
                   <GitBranch className="h-5 w-5" />
-                  Formulas with Variations
+                  {t("formulasWithVariations")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  These samples have multiple variations you can compare. Try the
-                  &quot;Compare Variations&quot; feature to see how different concentrations
-                  affect the flavor profile.
+                  {t("formulasWithVariationsDesc")}
                 </p>
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -116,10 +115,10 @@ export default async function SamplesPage() {
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
                   <FlaskConical className="h-5 w-5" />
-                  Single Formulas
+                  {t("singleFormulas")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Basic formula examples without variations.
+                  {t("singleFormulasDesc")}
                 </p>
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -130,27 +129,7 @@ export default async function SamplesPage() {
             </section>
           )}
 
-          <section className="border rounded-lg p-6 bg-muted/30">
-            <h3 className="font-semibold mb-2">How to use the Variation System</h3>
-            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-              <li>
-                Open any formula and click the <strong>variation pills</strong> at the top
-                to switch between versions
-              </li>
-              <li>
-                Use <strong>Compare Variations</strong> to see all versions side-by-side
-                with adjustable sliders
-              </li>
-              <li>
-                The <strong>radar chart overlay</strong> shows how flavor profiles differ
-                across variations
-              </li>
-              <li>
-                Create your own variations by clicking <strong>&quot;+ Add Variation&quot;</strong> on
-                any formula you own
-              </li>
-            </ol>
-          </section>
+          <SamplesHowItWorks />
         </>
       )}
     </div>

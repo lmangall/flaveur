@@ -16,11 +16,12 @@ import {
   SelectValue,
 } from "@/app/[locale]/components/ui/select";
 import { Switch } from "@/app/[locale]/components/ui/switch";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, FileText, FlaskConical, Award } from "lucide-react";
 import { toast } from "sonner";
 import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 import { createFlavour } from "@/actions/flavours";
 import { getCategories, type CategoryWithDetails } from "@/actions/categories";
+import { HowItWorks } from "@/app/[locale]/components/HowItWorks";
 
 export default function NewFlavourPage() {
   const router = useRouter();
@@ -99,6 +100,35 @@ export default function NewFlavourPage() {
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">{t("newFlavor")}</h1>
       </div>
+
+      <HowItWorks
+        title={t("howItWorksTitle")}
+        steps={[
+          {
+            icon: FileText,
+            title: t("step1Title"),
+            description: t("step1Description"),
+          },
+          {
+            icon: Save,
+            title: t("step2Title"),
+            description: t("step2Description"),
+          },
+          {
+            icon: FlaskConical,
+            title: t("step3Title"),
+            description: t("step3Description"),
+          },
+        ]}
+        tip={{
+          icon: Award,
+          title: t("tipTitle"),
+          description: t("tipDescription"),
+        }}
+        faqLink={{
+          text: t("faqLinkText"),
+        }}
+      />
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-8">

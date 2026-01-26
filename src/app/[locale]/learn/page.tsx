@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
@@ -41,7 +41,7 @@ import {
 import type { LearningDashboardStats, LearningQueueItem, LearningReview } from "@/app/type";
 
 export default function LearnDashboardPage() {
-  const { isLoaded, isSignedIn } = useUser();
+  const { data: session, isPending } = useSession();
   const t = useTranslations("Learn");
   const locale = useLocale();
   const router = useRouter();
@@ -71,12 +71,12 @@ export default function LearnDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (!isPending && session) {
       fetchData();
     }
-  }, [isLoaded, isSignedIn, fetchData]);
+  }, [isPending, session, fetchData]);
 
-  if (!isLoaded || isLoading) {
+  if (isPending || isLoading) {
     return (
       <div className="container max-w-6xl mx-auto py-8 px-4">
         <Skeleton className="h-10 w-64 mb-2" />
@@ -94,7 +94,7 @@ export default function LearnDashboardPage() {
     );
   }
 
-  if (!isSignedIn) {
+  if (!session) {
     return (
       <div className="container max-w-2xl mx-auto py-8">
         <Card>
@@ -153,43 +153,37 @@ export default function LearnDashboardPage() {
         </CardHeader>
         {showHowItWorks && (
           <CardContent className="pt-0">
-            <div className="grid gap-6 md:grid-cols-3">
-              <div className="flex gap-3">
-                <div className="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Target className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-1">{t("step1Title") || "1. Build your queue"}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {t("step1Description") || "Browse substances and add the ones you want to learn to your queue. Start with common aroma chemicals."}
-                  </p>
-                </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <h4 className="font-medium mb-1 flex items-center gap-1.5">
+                  <Target className="h-4 w-4 text-primary shrink-0" />
+                  {t("step1Title") || "1. Build your queue"}
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {t("step1Description") || "Browse substances and add the ones you want to learn to your queue. Start with common aroma chemicals."}
+                </p>
               </div>
-              <div className="flex gap-3">
-                <div className="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Brain className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-1">{t("step2Title") || "2. Practice identification"}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {t("step2Description") || "Smell and taste each substance. Check off your sensory experiences and add personal notes to remember key characteristics."}
-                  </p>
-                </div>
+              <div>
+                <h4 className="font-medium mb-1 flex items-center gap-1.5">
+                  <Brain className="h-4 w-4 text-primary shrink-0" />
+                  {t("step2Title") || "2. Practice identification"}
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {t("step2Description") || "Smell and taste each substance. Check off your sensory experiences and add personal notes to remember key characteristics."}
+                </p>
               </div>
-              <div className="flex gap-3">
-                <div className="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Repeat className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-1">{t("step3Title") || "3. Review & master"}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {t("step3Description") || "Progress through levels: Learning → Confident → Mastered. Spaced repetition reviews help you retain what you've learned."}
-                  </p>
-                </div>
+              <div>
+                <h4 className="font-medium mb-1 flex items-center gap-1.5">
+                  <Repeat className="h-4 w-4 text-primary shrink-0" />
+                  {t("step3Title") || "3. Review & master"}
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {t("step3Description") || "Progress through levels: Learning → Confident → Mastered. Spaced repetition reviews help you retain what you've learned."}
+                </p>
               </div>
             </div>
-            <div className="mt-6 p-4 rounded-lg bg-muted/50 flex items-start gap-3">
-              <Award className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+            <div className="mt-4 p-3 rounded-lg bg-muted/50 flex items-start gap-2">
+              <Award className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">{t("tipTitle") || "Pro tip:"}</span>{" "}
                 {t("tipDescription") || "Keep a physical kit of aroma chemicals nearby. The best way to learn is by experiencing the real thing while studying the data."}

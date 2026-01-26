@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Dialog,
@@ -27,6 +28,7 @@ export function CreateVariationDialog({
   sourceFlavourId,
   onVariationCreated,
 }: CreateVariationDialogProps) {
+  const t = useTranslations("Variations");
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -68,19 +70,18 @@ export function CreateVariationDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Variation</DialogTitle>
+          <DialogTitle>{t("createTitle")}</DialogTitle>
           <DialogDescription>
-            Create a new variation of this formula. The new variation will be a
-            copy that you can modify independently.
+            {t("createDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="label">Variation Label</Label>
+            <Label htmlFor="label">{t("variationLabel")}</Label>
             <Input
               id="label"
-              placeholder='e.g., "A", "Light", "Natural", "v2"'
+              placeholder={t("variationLabelPlaceholder")}
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -90,7 +91,7 @@ export function CreateVariationDialog({
 
           {/* Quick select buttons */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Quick select</Label>
+            <Label className="text-xs text-muted-foreground">{t("quickSelect")}</Label>
             <div className="flex flex-wrap gap-2">
               {DEFAULT_VARIATION_LABELS.map((item) => (
                 <Button
@@ -114,16 +115,16 @@ export function CreateVariationDialog({
             onClick={() => setOpen(false)}
             disabled={isCreating}
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button onClick={handleCreate} disabled={isCreating || !label.trim()}>
             {isCreating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating...
+                {t("creating")}
               </>
             ) : (
-              "Create & Edit"
+              t("createAndEdit")
             )}
           </Button>
         </DialogFooter>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Slider } from "@/app/[locale]/components/ui/slider";
 import { Label } from "@/app/[locale]/components/ui/label";
@@ -96,6 +97,7 @@ type Prices = {
 const PURE_ALCOHOL_PERCENT = 96; // Fixed alcohol concentration at 96%
 
 const FlavoringCalculator = () => {
+  const t = useTranslations("Calculator");
   const [params, setParams] = useState<Params>({
     syrupBrix: 67,
     infusionBrix: 24,
@@ -469,36 +471,16 @@ const FlavoringCalculator = () => {
           </TabsContent>
 
           <TabsContent value="explanations" className="space-y-6 w-full">
-            <h4 className="text-lg font-medium">Explications</h4>
-            <p>
-              Ce calculateur vous aide à déterminer les masses de sirop,
-              d'infusion, d'alcool pur (96%) et d'eau nécessaires pour atteindre
-              vos objectifs de Brix et d'alcool. Les paramètres que vous entrez
-              influencent directement les résultats. Assurez-vous de fournir des
-              valeurs précises pour obtenir des résultats valides.
-            </p>
-            <p>
-              Les Brix mesurent la concentration de sucre dans une solution,
-              tandis que le pourcentage d'alcool indique la force de l'infusion.
-              L'ajout d'alcool pur à 96% permet d'ajuster précisément la teneur
-              en alcool sans modifier excessivement la concentration en sucre.
-            </p>
-            <p>Ce calculateur utilise des unités de masse (g et kg).</p>
-            <p>
-              Pour utiliser l'alcool pur dans votre formulation, ajustez le
-              curseur "Masse d'Alcool Pur" dans l'onglet "Ratio Cible". Le
-              calculateur ajustera automatiquement les autres ingrédients pour
-              maintenir vos cibles.
-            </p>
+            <h4 className="text-lg font-medium">{t("explanationsTitle")}</h4>
+            <p>{t("explanationsIntro")}</p>
+            <p>{t("explanationsBrix")}</p>
+            <p>{t("explanationsUnits")}</p>
+            <p>{t("explanationsAlcohol")}</p>
             {advancedOptions && (
               <div className="mt-4 p-4 bg-muted rounded-md border">
-                <h5 className="text-md font-medium mb-2">Options Avancées</h5>
+                <h5 className="text-md font-medium mb-2">{t("advancedOptionsTitle")}</h5>
                 <p className="text-muted-foreground">
-                  Les options avancées vous permettent de définir les prix par
-                  kilogramme de chaque ingrédient pour calculer le coût total de
-                  votre préparation. Vous pouvez modifier les prix en cliquant
-                  sur chaque badge à droite des ingrédients. Le coût total est
-                  automatiquement recalculé.
+                  {t("advancedOptionsDesc")}
                 </p>
               </div>
             )}

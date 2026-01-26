@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -16,14 +16,9 @@ import {
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Skeleton } from "@/app/[locale]/components/ui/skeleton";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/app/[locale]/components/ui/accordion";
-import { PlusCircle, Users, Crown, Pencil, Eye, FileText, Beaker, UserPlus, Shield } from "lucide-react";
+import { PlusCircle, Users, Crown, Pencil, Eye, UserPlus, FolderPlus, Award } from "lucide-react";
 import { getMyWorkspaces } from "@/actions/workspaces";
+import { HowItWorks } from "@/app/[locale]/components/HowItWorks";
 import type { Workspace } from "@/app/type";
 import type { WorkspaceRoleValue } from "@/constants";
 
@@ -115,7 +110,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceWithRole }) {
 }
 
 export default function WorkspacesPage() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const t = useTranslations("Workspaces");
   const [workspaces, setWorkspaces] = useState<WorkspaceWithRole[]>([]);
@@ -123,8 +118,8 @@ export default function WorkspacesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) {
+    if (isPending) return;
+    if (!session) {
       router.push("/");
       return;
     }
@@ -144,9 +139,9 @@ export default function WorkspacesPage() {
     }
 
     fetchWorkspaces();
-  }, [isLoaded, isSignedIn, router, t]);
+  }, [isPending, session, router, t]);
 
-  if (!isLoaded || !isSignedIn) return null;
+  if (isPending || !session) return null;
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 space-y-6">
@@ -158,42 +153,35 @@ export default function WorkspacesPage() {
         </Button>
       </div>
 
-      {/* Explanation accordion */}
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="what-are-workspaces" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline">
-            <span className="flex items-center gap-2 text-base font-medium">
-              <Users className="h-5 w-5 text-primary" />
-              {t("whatAreWorkspaces")}
-            </span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4 pt-2">
-              <p className="text-muted-foreground">
-                {t("workspacesDescription")}
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="flex items-start gap-2">
-                  <FileText className="h-4 w-4 mt-0.5 text-blue-500" />
-                  <span className="text-sm">{t("featureDocuments")}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Beaker className="h-4 w-4 mt-0.5 text-green-500" />
-                  <span className="text-sm">{t("featureFlavors")}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <UserPlus className="h-4 w-4 mt-0.5 text-purple-500" />
-                  <span className="text-sm">{t("featureMembers")}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Shield className="h-4 w-4 mt-0.5 text-amber-500" />
-                  <span className="text-sm">{t("featureRoles")}</span>
-                </div>
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      {/* How it works */}
+      <HowItWorks
+        title={t("howItWorksTitle")}
+        steps={[
+          {
+            icon: FolderPlus,
+            title: t("step1Title"),
+            description: t("step1Description"),
+          },
+          {
+            icon: UserPlus,
+            title: t("step2Title"),
+            description: t("step2Description"),
+          },
+          {
+            icon: Users,
+            title: t("step3Title"),
+            description: t("step3Description"),
+          },
+        ]}
+        tip={{
+          icon: Award,
+          title: t("tipTitle"),
+          description: t("tipDescription"),
+        }}
+        faqLink={{
+          text: t("faqLinkText"),
+        }}
+      />
 
       {error ? (
         <div className="p-4 border border-red-300 bg-red-50 rounded-lg text-red-800">
