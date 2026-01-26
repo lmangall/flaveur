@@ -23,6 +23,10 @@ export type FlavourWithAccess = {
   flavor_profile: Record<string, number> | null;
   created_at: string;
   updated_at: string;
+  // Variation fields
+  variation_group_id: number | null;
+  variation_label: string | null;
+  is_main_variation: boolean;
   // Access info
   access_source: FlavourAccessSource;
   shared_by_username?: string | null;
@@ -86,6 +90,11 @@ export async function getFlavours(): Promise<FlavourWithAccess[]> {
     flavor_profile: f.flavor_profile as Record<string, number> | null,
     created_at: String(f.created_at),
     updated_at: String(f.updated_at),
+    // Variation fields
+    variation_group_id: f.variation_group_id ? Number(f.variation_group_id) : null,
+    variation_label: f.variation_label ? String(f.variation_label) : null,
+    is_main_variation: Boolean(f.is_main_variation),
+    // Access info
     access_source: String(f.access_source) as FlavourAccessSource,
     shared_by_username: f.shared_by_username ? String(f.shared_by_username) : null,
     shared_by_email: f.shared_by_email ? String(f.shared_by_email) : null,
@@ -357,6 +366,52 @@ export async function removeSubstanceFromFlavour(
   `;
 
   return { success: true };
+}
+
+export async function updateSubstanceInFlavour(
+  flavourId: number,
+  substanceId: number,
+  data: {
+    concentration?: number | null;
+    unit?: string | null;
+    supplier?: string | null;
+    dilution?: string | null;
+    price_per_kg?: number | null;
+  }
+) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const { concentration, unit, supplier, dilution, price_per_kg } = data;
+
+  // Check flavour exists and user has edit access
+  const accessCheck = await sql`
+    SELECT f.*
+    FROM public.flavour f
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
+  `;
+
+  if (accessCheck.length === 0) {
+    throw new Error("Flavour not found or access denied");
+  }
+
+  const result = await sql`
+    UPDATE public.substance_flavour
+    SET
+      concentration = COALESCE(${concentration ?? null}, concentration),
+      unit = COALESCE(${unit || null}, unit),
+      supplier = ${supplier ?? null},
+      dilution = ${dilution ?? null},
+      price_per_kg = ${price_per_kg ?? null}
+    WHERE substance_id = ${substanceId} AND flavour_id = ${flavourId}
+    RETURNING *
+  `;
+
+  return result[0];
 }
 
 export async function updateFlavourStatus(

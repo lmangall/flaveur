@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const STORAGE_KEY_PREFIX = "flaveur-column-visibility-";
 
@@ -14,6 +14,10 @@ export function useColumnVisibility(
 ) {
   const storageKey = `${STORAGE_KEY_PREFIX}${groupId}`;
 
+  // Use ref to avoid re-running effect when array reference changes but content is same
+  const initialIdsRef = useRef(initialVariationIds);
+  initialIdsRef.current = initialVariationIds;
+
   // Initialize state with a function to avoid SSR issues
   const [visibleIds, setVisibleIds] = useState<Set<number>>(() => {
     // Default to all visible on initial render (SSR-safe)
@@ -22,14 +26,14 @@ export function useColumnVisibility(
 
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load from localStorage after hydration
+  // Load from localStorage after hydration - only run once per groupId
   useEffect(() => {
     const stored = localStorage.getItem(storageKey);
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as number[];
         // Filter to only include IDs that still exist in initialVariationIds
-        const validIds = parsed.filter((id) => initialVariationIds.includes(id));
+        const validIds = parsed.filter((id) => initialIdsRef.current.includes(id));
         // Ensure at least one column is visible
         if (validIds.length > 0) {
           setVisibleIds(new Set(validIds));
@@ -39,7 +43,7 @@ export function useColumnVisibility(
       }
     }
     setIsHydrated(true);
-  }, [storageKey, initialVariationIds]);
+  }, [storageKey]); // Only depend on storageKey, use ref for initialVariationIds
 
   // Save to localStorage whenever visibleIds changes (after hydration)
   useEffect(() => {
@@ -66,18 +70,18 @@ export function useColumnVisibility(
 
   // Show all columns
   const showAll = useCallback(() => {
-    setVisibleIds(new Set(initialVariationIds));
-  }, [initialVariationIds]);
+    setVisibleIds(new Set(initialIdsRef.current));
+  }, []);
 
   // Hide all except main (or first if no main)
   const hideAllExceptMain = useCallback(
     (mainId: number | undefined) => {
-      const idToKeep = mainId ?? initialVariationIds[0];
+      const idToKeep = mainId ?? initialIdsRef.current[0];
       if (idToKeep !== undefined) {
         setVisibleIds(new Set([idToKeep]));
       }
     },
-    [initialVariationIds]
+    []
   );
 
   return {
