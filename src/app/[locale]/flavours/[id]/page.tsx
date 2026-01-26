@@ -26,7 +26,13 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save, Share2, Shield } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save, Share2, Shield, HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/[locale]/components/ui/tooltip";
 import { Flavour, Substance, FlavorProfileAttribute } from "@/app/type";
 import {
   getFlavourById,
@@ -313,12 +319,16 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
     {
       fema_number: true,
       common_name: true,
+      concentration: true,
       is_natural: true,
       odor: true,
       olfactory_taste_notes: true,
       functional_groups: true,
       flavor_profile: true,
       cas_number: true,
+      supplier: false,
+      dilution: false,
+      price_per_kg: false,
     }
   );
 
@@ -326,12 +336,16 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
   const allColumns = [
     { key: "fema_number", label: "FEMA #" },
     { key: "common_name", label: "Common Name" },
+    { key: "concentration", label: "Concentration" },
     { key: "is_natural", label: "Natural/Synthetic" },
     { key: "odor", label: "Odor" },
     { key: "olfactory_taste_notes", label: "Odor Notes" },
     { key: "functional_groups", label: "Functional Groups" },
     { key: "flavor_profile", label: "Flavor Profile" },
     { key: "cas_number", label: "CAS Number" },
+    { key: "supplier", label: "Supplier" },
+    { key: "dilution", label: "Dilution" },
+    { key: "price_per_kg", label: "Price/Kg" },
   ];
 
   // Toggle column visibility
@@ -367,6 +381,9 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
   const [femaNumberToAdd, setfemaNumberToAdd] = useState("");
   const [concentration, setConcentration] = useState("");
   const [unit, setUnit] = useState("");
+  const [supplier, setSupplier] = useState("");
+  const [dilution, setDilution] = useState("");
+  const [pricePerKg, setPricePerKg] = useState("");
 
   const handleAddSubstance = async () => {
     try {
@@ -375,6 +392,9 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
         concentration: parseFloat(concentration),
         unit,
         order_index: flavor.substances?.length || 0,
+        supplier: supplier || null,
+        dilution: dilution || null,
+        price_per_kg: pricePerKg ? parseFloat(pricePerKg) : null,
       });
 
       window.location.reload();
@@ -620,27 +640,48 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
           <div className="flex items-center gap-2">
             {/* Add substance form - only for owners */}
             {isOwner && (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <input
                   type="text"
                   placeholder="FEMA Number"
-                  className="px-2 py-1 border rounded"
+                  className="px-2 py-1 border rounded w-24"
                   value={femaNumberToAdd}
                   onChange={(e) => setfemaNumberToAdd(e.target.value)}
                 />
                 <input
                   type="text"
                   placeholder="Concentration"
-                  className="px-2 py-1 border rounded"
+                  className="px-2 py-1 border rounded w-24"
                   value={concentration}
                   onChange={(e) => setConcentration(e.target.value)}
                 />
                 <input
                   type="text"
                   placeholder="Unit"
-                  className="px-2 py-1 border rounded"
+                  className="px-2 py-1 border rounded w-20"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Supplier"
+                  className="px-2 py-1 border rounded w-24"
+                  value={supplier}
+                  onChange={(e) => setSupplier(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Dilution"
+                  className="px-2 py-1 border rounded w-28"
+                  value={dilution}
+                  onChange={(e) => setDilution(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Price/Kg"
+                  className="px-2 py-1 border rounded w-20"
+                  value={pricePerKg}
+                  onChange={(e) => setPricePerKg(e.target.value)}
                 />
                 <Button
                   variant="outline"
@@ -698,6 +739,7 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
               <p>No substances added to this flavor yet.</p>
             </div>
           ) : (
+            <TooltipProvider>
             <div className="border rounded-md overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -705,7 +747,37 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
                     {allColumns.map(
                       (column) =>
                         visibleColumns[column.key] && (
-                          <TableHead key={column.key}>{column.label}</TableHead>
+                          <TableHead key={column.key}>
+                            {column.key === "concentration" ? (
+                              <div className="flex items-center gap-1">
+                                {column.label}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-xs text-left">
+                                    <p className="font-medium">How much goes into YOUR formula</p>
+                                    <p className="text-xs mt-1">Example: &quot;Use 0.5% of Vanillin in this strawberry flavor&quot;</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                            ) : column.key === "dilution" ? (
+                              <div className="flex items-center gap-1">
+                                {column.label}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-xs text-left">
+                                    <p className="font-medium">How the raw material is sold by the supplier</p>
+                                    <p className="text-xs mt-1">Example: &quot;10% in DPG&quot; means 10% active dissolved in 90% dipropylene glycol</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                            ) : (
+                              column.label
+                            )}
+                          </TableHead>
                         )
                     )}
                     {isOwner && <TableHead className="text-right">Actions</TableHead>}
@@ -725,6 +797,11 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
                       {visibleColumns.common_name && (
                         <TableCell>
                           {substance.substance?.common_name || "N/A"}
+                        </TableCell>
+                      )}
+                      {visibleColumns.concentration && (
+                        <TableCell>
+                          {substance.concentration} {substance.unit}
                         </TableCell>
                       )}
                       {visibleColumns.is_natural && (
@@ -772,6 +849,21 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
                           {substance.substance?.cas_id || "N/A"}
                         </TableCell>
                       )}
+                      {visibleColumns.supplier && (
+                        <TableCell>
+                          {substance.supplier || "-"}
+                        </TableCell>
+                      )}
+                      {visibleColumns.dilution && (
+                        <TableCell>
+                          {substance.dilution || "-"}
+                        </TableCell>
+                      )}
+                      {visibleColumns.price_per_kg && (
+                        <TableCell>
+                          {substance.price_per_kg != null ? `€${substance.price_per_kg.toFixed(2)}` : "-"}
+                        </TableCell>
+                      )}
                       {isOwner && (
                         <TableCell className="text-right">
                           <Button
@@ -790,6 +882,7 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
                 </TableBody>
               </Table>
             </div>
+            </TooltipProvider>
           )}
         </CardContent>
       </Card>
@@ -850,12 +943,15 @@ export default function FlavorDetailPage() {
           // Transform substances to match the expected nested structure
           substances: Array.isArray(data.substances)
             ? data.substances.map(
-                (substance, index: number) => ({
-                  substance_id: (substance as { substance_id: number }).substance_id,
-                  concentration: 0, // Default values since not provided by API
-                  unit: "ppm" as const,
-                  order_index: index,
-                  substance: substance as Substance, // Nest the actual substance data
+                (substance: Record<string, unknown>, index: number) => ({
+                  substance_id: Number(substance.substance_id),
+                  concentration: Number(substance.concentration) || 0,
+                  unit: (substance.unit as string) || "ppm",
+                  order_index: Number(substance.order_index) ?? index,
+                  supplier: substance.supplier as string | null,
+                  dilution: substance.dilution as string | null,
+                  price_per_kg: substance.price_per_kg != null ? Number(substance.price_per_kg) : null,
+                  substance: substance as unknown as Substance, // Nest the actual substance data
                 })
               )
             : [],

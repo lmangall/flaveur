@@ -11,6 +11,9 @@ import type {
   WorkspaceRoleValue,
   DocumentTypeValue,
   WorkspaceInviteStatusValue,
+  LearningStatus,
+  ReviewResult,
+  BadgeKey,
 } from "@/constants";
 
 // ===========================================
@@ -116,6 +119,9 @@ export type SubstanceInFlavour = {
   concentration: number;
   unit: ConcentrationUnitValue;
   order_index: number;
+  supplier?: string | null;
+  dilution?: string | null;
+  price_per_kg?: number | null;
   substance?: Substance;
 };
 
@@ -354,4 +360,135 @@ export type WorkspaceFlavour = {
   // Relations (when loaded)
   flavour?: Flavour;
   added_by_user?: User;
+};
+
+// ===========================================
+// LEARNING
+// ===========================================
+
+export type LearningQueueItem = {
+  queue_id: number;
+  user_id: string;
+  substance_id: number;
+  priority: number;
+  target_date: string | null;
+  added_at: string;
+
+  // Relations (when loaded)
+  substance?: Substance;
+};
+
+export type SubstanceLearningProgress = {
+  progress_id: number;
+  user_id: string;
+  substance_id: number;
+  has_smelled: boolean;
+  smelled_at: string | null;
+  has_tasted: boolean;
+  tasted_at: string | null;
+  status: LearningStatus;
+  personal_notes: string | null;
+  personal_descriptors: string[];
+  associations: string | null;
+  sample_photo_url: string | null;
+  concentration_notes: string | null;
+  started_at: string | null;
+  mastered_at: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Relations (when loaded)
+  substance?: Substance;
+};
+
+export type LearningReview = {
+  review_id: number;
+  user_id: string;
+  substance_id: number;
+  scheduled_for: string;
+  completed_at: string | null;
+  review_result: ReviewResult | null;
+  confidence_after: number | null;
+  notes: string | null;
+  created_at: string;
+
+  // Relations (when loaded)
+  substance?: Substance;
+};
+
+export type QuizAttempt = {
+  attempt_id: number;
+  user_id: string;
+  substance_id: number;
+  guessed_name: string | null;
+  observations: string | null;
+  result: ReviewResult;
+  created_at: string;
+
+  // Relations (when loaded)
+  substance?: Substance;
+};
+
+export type LearningSession = {
+  session_id: number;
+  user_id: string;
+  name: string;
+  description: string | null;
+  scheduled_for: string | null;
+  duration_minutes: number | null;
+  reflection_notes: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Relations (when loaded)
+  substances?: LearningSessionSubstance[];
+};
+
+export type LearningSessionSubstance = {
+  session_id: number;
+  substance_id: number;
+  order_index: number;
+  session_code: string | null;
+
+  // Relations (when loaded)
+  substance?: Substance;
+};
+
+export type LearningStreak = {
+  streak_id: number;
+  user_id: string;
+  current_streak: number;
+  longest_streak: number;
+  last_study_date: string | null;
+  streak_freezes_available: number;
+};
+
+export type UserBadge = {
+  badge_id: number;
+  user_id: string;
+  badge_key: BadgeKey;
+  earned_at: string;
+};
+
+export type LearningDashboardStats = {
+  total_in_queue: number;
+  not_started: number;
+  learning: number;
+  confident: number;
+  mastered: number;
+  current_streak: number;
+  longest_streak: number;
+  reviews_due: number;
+  badges_earned: number;
+};
+
+export type CategoryLearningProgress = {
+  category_id: number;
+  category_name: string;
+  total_substances: number;
+  mastered: number;
+  learning: number;
+  not_started: number;
+  completion_percentage: number;
 };

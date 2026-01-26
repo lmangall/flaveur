@@ -11,6 +11,9 @@ export const substanceInFlavourSchema = z.object({
   concentration: z.number().positive("Concentration must be positive"),
   unit: z.enum(validUnits, { message: "Please select a valid unit" }),
   order_index: z.number().int().min(0),
+  supplier: z.string().max(100).optional().nullable(),
+  dilution: z.string().max(50).optional().nullable(),
+  price_per_kg: z.number().positive().optional().nullable(),
 });
 
 export type SubstanceInFlavourInput = z.infer<typeof substanceInFlavourSchema>;
@@ -94,6 +97,14 @@ export const substanceFormEntrySchema = z.object({
       message: "Concentration must be a positive number",
     }),
   unit: z.enum(validUnits, { message: "Please select a valid unit" }),
+  supplier: z.string().max(100).optional(),
+  dilution: z.string().max(50).optional(),
+  price_per_kg: z
+    .string()
+    .optional()
+    .refine((val) => !val || (!isNaN(parseFloat(val)) && parseFloat(val) > 0), {
+      message: "Price must be a positive number",
+    }),
 });
 
 export type SubstanceFormEntry = z.infer<typeof substanceFormEntrySchema>;

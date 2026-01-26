@@ -147,20 +147,21 @@ export async function getFlavourById(flavourId: number) {
     ...flavour
   } = flavourData;
 
-  const substanceLinks = await sql`
-    SELECT substance_id FROM substance_flavour WHERE flavour_id = ${flavourId}
+  // Get substances with junction table data (concentration, unit, supplier, dilution, price_per_kg)
+  const substances = await sql`
+    SELECT
+      s.*,
+      sf.concentration,
+      sf.unit,
+      sf.order_index,
+      sf.supplier,
+      sf.dilution,
+      sf.price_per_kg
+    FROM substance_flavour sf
+    JOIN substance s ON sf.substance_id = s.substance_id
+    WHERE sf.flavour_id = ${flavourId}
+    ORDER BY sf.order_index
   `;
-
-  const substanceIds = substanceLinks.map(
-    (row) => (row as { substance_id: number }).substance_id
-  );
-
-  let substances: Record<string, unknown>[] = [];
-  if (substanceIds.length > 0) {
-    substances = await sql`
-      SELECT * FROM substance WHERE substance_id = ANY(${substanceIds}::int[])
-    `;
-  }
 
   return {
     flavour,
@@ -193,6 +194,9 @@ export async function createFlavour(data: {
     concentration: number;
     unit: string;
     order_index: number;
+    supplier?: string | null;
+    dilution?: string | null;
+    price_per_kg?: number | null;
   }>;
 }) {
   const { userId } = await auth();
@@ -227,7 +231,7 @@ export async function createFlavour(data: {
 
   // Insert substances if provided
   for (const sub of substances) {
-    const { fema_number, concentration, unit, order_index } = sub;
+    const { fema_number, concentration, unit, order_index, supplier, dilution, price_per_kg } = sub;
 
     // Find substance_id by fema_number
     const substanceCheck = await sql`
@@ -242,8 +246,8 @@ export async function createFlavour(data: {
 
     // Insert into substance_flavour
     const result = await sql`
-      INSERT INTO public.substance_flavour (substance_id, flavour_id, concentration, unit, order_index)
-      VALUES (${substanceId}, ${newFlavour.flavour_id}, ${concentration}, ${unit}, ${order_index})
+      INSERT INTO public.substance_flavour (substance_id, flavour_id, concentration, unit, order_index, supplier, dilution, price_per_kg)
+      VALUES (${substanceId}, ${newFlavour.flavour_id}, ${concentration}, ${unit}, ${order_index}, ${supplier ?? null}, ${dilution ?? null}, ${price_per_kg ?? null})
       RETURNING *
     `;
 
@@ -260,12 +264,15 @@ export async function addSubstanceToFlavour(
     concentration: number;
     unit: string;
     order_index: number;
+    supplier?: string | null;
+    dilution?: string | null;
+    price_per_kg?: number | null;
   }
 ) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const { fema_number, concentration, unit, order_index } = data;
+  const { fema_number, concentration, unit, order_index, supplier, dilution, price_per_kg } = data;
 
   // Check substance exists
   const substanceCheck = await sql`
@@ -294,8 +301,8 @@ export async function addSubstanceToFlavour(
   }
 
   const result = await sql`
-    INSERT INTO public.substance_flavour (substance_id, flavour_id, concentration, unit, order_index)
-    VALUES (${substanceId}, ${flavourId}, ${concentration}, ${unit}, ${order_index})
+    INSERT INTO public.substance_flavour (substance_id, flavour_id, concentration, unit, order_index, supplier, dilution, price_per_kg)
+    VALUES (${substanceId}, ${flavourId}, ${concentration}, ${unit}, ${order_index}, ${supplier ?? null}, ${dilution ?? null}, ${price_per_kg ?? null})
     RETURNING *
   `;
 
@@ -490,8 +497,8 @@ export async function duplicateFlavour(flavourId: number, newName?: string) {
 
   for (const sub of originalSubstances) {
     await sql`
-      INSERT INTO public.substance_flavour (substance_id, flavour_id, concentration, unit, order_index)
-      VALUES (${sub.substance_id}, ${newFlavour.flavour_id}, ${sub.concentration}, ${sub.unit}, ${sub.order_index})
+      INSERT INTO public.substance_flavour (substance_id, flavour_id, concentration, unit, order_index, supplier, dilution, price_per_kg)
+      VALUES (${sub.substance_id}, ${newFlavour.flavour_id}, ${sub.concentration}, ${sub.unit}, ${sub.order_index}, ${sub.supplier}, ${sub.dilution}, ${sub.price_per_kg})
     `;
   }
 
