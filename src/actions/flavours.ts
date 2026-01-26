@@ -182,6 +182,15 @@ export async function getFlavourById(flavourId: number) {
   };
 }
 
+// Default zeroed flavor profile for new flavours
+const DEFAULT_FLAVOR_PROFILE = [
+  { attribute: "Sweetness", value: 0 },
+  { attribute: "Sourness", value: 0 },
+  { attribute: "Bitterness", value: 0 },
+  { attribute: "Umami", value: 0 },
+  { attribute: "Saltiness", value: 0 },
+];
+
 export async function createFlavour(data: {
   name: string;
   description?: string;
@@ -219,10 +228,10 @@ export async function createFlavour(data: {
     substances,
   } = validation.data;
 
-  // Insert flavour
+  // Insert flavour with default zeroed flavor profile
   const flavourResult = await sql`
-    INSERT INTO flavour (name, description, is_public, category_id, status, base_unit, user_id)
-    VALUES (${name}, ${description ?? null}, ${is_public}, ${category_id}, ${status}, ${base_unit}, ${userId})
+    INSERT INTO flavour (name, description, is_public, category_id, status, base_unit, user_id, flavor_profile)
+    VALUES (${name}, ${description ?? null}, ${is_public}, ${category_id}, ${status}, ${base_unit}, ${userId}, ${JSON.stringify(DEFAULT_FLAVOR_PROFILE)}::jsonb)
     RETURNING *
   `;
 
@@ -261,8 +270,8 @@ export async function addSubstanceToFlavour(
   flavourId: number,
   data: {
     fema_number: number;
-    concentration: number;
-    unit: string;
+    concentration?: number | null;
+    unit?: string | null;
     order_index: number;
     supplier?: string | null;
     dilution?: string | null;
@@ -302,7 +311,7 @@ export async function addSubstanceToFlavour(
 
   const result = await sql`
     INSERT INTO public.substance_flavour (substance_id, flavour_id, concentration, unit, order_index, supplier, dilution, price_per_kg)
-    VALUES (${substanceId}, ${flavourId}, ${concentration}, ${unit}, ${order_index}, ${supplier ?? null}, ${dilution ?? null}, ${price_per_kg ?? null})
+    VALUES (${substanceId}, ${flavourId}, ${concentration ?? null}, ${unit || null}, ${order_index}, ${supplier ?? null}, ${dilution ?? null}, ${price_per_kg ?? null})
     RETURNING *
   `;
 
