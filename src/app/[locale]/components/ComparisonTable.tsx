@@ -1,0 +1,348 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { Star, Loader2, Save, Plus, Minus } from "lucide-react";
+import { Button } from "@/app/[locale]/components/ui/button";
+import { Slider } from "@/app/[locale]/components/ui/slider";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/app/[locale]/components/ui/table";
+import { Badge } from "@/app/[locale]/components/ui/badge";
+import { cn } from "@/app/lib/utils";
+import { toast } from "sonner";
+import {
+  bulkUpdateVariations,
+  setMainVariation,
+} from "@/actions/variations";
+import type { VariationWithSubstances, ComparisonData } from "@/actions/variations";
+import { ColumnToggle } from "./ColumnToggle";
+
+interface ComparisonTableProps {
+  data: ComparisonData;
+  onDataChange?: () => void;
+}
+
+type ConcentrationUpdate = {
+  flavourId: number;
+  substanceId: number;
+  concentration: number;
+};
+
+export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
+  const [visibleVariations, setVisibleVariations] = useState<Set<number>>(
+    new Set(data.variations.map((v) => v.flavour_id))
+  );
+  const [pendingUpdates, setPendingUpdates] = useState<Map<string, ConcentrationUpdate>>(
+    new Map()
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSettingMain, setIsSettingMain] = useState<number | null>(null);
+
+  // Build a map for quick lookup: substanceId -> { flavourId -> concentration }
+  const concentrationMap = useMemo(() => {
+    const map = new Map<number, Map<number, number>>();
+    for (const variation of data.variations) {
+      for (const substance of variation.substances) {
+        if (!map.has(substance.substance_id)) {
+          map.set(substance.substance_id, new Map());
+        }
+        map
+          .get(substance.substance_id)!
+          .set(variation.flavour_id, substance.concentration ?? 0);
+      }
+    }
+    return map;
+  }, [data.variations]);
+
+  // Get concentration value (with pending updates applied)
+  const getConcentration = (
+    substanceId: number,
+    flavourId: number
+  ): number | null => {
+    const key = `${flavourId}-${substanceId}`;
+    const pending = pendingUpdates.get(key);
+    if (pending) {
+      return pending.concentration;
+    }
+    return concentrationMap.get(substanceId)?.get(flavourId) ?? null;
+  };
+
+  // Handle slider change
+  const handleConcentrationChange = (
+    flavourId: number,
+    substanceId: number,
+    newValue: number
+  ) => {
+    const key = `${flavourId}-${substanceId}`;
+    setPendingUpdates((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(key, { flavourId, substanceId, concentration: newValue });
+      return newMap;
+    });
+  };
+
+  // Save all changes
+  const handleSaveAll = async () => {
+    if (pendingUpdates.size === 0) {
+      toast.info("No changes to save");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const updates = Array.from(pendingUpdates.values());
+      await bulkUpdateVariations(updates);
+      toast.success(`Saved ${updates.length} changes`);
+      setPendingUpdates(new Map());
+      onDataChange?.();
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      toast.error("Failed to save changes");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Set main variation
+  const handleSetMain = async (flavourId: number) => {
+    setIsSettingMain(flavourId);
+    try {
+      await setMainVariation(flavourId);
+      toast.success("Main variation updated");
+      onDataChange?.();
+    } catch (error) {
+      console.error("Error setting main variation:", error);
+      toast.error("Failed to set main variation");
+    } finally {
+      setIsSettingMain(null);
+    }
+  };
+
+  // Toggle variation visibility
+  const toggleVariation = (flavourId: number) => {
+    setVisibleVariations((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(flavourId)) {
+        if (newSet.size > 1) {
+          newSet.delete(flavourId);
+        }
+      } else {
+        newSet.add(flavourId);
+      }
+      return newSet;
+    });
+  };
+
+  // Get visible variations
+  const visibleVariationsList = data.variations.filter((v) =>
+    visibleVariations.has(v.flavour_id)
+  );
+
+  // Calculate max concentration for slider range
+  const getMaxConcentration = (substanceId: number): number => {
+    let max = 0;
+    for (const variation of data.variations) {
+      const substance = variation.substances.find(
+        (s) => s.substance_id === substanceId
+      );
+      if (substance?.concentration) {
+        max = Math.max(max, substance.concentration);
+      }
+    }
+    // Add 50% headroom for adjustments
+    return Math.max(max * 1.5, 1);
+  };
+
+  // Calculate total for a variation
+  const calculateTotal = (variation: VariationWithSubstances): number => {
+    return variation.substances.reduce((total, sub) => {
+      const concentration = getConcentration(sub.substance_id, variation.flavour_id);
+      return total + (concentration ?? 0);
+    }, 0);
+  };
+
+  // Check if a substance is missing from a variation
+  const isMissing = (substanceId: number, flavourId: number): boolean => {
+    const variation = data.variations.find((v) => v.flavour_id === flavourId);
+    if (!variation) return true;
+    return !variation.substances.some((s) => s.substance_id === substanceId);
+  };
+
+  // Check if a substance is unique to this variation
+  const isUnique = (substanceId: number, flavourId: number): boolean => {
+    const variationsWithSubstance = data.variations.filter((v) =>
+      v.substances.some((s) => s.substance_id === substanceId)
+    );
+    return (
+      variationsWithSubstance.length === 1 &&
+      variationsWithSubstance[0].flavour_id === flavourId
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header with column toggle and save button */}
+      <div className="flex items-center justify-between">
+        <ColumnToggle
+          variations={data.variations}
+          visibleIds={visibleVariations}
+          onToggle={toggleVariation}
+        />
+        <Button
+          onClick={handleSaveAll}
+          disabled={isSaving || pendingUpdates.size === 0}
+        >
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
+          Save All Changes
+          {pendingUpdates.size > 0 && (
+            <Badge variant="secondary" className="ml-2">
+              {pendingUpdates.size}
+            </Badge>
+          )}
+        </Button>
+      </div>
+
+      {/* Comparison table */}
+      <div className="border rounded-lg overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">
+                Substance
+              </TableHead>
+              {visibleVariationsList.map((variation) => (
+                <TableHead
+                  key={variation.flavour_id}
+                  className="min-w-[200px] text-center"
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center gap-1">
+                      {variation.is_main_variation ? (
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      ) : (
+                        <button
+                          onClick={() => handleSetMain(variation.flavour_id)}
+                          disabled={isSettingMain !== null}
+                          className="hover:text-yellow-400 transition-colors"
+                        >
+                          <Star className="h-3 w-3" />
+                        </button>
+                      )}
+                      <span className="font-medium">
+                        {variation.variation_label || variation.name}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {variation.base_unit}
+                    </span>
+                  </div>
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.allSubstances.map((substance) => {
+              const maxValue = getMaxConcentration(substance.substance_id);
+              return (
+                <TableRow key={substance.substance_id}>
+                  <TableCell className="sticky left-0 bg-background z-10 font-medium">
+                    <div className="flex flex-col">
+                      <span>{substance.common_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        FEMA {substance.fema_number}
+                      </span>
+                    </div>
+                  </TableCell>
+                  {visibleVariationsList.map((variation) => {
+                    const concentration = getConcentration(
+                      substance.substance_id,
+                      variation.flavour_id
+                    );
+                    const missing = isMissing(
+                      substance.substance_id,
+                      variation.flavour_id
+                    );
+                    const unique = isUnique(
+                      substance.substance_id,
+                      variation.flavour_id
+                    );
+
+                    return (
+                      <TableCell
+                        key={variation.flavour_id}
+                        className={cn(
+                          "text-center",
+                          missing && "bg-red-50 dark:bg-red-950/20",
+                          unique && "bg-green-50 dark:bg-green-950/20"
+                        )}
+                      >
+                        {missing ? (
+                          <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                            <Minus className="h-3 w-3" />
+                            <span className="text-xs">empty</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2 px-2">
+                            <div className="flex items-center gap-2 w-full">
+                              <Slider
+                                value={[concentration ?? 0]}
+                                onValueChange={(values) =>
+                                  handleConcentrationChange(
+                                    variation.flavour_id,
+                                    substance.substance_id,
+                                    values[0]
+                                  )
+                                }
+                                max={maxValue}
+                                step={maxValue / 100}
+                                className="flex-1"
+                              />
+                              <span className="text-sm font-mono w-16 text-right">
+                                {(concentration ?? 0).toFixed(2)}
+                              </span>
+                            </div>
+                            {unique && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs bg-green-100 dark:bg-green-900"
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                unique
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              );
+            })}
+            {/* Total row */}
+            <TableRow className="bg-muted/50 font-medium">
+              <TableCell className="sticky left-0 bg-muted/50 z-10">
+                TOTAL
+              </TableCell>
+              {visibleVariationsList.map((variation) => (
+                <TableCell key={variation.flavour_id} className="text-center">
+                  <span className="font-mono">
+                    {calculateTotal(variation).toFixed(2)}
+                  </span>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}

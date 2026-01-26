@@ -76,6 +76,7 @@ import {
   ChartTooltipContent,
 } from "@/app/[locale]/components/ui/chart";
 import { ShareFlavourDialog } from "@/app/[locale]/components/share-flavour-dialog";
+import { VariationPills } from "@/app/[locale]/components/VariationPills";
 import { useTranslations } from "next-intl";
 import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 
@@ -281,12 +282,13 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: Fla
 
 interface FlavorContentProps {
   flavor: Flavour;
+  setFlavor: React.Dispatch<React.SetStateAction<Flavour | null>>;
   isOwner: boolean;
   isSharedWithMe: boolean;
   sharedBy?: { username: string | null; email: string } | null;
 }
 
-function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorContentProps) {
+function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }: FlavorContentProps) {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("Sharing");
@@ -385,19 +387,139 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
   const [dilution, setDilution] = useState("");
   const [pricePerKg, setPricePerKg] = useState("");
 
+  // Substance search state for adding new substances
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearchField, setActiveSearchField] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<Array<{
+    substance_id: number;
+    fema_number: number | null;
+    common_name: string;
+    flavor_profile: string | null;
+    odor: string | null;
+    olfactory_taste_notes: string | null;
+    cas_id: string | null;
+  }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [selectedSubstance, setSelectedSubstance] = useState<{
+    substance_id: number;
+    fema_number: number | null;
+    common_name: string;
+    flavor_profile: string | null;
+    odor: string | null;
+    olfactory_taste_notes: string | null;
+    cas_id: string | null;
+  } | null>(null);
+
+  // Search for substances when query changes
+  useEffect(() => {
+    const searchForSubstances = async () => {
+      if (searchQuery.length < 2) {
+        setSearchResults([]);
+        setShowSearchResults(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const { searchSubstances } = await import("@/actions/substances");
+        // Use "profile" category for flavor/odor searches, "all" for others
+        const category = activeSearchField === "flavor_profile" || activeSearchField === "odor" || activeSearchField === "olfactory_taste_notes"
+          ? "profile"
+          : "all";
+        const response = await searchSubstances(searchQuery, category, 1, 10);
+        setSearchResults(response.results as typeof searchResults);
+        setShowSearchResults(true);
+      } catch (error) {
+        console.error("Error searching substances:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchForSubstances, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, activeSearchField]);
+
+  const handleSelectSubstance = (substance: typeof searchResults[0]) => {
+    setSelectedSubstance({
+      substance_id: substance.substance_id,
+      fema_number: substance.fema_number,
+      common_name: substance.common_name,
+      flavor_profile: substance.flavor_profile,
+      odor: substance.odor,
+      olfactory_taste_notes: substance.olfactory_taste_notes,
+      cas_id: substance.cas_id,
+    });
+    setfemaNumberToAdd(substance.fema_number?.toString() || "");
+    setSearchQuery("");
+    setShowSearchResults(false);
+    setActiveSearchField(null);
+  };
+
+  const handleSearchFocus = (field: string) => {
+    setActiveSearchField(field);
+    if (searchQuery.length >= 2) {
+      setShowSearchResults(true);
+    }
+  };
+
+  const handleSearchBlur = () => {
+    // Keep results visible - they're table rows now, user can click anytime
+    setActiveSearchField(null);
+  };
+
+
   const handleAddSubstance = async () => {
+    if (!selectedSubstance) return;
+
     try {
-      await addSubstanceToFlavour(flavor.flavour_id, {
+      const result = await addSubstanceToFlavour(flavor.flavour_id, {
         fema_number: parseInt(femaNumberToAdd),
-        concentration: parseFloat(concentration),
-        unit,
+        concentration: concentration ? parseFloat(concentration) : null,
+        unit: unit || null,
         order_index: flavor.substances?.length || 0,
         supplier: supplier || null,
         dilution: dilution || null,
         price_per_kg: pricePerKg ? parseFloat(pricePerKg) : null,
       });
 
-      window.location.reload();
+      // Update local state with new substance
+      const newSubstanceEntry = {
+        substance_id: selectedSubstance.substance_id,
+        concentration: concentration ? parseFloat(concentration) : 0,
+        unit: unit || "",
+        order_index: flavor.substances?.length || 0,
+        supplier: supplier || null,
+        dilution: dilution || null,
+        price_per_kg: pricePerKg ? parseFloat(pricePerKg) : null,
+        substance: {
+          substance_id: selectedSubstance.substance_id,
+          fema_number: selectedSubstance.fema_number,
+          common_name: selectedSubstance.common_name,
+          flavor_profile: selectedSubstance.flavor_profile,
+          odor: selectedSubstance.odor,
+          olfactory_taste_notes: selectedSubstance.olfactory_taste_notes,
+          cas_id: selectedSubstance.cas_id,
+        } as Substance,
+      };
+
+      setFlavor((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          substances: [...(prev.substances || []), newSubstanceEntry],
+        };
+      });
+
+      // Clear form
+      setSelectedSubstance(null);
+      setfemaNumberToAdd("");
+      setConcentration("");
+      setUnit("");
+      setSupplier("");
+      setDilution("");
+      setPricePerKg("");
     } catch (error) {
       console.error("Error adding substance:", error);
     }
@@ -406,7 +528,15 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
   const handleRemoveSubstance = async (substanceId: number) => {
     try {
       await removeSubstanceFromFlavour(flavor.flavour_id, substanceId);
-      window.location.reload();
+
+      // Update local state
+      setFlavor((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          substances: prev.substances?.filter((s) => s.substance_id !== substanceId) || [],
+        };
+      });
     } catch (error) {
       console.error("Error removing substance:", error);
     }
@@ -551,6 +681,12 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
           )}
         </div>
       </div>
+
+      {/* Variation pills - separate row for clarity */}
+      {isOwner && (
+        <VariationPills flavourId={flavor.flavour_id} />
+      )}
+
       <div className="flex flex-col gap-2">
         <p className="text-muted-foreground">{flavor.description}</p>
         <div className="flex gap-2 text-sm text-muted-foreground items-center">
@@ -638,61 +774,6 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Substances ({flavor.substances?.length || 0})</CardTitle>
           <div className="flex items-center gap-2">
-            {/* Add substance form - only for owners */}
-            {isOwner && (
-              <div className="flex flex-wrap gap-2">
-                <input
-                  type="text"
-                  placeholder="FEMA Number"
-                  className="px-2 py-1 border rounded w-24"
-                  value={femaNumberToAdd}
-                  onChange={(e) => setfemaNumberToAdd(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Concentration"
-                  className="px-2 py-1 border rounded w-24"
-                  value={concentration}
-                  onChange={(e) => setConcentration(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Unit"
-                  className="px-2 py-1 border rounded w-20"
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Supplier"
-                  className="px-2 py-1 border rounded w-24"
-                  value={supplier}
-                  onChange={(e) => setSupplier(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Dilution"
-                  className="px-2 py-1 border rounded w-28"
-                  value={dilution}
-                  onChange={(e) => setDilution(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Price/Kg"
-                  className="px-2 py-1 border rounded w-20"
-                  value={pricePerKg}
-                  onChange={(e) => setPricePerKg(e.target.value)}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddSubstance}
-                  disabled={!femaNumberToAdd || !concentration || !unit}
-                >
-                  Add Substance
-                </Button>
-              </div>
-            )}
             <Button
               variant="outline"
               size="sm"
@@ -734,7 +815,7 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
           </div>
         </CardHeader>
         <CardContent>
-          {!flavor.substances || flavor.substances.length === 0 ? (
+          {(!flavor.substances || flavor.substances.length === 0) && !isOwner ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No substances added to this flavor yet.</p>
             </div>
@@ -879,6 +960,289 @@ function FlavorContent({ flavor, isOwner, isSharedWithMe, sharedBy }: FlavorCont
                       )}
                     </TableRow>
                   ))}
+                  {/* Add substance row - only for owners */}
+                  {isOwner && (
+                    <TableRow className="bg-muted/30">
+                      {visibleColumns.fema_number && (
+                        <TableCell>
+                          {selectedSubstance ? (
+                            <span className="text-sm font-medium">{selectedSubstance.fema_number || "N/A"}</span>
+                          ) : (
+                            <input
+                              type="text"
+                              placeholder="FEMA #"
+                              className="w-full px-2 py-1 border rounded text-sm bg-background"
+                              value={femaNumberToAdd}
+                              onChange={(e) => setfemaNumberToAdd(e.target.value)}
+                            />
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.common_name && (
+                        <TableCell className="relative">
+                          {selectedSubstance ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm">{selectedSubstance.common_name}</span>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-destructive"
+                                onClick={() => {
+                                  setSelectedSubstance(null);
+                                  setfemaNumberToAdd("");
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <input
+                                type="text"
+                                placeholder="Search name..."
+                                className="w-full px-2 py-1 border rounded text-sm bg-background"
+                                value={activeSearchField === "common_name" ? searchQuery : ""}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => handleSearchFocus("common_name")}
+                                onBlur={handleSearchBlur}
+                              />
+                                                          </>
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.concentration && (
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <input
+                              type="text"
+                              placeholder="0.5"
+                              className="w-16 px-2 py-1 border rounded text-sm bg-background"
+                              value={concentration}
+                              onChange={(e) => setConcentration(e.target.value)}
+                            />
+                            <select
+                              className="w-20 px-1 py-1 border rounded text-sm bg-background"
+                              value={unit}
+                              onChange={(e) => setUnit(e.target.value)}
+                            >
+                              <option value="">—</option>
+                              <option value="%(v/v)">%</option>
+                              <option value="g/kg">g/kg</option>
+                              <option value="g/L">g/L</option>
+                              <option value="mL/L">mL/L</option>
+                              <option value="ppm">ppm</option>
+                            </select>
+                          </div>
+                        </TableCell>
+                      )}
+                      {visibleColumns.is_natural && (
+                        <TableCell className="text-muted-foreground text-sm">
+                          {selectedSubstance ? "—" : "—"}
+                        </TableCell>
+                      )}
+                      {visibleColumns.odor && (
+                        <TableCell className="relative">
+                          {selectedSubstance ? (
+                            <span className="text-sm">{selectedSubstance.odor || "—"}</span>
+                          ) : (
+                            <>
+                              <input
+                                type="text"
+                                placeholder="Search odor..."
+                                className="w-full px-2 py-1 border rounded text-sm bg-background"
+                                value={activeSearchField === "odor" ? searchQuery : ""}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => handleSearchFocus("odor")}
+                                onBlur={handleSearchBlur}
+                              />
+                                                          </>
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.olfactory_taste_notes && (
+                        <TableCell className="relative">
+                          {selectedSubstance ? (
+                            <span className="text-sm">{selectedSubstance.olfactory_taste_notes || "—"}</span>
+                          ) : (
+                            <>
+                              <input
+                                type="text"
+                                placeholder="Search notes..."
+                                className="w-full px-2 py-1 border rounded text-sm bg-background"
+                                value={activeSearchField === "olfactory_taste_notes" ? searchQuery : ""}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => handleSearchFocus("olfactory_taste_notes")}
+                                onBlur={handleSearchBlur}
+                              />
+                                                          </>
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.functional_groups && (
+                        <TableCell className="text-muted-foreground text-sm">
+                          —
+                        </TableCell>
+                      )}
+                      {visibleColumns.flavor_profile && (
+                        <TableCell className="relative">
+                          {selectedSubstance ? (
+                            <span className="text-sm">{selectedSubstance.flavor_profile || "—"}</span>
+                          ) : (
+                            <>
+                              <input
+                                type="text"
+                                placeholder="Search flavor..."
+                                className="w-full px-2 py-1 border rounded text-sm bg-background"
+                                value={activeSearchField === "flavor_profile" ? searchQuery : ""}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => handleSearchFocus("flavor_profile")}
+                                onBlur={handleSearchBlur}
+                              />
+                                                          </>
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.cas_number && (
+                        <TableCell className="relative">
+                          {selectedSubstance ? (
+                            <span className="text-sm">{selectedSubstance.cas_id || "—"}</span>
+                          ) : (
+                            <>
+                              <input
+                                type="text"
+                                placeholder="Search CAS..."
+                                className="w-full px-2 py-1 border rounded text-sm bg-background"
+                                value={activeSearchField === "cas_number" ? searchQuery : ""}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => handleSearchFocus("cas_number")}
+                                onBlur={handleSearchBlur}
+                              />
+                                                          </>
+                          )}
+                        </TableCell>
+                      )}
+                      {visibleColumns.supplier && (
+                        <TableCell>
+                          <input
+                            type="text"
+                            placeholder="Supplier"
+                            className="w-full px-2 py-1 border rounded text-sm bg-background"
+                            value={supplier}
+                            onChange={(e) => setSupplier(e.target.value)}
+                          />
+                        </TableCell>
+                      )}
+                      {visibleColumns.dilution && (
+                        <TableCell>
+                          <input
+                            type="text"
+                            placeholder="e.g. 10% in DPG"
+                            className="w-full px-2 py-1 border rounded text-sm bg-background"
+                            value={dilution}
+                            onChange={(e) => setDilution(e.target.value)}
+                          />
+                        </TableCell>
+                      )}
+                      {visibleColumns.price_per_kg && (
+                        <TableCell>
+                          <input
+                            type="text"
+                            placeholder="€/kg"
+                            className="w-20 px-2 py-1 border rounded text-sm bg-background"
+                            value={pricePerKg}
+                            onChange={(e) => setPricePerKg(e.target.value)}
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleAddSubstance}
+                          disabled={!femaNumberToAdd}
+                          className={`${
+                            !femaNumberToAdd
+                              ? "text-muted-foreground"
+                              : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                          }`}
+                          title={!femaNumberToAdd ? "Select a substance first" : "Add substance"}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {/* Search results as table rows */}
+                  {isOwner && showSearchResults && searchResults.length > 0 && (
+                    searchResults.map((substance, index) => (
+                      <TableRow
+                        key={`search-${substance.substance_id}`}
+                        className={`cursor-pointer hover:bg-primary/10 ${
+                          index % 2 === 0 ? "bg-blue-50/50" : "bg-blue-100/50"
+                        }`}
+                        onClick={() => handleSelectSubstance(substance)}
+                      >
+                        {visibleColumns.fema_number && (
+                          <TableCell className="font-medium">
+                            {substance.fema_number || "—"}
+                          </TableCell>
+                        )}
+                        {visibleColumns.common_name && (
+                          <TableCell>{substance.common_name}</TableCell>
+                        )}
+                        {visibleColumns.concentration && (
+                          <TableCell className="text-muted-foreground">—</TableCell>
+                        )}
+                        {visibleColumns.is_natural && (
+                          <TableCell className="text-muted-foreground">—</TableCell>
+                        )}
+                        {visibleColumns.odor && (
+                          <TableCell className="text-sm">{substance.odor || "—"}</TableCell>
+                        )}
+                        {visibleColumns.olfactory_taste_notes && (
+                          <TableCell className="text-sm">{substance.olfactory_taste_notes || "—"}</TableCell>
+                        )}
+                        {visibleColumns.functional_groups && (
+                          <TableCell className="text-muted-foreground">—</TableCell>
+                        )}
+                        {visibleColumns.flavor_profile && (
+                          <TableCell className="text-sm">{substance.flavor_profile || "—"}</TableCell>
+                        )}
+                        {visibleColumns.cas_number && (
+                          <TableCell className="text-sm">{substance.cas_id || "—"}</TableCell>
+                        )}
+                        {visibleColumns.supplier && (
+                          <TableCell className="text-muted-foreground">—</TableCell>
+                        )}
+                        {visibleColumns.dilution && (
+                          <TableCell className="text-muted-foreground">—</TableCell>
+                        )}
+                        {visibleColumns.price_per_kg && (
+                          <TableCell className="text-muted-foreground">—</TableCell>
+                        )}
+                        <TableCell className="text-right text-xs text-muted-foreground">
+                          Click to select
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                  {isOwner && showSearchResults && searchQuery.length >= 2 && searchResults.length === 0 && !isSearching && (
+                    <TableRow className="bg-muted/20">
+                      <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="text-center text-sm text-muted-foreground py-4">
+                        No substances found for &quot;{searchQuery}&quot;
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {isOwner && isSearching && (
+                    <TableRow className="bg-muted/20">
+                      <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="text-center text-sm text-muted-foreground py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                          Searching...
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -1028,6 +1392,7 @@ export default function FlavorDetailPage() {
     <Suspense fallback={<LoadingState />}>
       <FlavorContent
         flavor={flavor}
+        setFlavor={setFlavor}
         isOwner={isOwner}
         isSharedWithMe={isSharedWithMe}
         sharedBy={sharedBy}

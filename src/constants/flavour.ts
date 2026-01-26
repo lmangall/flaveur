@@ -29,3 +29,21 @@ export const isValidConcentrationUnit = (value: string): value is ConcentrationU
 export const DEFAULT_FLAVOUR_STATUS: FlavourStatusValue = "draft";
 export const DEFAULT_BASE_UNIT: ConcentrationUnitValue = "g/kg";
 export const DEFAULT_VERSION = 1;
+
+// Variation system constants
+export const DEFAULT_VARIATION_LABELS = [
+  { value: "A", label: "A" },
+  { value: "B", label: "B" },
+  { value: "C", label: "C" },
+  { value: "D", label: "D" },
+  { value: "Light", label: "Light" },
+  { value: "Strong", label: "Strong" },
+  { value: "Natural", label: "Natural" },
+  { value: "v2", label: "v2" },
+] as const;
+
+export type VariationLabelValue =
+  | (typeof DEFAULT_VARIATION_LABELS)[number]["value"]
+  | string;
+
+export const DEFAULT_IS_MAIN_VARIATION = false;
