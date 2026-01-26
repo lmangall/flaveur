@@ -525,7 +525,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
         } as Substance,
       };
 
-      setFlavor((prev) => {
+      setFlavor((prev): Flavour | null => {
         if (!prev) return prev;
         return {
           ...prev,
