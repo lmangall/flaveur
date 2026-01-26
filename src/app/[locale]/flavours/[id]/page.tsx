@@ -26,14 +26,15 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save, Share2, Shield, HelpCircle } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save, Share2, Shield, HelpCircle, MoreVertical, Check, RefreshCw, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/[locale]/components/ui/tooltip";
-import { Flavour, Substance, FlavorProfileAttribute } from "@/app/type";
+import { Flavour, Substance, FlavorProfileAttribute, SubstanceInFlavour } from "@/app/type";
+import { ConcentrationUnitValue } from "@/constants/flavour";
 import {
   getFlavourById,
   addSubstanceToFlavour,
@@ -387,6 +388,26 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
   const [dilution, setDilution] = useState("");
   const [pricePerKg, setPricePerKg] = useState("");
 
+  // Edit substance state
+  const [editingSubstanceId, setEditingSubstanceId] = useState<number | null>(null);
+  const [editConcentration, setEditConcentration] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const [editSupplier, setEditSupplier] = useState("");
+  const [editDilution, setEditDilution] = useState("");
+  const [editPricePerKg, setEditPricePerKg] = useState("");
+
+  // Substance variations state
+  const [variationsSubstanceId, setVariationsSubstanceId] = useState<number | null>(null);
+  const [variationsLoading, setVariationsLoading] = useState(false);
+  const [substanceVariations, setSubstanceVariations] = useState<Array<{
+    substance_id: number;
+    fema_number: number | null;
+    common_name: string;
+    cas_id: string | null;
+    flavor_profile: string | null;
+    odor: string | null;
+  }>>([]);
+
   // Substance search state for adding new substances
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSearchField, setActiveSearchField] = useState<string | null>(null);
@@ -485,10 +506,10 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
       });
 
       // Update local state with new substance
-      const newSubstanceEntry = {
+      const newSubstanceEntry: SubstanceInFlavour = {
         substance_id: selectedSubstance.substance_id,
         concentration: concentration ? parseFloat(concentration) : 0,
-        unit: unit || "",
+        unit: (unit || "g/kg") as ConcentrationUnitValue,
         order_index: flavor.substances?.length || 0,
         supplier: supplier || null,
         dilution: dilution || null,
@@ -539,6 +560,145 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
       });
     } catch (error) {
       console.error("Error removing substance:", error);
+    }
+  };
+
+  const startEditingSubstance = (substance: SubstanceInFlavour) => {
+    setEditingSubstanceId(substance.substance_id);
+    setEditConcentration(substance.concentration?.toString() || "");
+    setEditUnit(substance.unit || "");
+    setEditSupplier(substance.supplier || "");
+    setEditDilution(substance.dilution || "");
+    setEditPricePerKg(substance.price_per_kg?.toString() || "");
+  };
+
+  const cancelEditingSubstance = () => {
+    setEditingSubstanceId(null);
+    setEditConcentration("");
+    setEditUnit("");
+    setEditSupplier("");
+    setEditDilution("");
+    setEditPricePerKg("");
+  };
+
+  const handleSaveSubstance = async (substanceId: number) => {
+    try {
+      const { updateSubstanceInFlavour } = await import("@/actions/flavours");
+      await updateSubstanceInFlavour(flavor.flavour_id, substanceId, {
+        concentration: editConcentration ? parseFloat(editConcentration) : null,
+        unit: editUnit || null,
+        supplier: editSupplier || null,
+        dilution: editDilution || null,
+        price_per_kg: editPricePerKg ? parseFloat(editPricePerKg) : null,
+      });
+
+      // Update local state
+      setFlavor((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          substances: prev.substances?.map((s) =>
+            s.substance_id === substanceId
+              ? {
+                  ...s,
+                  concentration: editConcentration ? parseFloat(editConcentration) : 0,
+                  unit: (editUnit || "g/kg") as ConcentrationUnitValue,
+                  supplier: editSupplier || null,
+                  dilution: editDilution || null,
+                  price_per_kg: editPricePerKg ? parseFloat(editPricePerKg) : null,
+                }
+              : s
+          ) || [],
+        };
+      });
+
+      cancelEditingSubstance();
+    } catch (error) {
+      console.error("Error updating substance:", error);
+    }
+  };
+
+  const handleLoadVariations = async (substanceId: number) => {
+    if (variationsSubstanceId === substanceId) {
+      // Toggle off if already showing
+      setVariationsSubstanceId(null);
+      setSubstanceVariations([]);
+      return;
+    }
+
+    setVariationsSubstanceId(substanceId);
+    setVariationsLoading(true);
+    try {
+      const { getRelatedSubstanceVariations } = await import("@/actions/substances");
+      const variations = await getRelatedSubstanceVariations(substanceId);
+      setSubstanceVariations(variations);
+    } catch (error) {
+      console.error("Error loading variations:", error);
+      setSubstanceVariations([]);
+    } finally {
+      setVariationsLoading(false);
+    }
+  };
+
+  const handleSwapSubstance = async (oldSubstanceId: number, newSubstance: {
+    substance_id: number;
+    fema_number: number | null;
+    common_name: string;
+    cas_id: string | null;
+    flavor_profile: string | null;
+    odor: string | null;
+  }) => {
+    // Get the old substance data to preserve concentration, unit, etc.
+    const oldSubstanceData = flavor.substances?.find((s) => s.substance_id === oldSubstanceId);
+    if (!oldSubstanceData) return;
+
+    try {
+      // Remove old substance
+      await removeSubstanceFromFlavour(flavor.flavour_id, oldSubstanceId);
+
+      // Add new substance with same concentration
+      await addSubstanceToFlavour(flavor.flavour_id, {
+        fema_number: newSubstance.fema_number || 0,
+        concentration: oldSubstanceData.concentration || null,
+        unit: oldSubstanceData.unit || null,
+        order_index: oldSubstanceData.order_index,
+        supplier: oldSubstanceData.supplier,
+        dilution: oldSubstanceData.dilution,
+        price_per_kg: oldSubstanceData.price_per_kg,
+      });
+
+      // Update local state
+      setFlavor((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          substances: prev.substances?.map((s) =>
+            s.substance_id === oldSubstanceId
+              ? {
+                  ...s,
+                  substance_id: newSubstance.substance_id,
+                  substance: {
+                    ...s.substance,
+                    substance_id: newSubstance.substance_id,
+                    fema_number: newSubstance.fema_number,
+                    common_name: newSubstance.common_name,
+                    cas_id: newSubstance.cas_id,
+                    flavor_profile: newSubstance.flavor_profile,
+                    odor: newSubstance.odor,
+                  } as Substance,
+                }
+              : s
+          ) || [],
+        };
+      });
+
+      // Close variations panel
+      setVariationsSubstanceId(null);
+      setSubstanceVariations([]);
+      toast.success(`Swapped to ${newSubstance.common_name}`);
+    } catch (error) {
+      console.error("Error swapping substance:", error);
+      toast.error("Failed to swap substance");
     }
   };
 
@@ -865,7 +1025,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {flavor.substances?.map((substance) => (
+                  {flavor.substances?.flatMap((substance) => [
                     <TableRow key={substance.substance_id}>
                       {visibleColumns.fema_number && (
                         <TableCell className="font-medium">
@@ -882,7 +1042,32 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                       )}
                       {visibleColumns.concentration && (
                         <TableCell>
-                          {substance.concentration} {substance.unit}
+                          {editingSubstanceId === substance.substance_id ? (
+                            <div className="flex gap-1">
+                              <input
+                                type="text"
+                                className="w-16 px-2 py-1 border rounded text-sm bg-background"
+                                value={editConcentration}
+                                onChange={(e) => setEditConcentration(e.target.value)}
+                              />
+                              <select
+                                className="w-20 px-1 py-1 border rounded text-sm bg-background"
+                                value={editUnit}
+                                onChange={(e) => setEditUnit(e.target.value)}
+                              >
+                                <option value="">—</option>
+                                <option value="%(v/v)">%</option>
+                                <option value="g/kg">g/kg</option>
+                                <option value="g/L">g/L</option>
+                                <option value="mL/L">mL/L</option>
+                                <option value="ppm">ppm</option>
+                              </select>
+                            </div>
+                          ) : (
+                            <>
+                              {substance.concentration} {substance.unit}
+                            </>
+                          )}
                         </TableCell>
                       )}
                       {visibleColumns.is_natural && (
@@ -932,34 +1117,159 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                       )}
                       {visibleColumns.supplier && (
                         <TableCell>
-                          {substance.supplier || "-"}
+                          {editingSubstanceId === substance.substance_id ? (
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 border rounded text-sm bg-background"
+                              value={editSupplier}
+                              onChange={(e) => setEditSupplier(e.target.value)}
+                              placeholder="Supplier"
+                            />
+                          ) : (
+                            substance.supplier || "-"
+                          )}
                         </TableCell>
                       )}
                       {visibleColumns.dilution && (
                         <TableCell>
-                          {substance.dilution || "-"}
+                          {editingSubstanceId === substance.substance_id ? (
+                            <input
+                              type="text"
+                              className="w-full px-2 py-1 border rounded text-sm bg-background"
+                              value={editDilution}
+                              onChange={(e) => setEditDilution(e.target.value)}
+                              placeholder="e.g. 10% in DPG"
+                            />
+                          ) : (
+                            substance.dilution || "-"
+                          )}
                         </TableCell>
                       )}
                       {visibleColumns.price_per_kg && (
                         <TableCell>
-                          {substance.price_per_kg != null ? `€${substance.price_per_kg.toFixed(2)}` : "-"}
+                          {editingSubstanceId === substance.substance_id ? (
+                            <input
+                              type="text"
+                              className="w-20 px-2 py-1 border rounded text-sm bg-background"
+                              value={editPricePerKg}
+                              onChange={(e) => setEditPricePerKg(e.target.value)}
+                              placeholder="€/kg"
+                            />
+                          ) : (
+                            substance.price_per_kg != null ? `€${substance.price_per_kg.toFixed(2)}` : "-"
+                          )}
                         </TableCell>
                       )}
                       {isOwner && (
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              handleRemoveSubstance(substance.substance_id)
-                            }
-                          >
-                            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                          </Button>
+                          {editingSubstanceId === substance.substance_id ? (
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleSaveSubstance(substance.substance_id)}
+                                title="Save"
+                              >
+                                <Check className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={cancelEditingSubstance}
+                                title="Cancel"
+                              >
+                                <X className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <button
+                                  className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-muted rounded cursor-pointer"
+                                  onClick={() => startEditingSubstance(substance)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  Edit
+                                </button>
+                                <button
+                                  className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-muted rounded cursor-pointer"
+                                  onClick={() => handleLoadVariations(substance.substance_id)}
+                                >
+                                  <RefreshCw className="h-4 w-4" />
+                                  Variations
+                                  {variationsSubstanceId === substance.substance_id && (
+                                    <span className="ml-auto text-xs text-muted-foreground">✓</span>
+                                  )}
+                                </button>
+                                <DropdownMenuSeparator />
+                                <button
+                                  className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-muted rounded cursor-pointer text-destructive"
+                                  onClick={() => handleRemoveSubstance(substance.substance_id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete
+                                </button>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </TableCell>
                       )}
-                    </TableRow>
-                  ))}
+                    </TableRow>,
+                    // Variations row - shown when user clicks "Variations" in dropdown
+                    variationsSubstanceId === substance.substance_id && (
+                      <TableRow key={`variations-${substance.substance_id}`} className="bg-amber-50/50">
+                        <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + (isOwner ? 1 : 0)} className="py-3">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+                              <RefreshCw className="h-4 w-4" />
+                              Suggested Variations for {substance.substance?.common_name}
+                              <button
+                                className="ml-auto text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                  setVariationsSubstanceId(null);
+                                  setSubstanceVariations([]);
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                            {variationsLoading ? (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Loading variations...
+                              </div>
+                            ) : substanceVariations.length === 0 ? (
+                              <div className="text-sm text-muted-foreground">
+                                No variations found for this substance.
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {substanceVariations.map((variation) => (
+                                  <button
+                                    key={variation.substance_id}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm bg-white border border-amber-200 hover:bg-amber-100 hover:border-amber-300 transition-colors"
+                                    onClick={() => handleSwapSubstance(substance.substance_id, variation)}
+                                  >
+                                    <span className="font-medium">{variation.common_name}</span>
+                                    {variation.fema_number && (
+                                      <span className="text-xs text-muted-foreground">#{variation.fema_number}</span>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ),
+                  ].filter(Boolean))}
                   {/* Add substance row - only for owners */}
                   {isOwner && (
                     <TableRow className="bg-muted/30">

@@ -564,10 +564,21 @@ export async function getSubstanceWithRelations(substanceId: number) {
     throw new Error(`Substance not found with ID: ${substanceId}`);
   }
 
-  const [regulatoryStatuses, usageGuidelines] = await Promise.all([
-    getRegulatoryStatusBySubstance(substanceId),
-    getUsageGuidelinesBySubstance(substanceId),
-  ]);
+  // Fetch related data, gracefully handling missing tables
+  let regulatoryStatuses: RegulatoryStatus[] = [];
+  let usageGuidelines: SubstanceUsageGuideline[] = [];
+
+  try {
+    regulatoryStatuses = await getRegulatoryStatusBySubstance(substanceId);
+  } catch {
+    // Table may not exist yet
+  }
+
+  try {
+    usageGuidelines = await getUsageGuidelinesBySubstance(substanceId);
+  } catch {
+    // Table may not exist yet
+  }
 
   return {
     ...substance[0],
@@ -594,4 +605,86 @@ export async function searchSubstancesFuzzy(
   `;
 
   return results;
+}
+
+// ===========================================
+// RELATED SUBSTANCE VARIATIONS
+// ===========================================
+
+/**
+ * Find related substance variations based on name.
+ * This finds substances that are dilutions or variants of the base substance.
+ * For example, "Vanillin" might have variations like "Vanillin 10%", "Vanillin IPM".
+ */
+export async function getRelatedSubstanceVariations(
+  substanceId: number,
+  limit: number = 10
+): Promise<{
+  substance_id: number;
+  fema_number: number | null;
+  common_name: string;
+  cas_id: string | null;
+  flavor_profile: string | null;
+  odor: string | null;
+}[]> {
+  // First, get the source substance name
+  const sourceResult = await sql`
+    SELECT common_name FROM substance WHERE substance_id = ${substanceId}
+  `;
+
+  if (sourceResult.length === 0) {
+    return [];
+  }
+
+  const sourceName = String(sourceResult[0].common_name);
+
+  // Extract the base name (before any percentage or dilution info)
+  // Pattern: "Vanillin 10% in DPG" -> "Vanillin"
+  // Pattern: "Ethyl Vanillin IPM" -> "Ethyl Vanillin"
+  const baseName = sourceName
+    .replace(/\s*\d+%.*$/i, "") // Remove "10% in DPG" pattern
+    .replace(/\s*(in\s+)?(DPG|TEC|IPM|PG|MCT|Triacetin).*$/i, "") // Remove solvent info
+    .trim();
+
+  if (baseName.length < 3) {
+    return [];
+  }
+
+  // Find substances that:
+  // 1. Have a name starting with the base name (variations like "Vanillin 10%")
+  // 2. OR are the base substance of this one (if this is already a dilution)
+  // Exclude the source substance itself
+  const searchPattern = `${baseName}%`;
+
+  const results = await sql`
+    SELECT
+      substance_id,
+      fema_number,
+      common_name,
+      cas_id,
+      flavor_profile,
+      odor
+    FROM substance
+    WHERE substance_id != ${substanceId}
+      AND (
+        common_name ILIKE ${searchPattern}
+        OR LOWER(${sourceName}) LIKE LOWER(common_name) || '%'
+      )
+    ORDER BY
+      CASE
+        WHEN LOWER(common_name) = LOWER(${baseName}) THEN 1
+        ELSE 2
+      END,
+      common_name
+    LIMIT ${limit}
+  `;
+
+  return results.map((r) => ({
+    substance_id: Number(r.substance_id),
+    fema_number: r.fema_number != null ? Number(r.fema_number) : null,
+    common_name: String(r.common_name),
+    cas_id: r.cas_id ? String(r.cas_id) : null,
+    flavor_profile: r.flavor_profile ? String(r.flavor_profile) : null,
+    odor: r.odor ? String(r.odor) : null,
+  }));
 }
