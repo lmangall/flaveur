@@ -6,7 +6,8 @@ import { useTranslations, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Sun, Moon, Monitor, User, Mail, Globe, Palette, Bell, X, Info, ExternalLink, Database } from "lucide-react";
+import { Sun, Moon, Monitor, User, Mail, Globe, Palette, Bell, X, Database, Search, RefreshCw, AlertTriangle } from "lucide-react";
+import { HowItWorks } from "@/app/[locale]/components/HowItWorks";
 
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
@@ -600,97 +601,35 @@ export default function SettingsPage() {
         </Card>
 
         {/* How It Works - EU Compliance Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              <CardTitle>{t("howItWorks")}</CardTitle>
-            </div>
-            <CardDescription>{t("howItWorksDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* EU Compliance Data Sources */}
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
-                <div className="space-y-1">
-                  <span className="text-sm font-medium">{t("euComplianceTitle")}</span>
-                  <p className="text-xs text-muted-foreground">
-                    {t("euComplianceDesc")}
-                  </p>
-                </div>
-              </div>
-
-              {/* Data Sources List */}
-              <div className="pl-8 space-y-3">
-                <div className="border rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{t("euFlavouringsDb")}</span>
-                    <a
-                      href="https://webgate.ec.europa.eu/foods_system/main/?sector=FFL"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-                    >
-                      {t("viewSource")}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t("euFlavouringsDbDesc")}
-                  </p>
-                </div>
-
-                <div className="border rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{t("euAdditivesDb")}</span>
-                    <a
-                      href="https://webgate.ec.europa.eu/foods_system/main/?sector=FAD"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-                    >
-                      {t("viewSource")}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t("euAdditivesDbDesc")}
-                  </p>
-                </div>
-              </div>
-
-              {/* How Matching Works */}
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
-                <div className="space-y-1">
-                  <span className="text-sm font-medium">{t("matchingTitle")}</span>
-                  <p className="text-xs text-muted-foreground">
-                    {t("matchingDesc")}
-                  </p>
-                </div>
-              </div>
-
-              {/* Data Freshness */}
-              <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                <div className="space-y-1">
-                  <span className="text-sm font-medium">{t("dataFreshnessTitle")}</span>
-                  <p className="text-xs text-muted-foreground">
-                    {t("dataFreshnessDesc")}
-                  </p>
-                </div>
-              </div>
-
-              {/* Disclaimer */}
-              <div className="bg-muted/50 rounded-lg p-3 mt-4">
-                <p className="text-xs text-muted-foreground">
-                  <strong>{t("disclaimer")}:</strong> {t("disclaimerText")}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <HowItWorks
+          title={t("howItWorksTitle")}
+          steps={[
+            {
+              icon: Database,
+              title: t("step1Title"),
+              description: t("step1Description"),
+            },
+            {
+              icon: Search,
+              title: t("step2Title"),
+              description: t("step2Description"),
+            },
+            {
+              icon: RefreshCw,
+              title: t("step3Title"),
+              description: t("step3Description"),
+            },
+          ]}
+          tip={{
+            icon: AlertTriangle,
+            title: t("tipTitle"),
+            description: t("tipDescription"),
+          }}
+          faqLink={{
+            text: t("faqLinkText"),
+            category: "regulatory",
+          }}
+        />
       </div>
     </div>
   );
