@@ -2,8 +2,8 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.oumamie.xyz" }],
-      "destination": "https://oumamie.xyz/:path*",
+      "has": [{ "type": "host", "value": "oumamie.xyz" }],
+      "destination": "https://www.oumamie.xyz/:path*",
       "permanent": true
     }
   ],

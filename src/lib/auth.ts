@@ -12,7 +12,7 @@ function getBaseURL() {
   }
   // Vercel production/preview
   if (process.env.VERCEL_ENV === "production") {
-    return "https://oumamie.xyz";
+    return "https://www.oumamie.xyz";
   }
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
