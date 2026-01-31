@@ -8,6 +8,8 @@ import {
   getMyConversation,
   sendSupportMessage,
   pollMessages,
+  updateTypingStatus,
+  getTypingStatus,
   type SupportMessage,
 } from "@/actions/support";
 
@@ -30,10 +32,32 @@ export function useSupportChat() {
   const [needsEmailInput, setNeedsEmailInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [adminIsTyping, setAdminIsTyping] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get the last message ID for polling
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1].message_id : 0;
+
+  // Auto-initialize a guest session without requiring email
+  const autoInitGuestSession = async () => {
+    try {
+      const result = await getOrCreateConversation();
+      if (result.success) {
+        const sessionId = result.guestSessionId!;
+        localStorage.setItem(
+          GUEST_SESSION_KEY,
+          JSON.stringify({ sessionId, email: "" })
+        );
+        setGuestSessionId(sessionId);
+        setConversationId(result.conversationId!);
+        setMessages(result.messages || []);
+        setNeedsEmailInput(false);
+      }
+    } catch (err) {
+      console.error("[useSupportChat] Error auto-initializing guest session:", err);
+    }
+  };
 
   // Initialize conversation
   const initialize = useCallback(async () => {
@@ -62,21 +86,22 @@ export function useSupportChat() {
             const result = await getConversationByGuestSession(sessionId);
             if (result.success) {
               setGuestSessionId(sessionId);
-              setGuestEmail(email);
+              setGuestEmail(email || "");
               setConversationId(result.conversationId!);
               setMessages(result.messages || []);
               setNeedsEmailInput(false);
             } else {
-              // Session invalid, clear it
+              // Session invalid, clear it and auto-create new one
               localStorage.removeItem(GUEST_SESSION_KEY);
-              setNeedsEmailInput(true);
+              await autoInitGuestSession();
             }
           } catch {
             localStorage.removeItem(GUEST_SESSION_KEY);
-            setNeedsEmailInput(true);
+            await autoInitGuestSession();
           }
         } else {
-          setNeedsEmailInput(true);
+          // No existing session, auto-create one
+          await autoInitGuestSession();
         }
       }
     } catch (err) {
@@ -200,27 +225,62 @@ export function useSupportChat() {
     [conversationId, session?.user, guestSessionId, initUserConversation]
   );
 
-  // Poll for new messages
+  // Poll for new messages and typing status
   const poll = useCallback(async () => {
-    if (!conversationId || lastMessageId === 0) return;
+    if (!conversationId) return;
 
     try {
-      const result = await pollMessages(
-        conversationId,
-        lastMessageId,
-        guestSessionId || undefined
-      );
-      if (result.success && result.messages && result.messages.length > 0) {
-        setMessages((prev) => [...prev, ...result.messages!]);
+      // Poll messages and typing status in parallel
+      const [messagesResult, typingResult] = await Promise.all([
+        lastMessageId > 0
+          ? pollMessages(conversationId, lastMessageId, guestSessionId || undefined)
+          : Promise.resolve({ success: true, messages: [] }),
+        getTypingStatus(conversationId, guestSessionId || undefined),
+      ]);
+
+      if (messagesResult.success && messagesResult.messages && messagesResult.messages.length > 0) {
+        setMessages((prev) => [...prev, ...messagesResult.messages!]);
+      }
+
+      if (typingResult.success) {
+        setAdminIsTyping(typingResult.isTyping || false);
       }
     } catch (err) {
       console.error("[useSupportChat] Error polling:", err);
     }
   }, [conversationId, lastMessageId, guestSessionId]);
 
+  // Send typing indicator (debounced)
+  const setTyping = useCallback(
+    (isTyping: boolean) => {
+      if (!conversationId) return;
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+
+      // Update typing status
+      updateTypingStatus(conversationId, isTyping, guestSessionId || undefined).catch((err) =>
+        console.error("[useSupportChat] Error updating typing status:", err)
+      );
+
+      // Auto-clear typing after 3 seconds of no activity
+      if (isTyping) {
+        typingTimeoutRef.current = setTimeout(() => {
+          updateTypingStatus(conversationId, false, guestSessionId || undefined).catch((err) =>
+            console.error("[useSupportChat] Error clearing typing status:", err)
+          );
+        }, 3000);
+      }
+    },
+    [conversationId, guestSessionId]
+  );
+
   // Start/stop polling when conversation exists
   useEffect(() => {
-    if (conversationId && lastMessageId > 0) {
+    if (conversationId) {
       pollIntervalRef.current = setInterval(poll, POLL_INTERVAL);
     }
 
@@ -229,8 +289,12 @@ export function useSupportChat() {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
     };
-  }, [conversationId, lastMessageId, poll]);
+  }, [conversationId, poll]);
 
   // Clear guest session (for testing/logout)
   const clearSession = useCallback(() => {
@@ -258,5 +322,7 @@ export function useSupportChat() {
     isAuthenticated: !!session?.user,
     isInitialized,
     clearSession,
+    adminIsTyping,
+    setTyping,
   };
 }

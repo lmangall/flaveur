@@ -5,7 +5,6 @@ import { MessageCircle, X, Minimize2, Send, Loader2, User, Shield } from "lucide
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Card } from "@/app/[locale]/components/ui/card";
 import { ScrollArea } from "@/app/[locale]/components/ui/scroll-area";
-import { Input } from "@/app/[locale]/components/ui/input";
 import { Textarea } from "@/app/[locale]/components/ui/textarea";
 import { cn } from "@/app/lib/utils";
 import { useSupportChat } from "./useSupportChat";
@@ -16,19 +15,36 @@ export function SupportChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messageInput, setMessageInput] = useState("");
-  const [emailInput, setEmailInput] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Show popup after 3 seconds if chat hasn't been opened
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isOpen) {
+        setShowPopup(true);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Hide popup when chat opens
+  useEffect(() => {
+    if (isOpen) {
+      setShowPopup(false);
+    }
+  }, [isOpen]);
 
   const {
     messages,
     sendMessage,
     isLoading,
     isSending,
-    needsEmailInput,
-    initGuestSession,
     error,
-    isAuthenticated,
     isInitialized,
+    adminIsTyping,
+    setTyping,
   } = useSupportChat();
 
   // Scroll to bottom when messages change
@@ -40,17 +56,17 @@ export function SupportChatWidget() {
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() || isSending) return;
+    setTyping(false); // Stop typing indicator when sending
     const success = await sendMessage(messageInput);
     if (success) {
       setMessageInput("");
     }
   };
 
-  const handleStartGuestChat = async () => {
-    if (!emailInput.trim()) return;
-    const success = await initGuestSession(emailInput.trim());
-    if (success) {
-      setEmailInput("");
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessageInput(e.target.value);
+    if (e.target.value.trim()) {
+      setTyping(true);
     }
   };
 
@@ -58,13 +74,6 @@ export function SupportChatWidget() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    }
-  };
-
-  const handleEmailKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleStartGuestChat();
     }
   };
 
@@ -78,14 +87,34 @@ export function SupportChatWidget() {
     <>
       {/* Floating Button - always visible when chat is closed */}
       {!isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 hover:scale-105 transition-transform"
-          size="icon"
-          aria-label={t("openChat")}
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
+        <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
+          {/* Popup message */}
+          {showPopup && (
+            <div
+              className="bg-card border rounded-lg shadow-lg p-3 max-w-[200px] animate-in slide-in-from-right-2 fade-in duration-300"
+              onClick={() => setShowPopup(false)}
+            >
+              <button
+                className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-muted flex items-center justify-center text-xs hover:bg-muted/80"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPopup(false);
+                }}
+              >
+                <X className="h-3 w-3" />
+              </button>
+              <p className="text-sm">{t("popupMessage")}</p>
+            </div>
+          )}
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform"
+            size="icon"
+            aria-label={t("openChat")}
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+        </div>
       )}
 
       {/* Chat Window */}
@@ -128,38 +157,6 @@ export function SupportChatWidget() {
               {!isInitialized || isLoading ? (
                 <div className="flex-1 flex items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : needsEmailInput && !isAuthenticated ? (
-                /* Guest email form */
-                <div className="flex-1 p-4 flex flex-col justify-center">
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <h3 className="font-medium mb-2">{t("startConversation")}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t("enterEmail")}
-                      </p>
-                    </div>
-                    <Input
-                      type="email"
-                      placeholder={t("emailPlaceholder")}
-                      value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      onKeyDown={handleEmailKeyDown}
-                    />
-                    {error && (
-                      <p className="text-sm text-destructive">{error}</p>
-                    )}
-                    <Button
-                      onClick={handleStartGuestChat}
-                      className="w-full"
-                      disabled={!emailInput.trim() || isLoading}
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : null}
-                      {t("startChat")}
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <>
@@ -230,12 +227,24 @@ export function SupportChatWidget() {
                     </div>
                   )}
 
+                  {/* Typing indicator */}
+                  {adminIsTyping && (
+                    <div className="px-4 py-2 text-sm text-muted-foreground flex items-center gap-2">
+                      <span className="flex gap-1">
+                        <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </span>
+                      {t("adminTyping")}
+                    </div>
+                  )}
+
                   {/* Input area */}
                   <div className="p-4 border-t shrink-0">
                     <div className="flex gap-2">
                       <Textarea
                         value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
+                        onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
                         placeholder={t("messagePlaceholder")}
                         className="min-h-[60px] max-h-[120px] resize-none"

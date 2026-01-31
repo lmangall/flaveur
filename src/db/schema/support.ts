@@ -34,6 +34,9 @@ export const support_conversation = pgTable(
     // Admin tracking
     has_unread_admin: boolean().default(true).notNull(), // New user messages unread by admin
     last_admin_read_at: timestamp({ mode: "string" }),
+    // Typing indicators
+    user_typing_at: timestamp({ mode: "string" }),
+    admin_typing_at: timestamp({ mode: "string" }),
   },
   (table) => [
     index("idx_support_conversation_user_id").using(

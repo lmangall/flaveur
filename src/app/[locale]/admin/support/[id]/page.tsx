@@ -19,6 +19,8 @@ import {
   sendAdminReply,
   updateConversationStatus,
   pollMessages,
+  updateTypingStatus,
+  getTypingStatus,
   type SupportMessage,
 } from "@/actions/support";
 import { Send, User, Shield, ArrowLeft, Loader2 } from "lucide-react";
@@ -48,8 +50,10 @@ export default function AdminConversationDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [userIsTyping, setUserIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load conversation
   useEffect(() => {
@@ -76,28 +80,61 @@ export default function AdminConversationDetailPage() {
     }
   }, [messages]);
 
-  // Poll for new messages
+  // Poll for new messages and typing status
   useEffect(() => {
-    if (!conversationId || messages.length === 0) return;
+    if (!conversationId) return;
 
-    const lastMessageId = messages[messages.length - 1].message_id;
+    const lastMessageId = messages.length > 0 ? messages[messages.length - 1].message_id : 0;
 
     pollIntervalRef.current = setInterval(async () => {
-      const result = await pollMessages(conversationId, lastMessageId);
-      if (result.success && result.messages && result.messages.length > 0) {
-        setMessages((prev) => [...prev, ...result.messages!]);
+      const [messagesResult, typingResult] = await Promise.all([
+        lastMessageId > 0 ? pollMessages(conversationId, lastMessageId) : Promise.resolve({ success: true, messages: [] }),
+        getTypingStatus(conversationId),
+      ]);
+
+      if (messagesResult.success && messagesResult.messages && messagesResult.messages.length > 0) {
+        setMessages((prev) => [...prev, ...messagesResult.messages!]);
       }
-    }, 5000);
+
+      if (typingResult.success) {
+        setUserIsTyping(typingResult.isTyping || false);
+      }
+    }, 3000);
 
     return () => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
       }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
-  }, [conversationId, messages]);
+  }, [conversationId, messages.length]);
+
+  // Send admin typing status
+  function handleReplyChange(value: string) {
+    setReplyContent(value);
+    if (value.trim()) {
+      updateTypingStatus(conversationId, true).catch(console.error);
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      // Auto-clear after 3 seconds
+      typingTimeoutRef.current = setTimeout(() => {
+        updateTypingStatus(conversationId, false).catch(console.error);
+      }, 3000);
+    }
+  }
 
   async function handleSendReply() {
     if (!replyContent.trim() || isSending) return;
+
+    // Clear typing status
+    updateTypingStatus(conversationId, false).catch(console.error);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
     setIsSending(true);
     const result = await sendAdminReply(conversationId, replyContent.trim());
@@ -252,12 +289,24 @@ export default function AdminConversationDetailPage() {
           </div>
         </ScrollArea>
 
+        {/* Typing indicator */}
+        {userIsTyping && (
+          <div className="px-4 py-2 border-t text-sm text-muted-foreground flex items-center gap-2">
+            <span className="flex gap-1">
+              <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </span>
+            User is typing...
+          </div>
+        )}
+
         {/* Reply input */}
-        <div className="p-4 border-t">
+        <div className={cn("p-4", !userIsTyping && "border-t")}>
           <div className="flex gap-2">
             <Textarea
               value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
+              onChange={(e) => handleReplyChange(e.target.value)}
               placeholder="Type your reply..."
               className="min-h-[80px]"
               onKeyDown={(e) => {

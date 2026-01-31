@@ -107,21 +107,20 @@ export async function getOrCreateConversation(input?: { guestEmail?: string }) {
     };
   }
 
-  // Guest user
-  if (!input?.guestEmail) {
-    return { success: false, error: "Email required for guest users" };
-  }
-
-  const validated = guestEmailSchema.safeParse(input);
-  if (!validated.success) {
-    return { success: false, error: "Invalid email" };
+  // Guest user - email is optional
+  let guestEmail: string | null = null;
+  if (input?.guestEmail) {
+    const validated = guestEmailSchema.safeParse(input);
+    if (validated.success) {
+      guestEmail = validated.data.guestEmail.toLowerCase().trim();
+    }
   }
 
   // Create new guest conversation
   const [newConv] = await db
     .insert(support_conversation)
     .values({
-      guest_email: validated.data.guestEmail.toLowerCase().trim(),
+      guest_email: guestEmail,
       status: "open",
     })
     .returning();
@@ -469,5 +468,127 @@ export async function pollMessages(
   return {
     success: true,
     messages: newMessages as SupportMessage[],
+  };
+}
+
+// ============================================
+// TYPING INDICATOR ACTIONS
+// ============================================
+
+const TYPING_TIMEOUT_MS = 5000; // Consider "typing" if updated within last 5 seconds
+
+export async function updateTypingStatus(
+  conversationId: number,
+  isTyping: boolean,
+  guestSessionId?: string
+) {
+  const session = await getSession();
+
+  // Verify access
+  const conversation = await db
+    .select()
+    .from(support_conversation)
+    .where(eq(support_conversation.conversation_id, conversationId))
+    .limit(1);
+
+  if (conversation.length === 0) {
+    return { success: false, error: "Conversation not found" };
+  }
+
+  const conv = conversation[0];
+
+  // Check if admin
+  let isAdmin = false;
+  try {
+    await requireAdmin();
+    isAdmin = true;
+  } catch {
+    // Not admin
+  }
+
+  if (isAdmin) {
+    // Admin typing
+    await db
+      .update(support_conversation)
+      .set({
+        admin_typing_at: isTyping ? new Date().toISOString() : null,
+      })
+      .where(eq(support_conversation.conversation_id, conversationId));
+  } else if (session?.user && conv.user_id === session.user.id) {
+    // Authenticated user typing
+    await db
+      .update(support_conversation)
+      .set({
+        user_typing_at: isTyping ? new Date().toISOString() : null,
+      })
+      .where(eq(support_conversation.conversation_id, conversationId));
+  } else if (guestSessionId && conv.guest_session_id === guestSessionId) {
+    // Guest typing
+    await db
+      .update(support_conversation)
+      .set({
+        user_typing_at: isTyping ? new Date().toISOString() : null,
+      })
+      .where(eq(support_conversation.conversation_id, conversationId));
+  } else {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  return { success: true };
+}
+
+export async function getTypingStatus(
+  conversationId: number,
+  guestSessionId?: string
+) {
+  const session = await getSession();
+
+  const conversation = await db
+    .select({
+      user_typing_at: support_conversation.user_typing_at,
+      admin_typing_at: support_conversation.admin_typing_at,
+      user_id: support_conversation.user_id,
+      guest_session_id: support_conversation.guest_session_id,
+    })
+    .from(support_conversation)
+    .where(eq(support_conversation.conversation_id, conversationId))
+    .limit(1);
+
+  if (conversation.length === 0) {
+    return { success: false, error: "Conversation not found" };
+  }
+
+  const conv = conversation[0];
+  const now = Date.now();
+
+  // Check if admin
+  let isAdmin = false;
+  try {
+    await requireAdmin();
+    isAdmin = true;
+  } catch {
+    // Not admin
+  }
+
+  // Determine if the "other party" is typing
+  let otherPartyTyping = false;
+
+  if (isAdmin) {
+    // Admin wants to know if user is typing
+    if (conv.user_typing_at) {
+      const typingTime = new Date(conv.user_typing_at).getTime();
+      otherPartyTyping = now - typingTime < TYPING_TIMEOUT_MS;
+    }
+  } else {
+    // User/guest wants to know if admin is typing
+    if (conv.admin_typing_at) {
+      const typingTime = new Date(conv.admin_typing_at).getTime();
+      otherPartyTyping = now - typingTime < TYPING_TIMEOUT_MS;
+    }
+  }
+
+  return {
+    success: true,
+    isTyping: otherPartyTyping,
   };
 }

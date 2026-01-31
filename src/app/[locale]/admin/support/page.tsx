@@ -10,9 +10,9 @@ import {
   TableRow,
 } from "@/app/[locale]/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/[locale]/components/ui/tabs";
-import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import { MessageCircle, CheckCircle2, AlertCircle } from "lucide-react";
+import { ConversationTableClient } from "./ConversationTableClient";
 
 // Simple relative time formatter
 function formatRelativeTime(dateString: string): string {
@@ -67,86 +67,13 @@ export default async function AdminSupportPage() {
         </TabsList>
 
         <TabsContent value="open">
-          <ConversationTable conversations={openConversations} locale={locale} />
+          <ConversationTableClient conversations={openConversations} locale={locale} />
         </TabsContent>
 
         <TabsContent value="closed">
-          <ConversationTable conversations={closedConversations} locale={locale} />
+          <ConversationTableClient conversations={closedConversations} locale={locale} />
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-function ConversationTable({
-  conversations,
-  locale,
-}: {
-  conversations: Awaited<ReturnType<typeof getAdminConversations>>;
-  locale: string;
-}) {
-  if (conversations.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>No conversations found</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Contact</TableHead>
-            <TableHead>Subject</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Last Update</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {conversations.map((conv) => (
-            <TableRow key={conv.conversation_id}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  {conv.has_unread_admin && (
-                    <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
-                  )}
-                  <div>
-                    <p className="font-medium">
-                      {conv.user_name || conv.guest_email || "Unknown"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {conv.user_email || (conv.user_id ? "Registered User" : "Guest")}
-                    </p>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>{conv.subject || "General inquiry"}</TableCell>
-              <TableCell>
-                <Badge variant={conv.status === "open" ? "default" : "secondary"}>
-                  {conv.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {conv.updated_at ? formatRelativeTime(conv.updated_at) : "-"}
-              </TableCell>
-              <TableCell>
-                <Link
-                  href={`/${locale}/admin/support/${conv.conversation_id}`}
-                  className="text-primary hover:underline"
-                >
-                  View
-                </Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
   );
 }

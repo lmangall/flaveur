@@ -952,7 +952,10 @@
 		"noMessages": "Pas de messages",
 		"sendFirst": "Envoyez un message pour démarrer la conversation",
 		"messagePlaceholder": "Tapez votre message...",
-		"send": "Envoyer"
+		"send": "Envoyer",
+		"popupMessage": "N'hésites pas si tu as une question !",
+		"adminTyping": "Support est en train d'écrire...",
+		"userTyping": "En train d'écrire..."
 	  },
 	  "Onboarding": {
 		"welcomeTitle": "Bienvenue sur Flaveur !",

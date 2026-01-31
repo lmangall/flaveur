@@ -957,7 +957,10 @@
 		"noMessages": "No messages yet",
 		"sendFirst": "Send a message to start the conversation",
 		"messagePlaceholder": "Type your message...",
-		"send": "Send"
+		"send": "Send",
+		"popupMessage": "Feel free to ask if you have any questions!",
+		"adminTyping": "Support is typing...",
+		"userTyping": "Typing..."
 	  },
 	  "Onboarding": {
 		"welcomeTitle": "Welcome to Flaveur!",
