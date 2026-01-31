@@ -48,6 +48,10 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: "better-auth",
     useSecureCookies: process.env.NODE_ENV === "production",
+    crossSubDomainCookies: {
+      enabled: process.env.NODE_ENV === "production",
+      domain: ".oumamie.xyz",
+    },
   },
 
   // Enable email + password authentication

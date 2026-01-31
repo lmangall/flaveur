@@ -17,6 +17,9 @@ function getClientBaseURL() {
 
 export const authClient = createAuthClient({
   baseURL: getClientBaseURL(),
+  fetchOptions: {
+    credentials: "include",
+  },
 });
 
 // Export commonly used hooks and methods
