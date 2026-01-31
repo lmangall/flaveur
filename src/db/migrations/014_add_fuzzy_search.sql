@@ -21,6 +21,7 @@ RETURNS TABLE(
   common_name VARCHAR,
   cas_id VARCHAR,
   fema_number INT,
+  odor TEXT,
   similarity FLOAT
 ) AS $$
   SELECT
@@ -28,6 +29,7 @@ RETURNS TABLE(
     s.common_name,
     s.cas_id,
     s.fema_number,
+    s.odor,
     GREATEST(
       similarity(s.common_name, search_term),
       COALESCE((

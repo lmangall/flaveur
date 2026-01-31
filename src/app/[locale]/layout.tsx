@@ -3,8 +3,7 @@ import type { Viewport } from "next";
 import "@/app/globals.css";
 import { Toaster } from "@/app/[locale]/components/ui/sonner";
 import { ConfettiProvider } from "@/app/[locale]/components/ui/confetti";
-import Navbar from "@/app/[locale]/components/navbar";
-import Footer from "@/app/[locale]/components/footer";
+import { OnboardingCheck } from "@/app/[locale]/components/onboarding";
 import { Mona_Sans as FontSans } from "next/font/google";
 import { TooltipProvider } from "@/app/[locale]/components/ui/tooltip";
 import { cn } from "src/app/lib/utils";
@@ -145,11 +144,8 @@ export default async function RootLayout({
                 >
                   Skip to main content
                 </a>
-                <Navbar />
-                <main id="main-content" className="flex-1 pt-16 min-h-screen">
-                  {children}
-                </main>
-                <Footer />
+                <OnboardingCheck />
+                {children}
                 <Toaster />
               </ConfettiProvider>
             </NextIntlClientProvider>

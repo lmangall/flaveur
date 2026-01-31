@@ -46,8 +46,10 @@ export default async function middleware(req: NextRequest) {
 
   // Check if route is public
   if (!isPublicRoute(pathname)) {
-    // Check for Better Auth session cookie
-    const sessionCookie = req.cookies.get("better-auth.session_token");
+    // Check for Better Auth session cookie (both HTTP and HTTPS versions)
+    const sessionCookie =
+      req.cookies.get("better-auth.session_token") ||
+      req.cookies.get("__Secure-better-auth.session_token");
 
     if (!sessionCookie) {
       // Redirect to sign-in page

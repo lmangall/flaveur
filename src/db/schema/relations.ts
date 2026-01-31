@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { users, user_badge } from "./user";
+import { users, user_badge, user_profile, user_social_link } from "./user";
 import { category, newsletter_subscribers } from "./misc";
 import { substance, functional_group, substance_functional_group } from "./substance";
 import {
@@ -76,7 +76,7 @@ export const categoryRelations = relations(category, ({ one, many }) => ({
   }),
 }));
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   flavours: many(flavour),
   variation_groups: many(variation_group),
   job_offer_interactions: many(job_offer_interactions),
@@ -99,6 +99,11 @@ export const usersRelations = relations(users, ({ many }) => ({
   learning_sessions: many(learning_session),
   user_badges: many(user_badge),
   workspace_flavours: many(workspace_flavour),
+  profile: one(user_profile, {
+    fields: [users.id],
+    references: [user_profile.user_id],
+  }),
+  social_links: many(user_social_link),
 }));
 
 export const job_offer_interactionsRelations = relations(
@@ -376,6 +381,23 @@ export const ingredient_flavourRelations = relations(
       fields: [ingredient_flavour.parent_flavour_id],
       references: [flavour.flavour_id],
       relationName: "ingredient_flavour_parent_flavour_id_flavour_flavour_id",
+    }),
+  })
+);
+
+export const user_profileRelations = relations(user_profile, ({ one }) => ({
+  user: one(users, {
+    fields: [user_profile.user_id],
+    references: [users.id],
+  }),
+}));
+
+export const user_social_linkRelations = relations(
+  user_social_link,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [user_social_link.user_id],
+      references: [users.id],
     }),
   })
 );

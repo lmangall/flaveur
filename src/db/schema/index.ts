@@ -10,6 +10,7 @@ export * from "./flavour";
 export * from "./workspace";
 export * from "./learning";
 export * from "./jobs";
+export * from "./support";
 
 // Relations
 export * from "./relations";

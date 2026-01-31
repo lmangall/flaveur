@@ -5,3 +5,4 @@ export * from "./contribution";
 export * from "./workspace";
 export * from "./learning";
 export * from "./samples";
+export * from "./profile";

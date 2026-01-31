@@ -729,3 +729,55 @@ export async function sendNewFeedbackNotification(data: {
     `,
   });
 }
+
+// Support chat notification to admin
+export async function sendSupportNotification(data: {
+  conversationId: number;
+  senderInfo: string;
+  messageContent: string;
+  isGuest: boolean;
+}) {
+  const { conversationId, senderInfo, messageContent, isGuest } = data;
+  const adminUrl = `${BASE_URL}/en/admin/support/${conversationId}`;
+  const userType = isGuest ? 'Guest' : 'User';
+
+  await resend.emails.send({
+    from: 'Oumamie Support <support@oumamie.xyz>',
+    to: DEV_EMAIL,
+    subject: `[Support] New message from ${senderInfo}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 40px; width: auto;" />
+  </div>
+
+  <h2 style="color: #111; margin-bottom: 20px;">New Support Message</h2>
+
+  <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <p style="margin: 0 0 10px 0;"><strong>From:</strong> ${senderInfo}</p>
+    <p style="margin: 0 0 10px 0;"><strong>Type:</strong> ${userType}</p>
+    <p style="margin: 0 0 10px 0;"><strong>Conversation ID:</strong> ${conversationId}</p>
+    <p style="margin: 0;"><strong>Time:</strong> ${new Date().toISOString()}</p>
+  </div>
+
+  <div style="background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+    <p style="margin: 0; white-space: pre-wrap; color: #333;">${messageContent}</p>
+  </div>
+
+  <div style="text-align: center;">
+    <a href="${adminUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 500;">View & Reply</a>
+  </div>
+
+  <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px;">
+    Oumamie Support System
+  </p>
+</body>
+</html>
+    `,
+  });
+}

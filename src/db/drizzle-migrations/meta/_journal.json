@@ -22,6 +22,34 @@
       "when": 1769469017975,
       "tag": "0002_misty_slipstream",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1769471968889,
+      "tag": "0003_glamorous_chimera",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1769472366057,
+      "tag": "0004_slim_darkhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1769472434861,
+      "tag": "0005_grey_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1769496514234,
+      "tag": "0006_faulty_talkback",
+      "breakpoints": true
     }
   ]
 }

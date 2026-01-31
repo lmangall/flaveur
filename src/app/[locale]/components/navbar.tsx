@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSession, signOut } from "@/lib/auth-client";
-import { MenuIcon, Settings, Shield, LogOut, User } from "lucide-react";
+import { MenuIcon, Settings, Shield, LogOut, User, Lock, LayoutDashboard } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import {
   Sheet,
@@ -18,24 +18,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/[locale]/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/app/[locale]/components/ui/tooltip";
 import { useRouter, usePathname } from "next/navigation";
 
 // Admin emails - must match the server-side list in src/lib/admin.ts
 const ADMIN_EMAILS = ["l.mangallon@gmail.com"];
 
-// Routes for authenticated users
-const authRoutes = [
-  // { href: "/dashboard", label: "Dashboard" },
-  { href: "/flavours", label: "myFlavours" },
-  { href: "/workspaces", label: "workspaces" },
-  { href: "/substances", label: "substances" },
-  { href: "/samples", label: "samples" },
-  { href: "/learn", label: "learn" },
-  { href: "/molecules", label: "molecules" },
-  { href: "/calculator", label: "calculator" },
-  { href: "/jobs", label: "jobs" },
-  { href: "/about", label: "about" },
+// Public routes shown in navbar (simplified for marketing pages)
+const publicRoutes = [
+  { href: "/samples", label: "samples", protected: false },
+  { href: "/jobs", label: "jobs", protected: false },
+  { href: "/about", label: "about", protected: false },
 ];
+
+// Protected routes (shown with lock icon when logged out)
+const protectedRoutes = ["/flavours", "/workspaces", "/substances", "/learn", "/molecules", "/calculator", "/dashboard"];
 
 export default function Navbar() {
   const locale = useLocale();
@@ -65,19 +66,11 @@ export default function Navbar() {
     return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
   };
 
-  // Always show the same routes, but handle auth redirects in the click handler
-  const routes = authRoutes;
-
-  const handleRouteClick = (href: string) => {
-    // If the route requires auth and user is not signed in, redirect to sign in
-    if (
-      !isSignedIn &&
-      ["/dashboard", "/flavours", "/substances", "/workspaces", "/learn"].includes(href)
-    ) {
+  const handleRouteClick = (href: string, isProtected: boolean) => {
+    if (isProtected && !isSignedIn) {
       router.push(`/${locale}/auth/sign-in`);
       return;
     }
-    // If user is signed in or route doesn't require auth, navigate to the route
     router.push(`/${locale}${href}`);
   };
 
@@ -97,22 +90,33 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6 mx-6">
-          {routes.map((route) => {
+          {publicRoutes.map((route) => {
             const isActive = isActiveRoute(route.href);
+            const isProtected = protectedRoutes.includes(route.href);
             return (
               <Link
                 key={route.href}
                 href={`/${locale}${route.href}`}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${
                   isActive ? "text-primary font-semibold" : "text-muted-foreground"
                 }`}
                 aria-current={isActive ? "page" : undefined}
                 onClick={(e) => {
-                  e.preventDefault();
-                  handleRouteClick(route.href);
+                  if (isProtected && !isSignedIn) {
+                    e.preventDefault();
+                    handleRouteClick(route.href, isProtected);
+                  }
                 }}
               >
                 {t(route.label)}
+                {isProtected && !isSignedIn && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Lock className="h-3 w-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>Sign in required</TooltipContent>
+                  </Tooltip>
+                )}
               </Link>
             );
           })}
@@ -122,6 +126,13 @@ export default function Navbar() {
           {isLoaded ? (
             isSignedIn ? (
               <div className="flex items-center space-x-2">
+                {/* Go to App button */}
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/${locale}/dashboard`}>
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    Go to App
+                  </Link>
+                </Button>
                 {isAdmin && (
                   <Button variant="ghost" size="icon" asChild title={tAdmin("admin")}>
                     <Link href={`/${locale}/admin`}>
@@ -152,6 +163,12 @@ export default function Navbar() {
                       <p className="text-muted-foreground text-xs">{user?.email}</p>
                     </div>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={`/${locale}/dashboard`}>
+                        <LayoutDashboard className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href={`/${locale}/settings`}>
                         <Settings className="h-4 w-4 mr-2" />
@@ -204,23 +221,29 @@ export default function Navbar() {
                 <span className="font-bold text-lg">Oumamie</span>
               </Link>
               <nav className="flex flex-col space-y-4">
-                {routes.map((route) => {
+                {publicRoutes.map((route) => {
                   const isActive = isActiveRoute(route.href);
+                  const isProtected = protectedRoutes.includes(route.href);
                   return (
                     <Link
                       key={route.href}
                       href={`/${locale}${route.href}`}
-                      className={`text-sm font-medium transition-colors hover:text-primary ${
+                      className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
                         isActive ? "text-primary font-semibold" : "text-muted-foreground"
                       }`}
                       aria-current={isActive ? "page" : undefined}
                       onClick={(e) => {
-                        e.preventDefault();
-                        handleRouteClick(route.href);
+                        if (isProtected && !isSignedIn) {
+                          e.preventDefault();
+                          handleRouteClick(route.href, isProtected);
+                        }
                         setIsOpen(false);
                       }}
                     >
                       {t(route.label)}
+                      {isProtected && !isSignedIn && (
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                      )}
                     </Link>
                   );
                 })}
@@ -228,6 +251,16 @@ export default function Navbar() {
                 {isSignedIn && (
                   <>
                     <div className="h-px bg-border my-2" />
+                    <Link
+                      href={`/${locale}/dashboard`}
+                      className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-2 ${
+                        isActiveRoute("/dashboard") ? "text-primary font-semibold" : "text-muted-foreground"
+                      }`}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      Go to App
+                    </Link>
                     {isAdmin && (
                       <Link
                         href={`/${locale}/admin`}
