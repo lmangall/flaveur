@@ -6,8 +6,6 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
-neonConfig.fetchConnectionCache = true;
-
 const neonClient = neon(process.env.DATABASE_URL);
 export const sql = neonClient;
 export const db = drizzle(neonClient, { schema });

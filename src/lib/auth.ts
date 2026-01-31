@@ -16,6 +16,13 @@ export const auth = betterAuth({
     },
   }),
 
+  // Trust the host header for OAuth redirects in production
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    "https://www.oumamie.xyz",
+    "https://oumamie.xyz",
+  ],
+
   // Enable email + password authentication
   emailAndPassword: {
     enabled: true,
@@ -43,7 +50,7 @@ export const auth = betterAuth({
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60, // 5 minutes
+      maxAge: 60 * 60, // 60 minutes (was 5 minutes)
     },
   },
 
