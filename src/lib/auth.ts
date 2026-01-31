@@ -4,9 +4,26 @@ import { nextCookies } from "better-auth/next-js";
 import { db } from "./db";
 import * as schema from "@/db/schema";
 
+// Determine the base URL for auth - critical for cookie domain and OAuth redirects
+function getBaseURL() {
+  // Explicit env var takes priority
+  if (process.env.BETTER_AUTH_URL && process.env.BETTER_AUTH_URL !== "http://localhost:3000") {
+    return process.env.BETTER_AUTH_URL;
+  }
+  // Vercel production/preview
+  if (process.env.VERCEL_ENV === "production") {
+    return "https://oumamie.xyz";
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Local development
+  return "http://localhost:3000";
+}
+
 export const auth = betterAuth({
   // Base URL for the auth server - REQUIRED for production
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: getBaseURL(),
 
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -21,10 +38,17 @@ export const auth = betterAuth({
 
   // Trust the host header for OAuth redirects in production
   trustedOrigins: [
-    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    getBaseURL(),
     "https://www.oumamie.xyz",
     "https://oumamie.xyz",
+    "http://localhost:3000",
   ],
+
+  // Advanced cookie settings for cross-page persistence
+  advanced: {
+    cookiePrefix: "better-auth",
+    useSecureCookies: process.env.NODE_ENV === "production",
+  },
 
   // Enable email + password authentication
   emailAndPassword: {
