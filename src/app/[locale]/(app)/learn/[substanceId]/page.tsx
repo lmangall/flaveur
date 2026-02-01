@@ -103,13 +103,49 @@ export default function SubstanceStudyPage() {
   }, [isPending, session, substanceId, fetchData]);
 
   const handleSensoryCheck = async (type: "smell" | "taste") => {
+    const now = new Date().toISOString();
+
+    // Optimistic update
+    setProgress((prev) => {
+      if (!prev) {
+        // Create new progress record optimistically
+        return {
+          progress_id: 0, // Will be set by server
+          user_id: session?.user?.id || "",
+          substance_id: substanceId,
+          status: "not_started",
+          has_smelled: type === "smell" ? true : false,
+          has_tasted: type === "taste" ? true : false,
+          smelled_at: type === "smell" ? now : null,
+          tasted_at: type === "taste" ? now : null,
+          personal_notes: null,
+          personal_descriptors: [],
+          associations: null,
+          concentration_notes: null,
+          sample_photo_url: null,
+          started_at: now,
+          mastered_at: null,
+          next_review_at: null,
+          review_count: 0,
+          created_at: now,
+          updated_at: now,
+        } as SubstanceLearningProgress;
+      }
+      return {
+        ...prev,
+        has_smelled: type === "smell" ? true : prev.has_smelled,
+        has_tasted: type === "taste" ? true : prev.has_tasted,
+        smelled_at: type === "smell" ? now : prev.smelled_at,
+        tasted_at: type === "taste" ? now : prev.tasted_at,
+      };
+    });
+
     try {
       // If not in queue, add it first
       if (!progress) {
         await addToLearningQueue(substanceId);
       }
       await recordSensoryExperience(substanceId, type);
-      await fetchData();
       toast.success(
         type === "smell"
           ? t("smelledRecorded") || "Smelled recorded!"
@@ -118,18 +154,36 @@ export default function SubstanceStudyPage() {
     } catch (error) {
       console.error("Failed to record sensory experience:", error);
       toast.error(t("errorRecording") || "Failed to record");
+      // Revert optimistic update on error
+      await fetchData();
     }
   };
 
   const handleStatusChange = async (newStatus: string) => {
+    const previousStatus = progress?.status;
+
+    // Optimistic update
+    setProgress((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        status: newStatus as SubstanceLearningProgress["status"],
+        mastered_at: newStatus === "mastered" ? new Date().toISOString() : prev.mastered_at,
+      };
+    });
+
     try {
       await updateProgressStatus(substanceId, newStatus);
-      await fetchData();
       toast.success(t("statusUpdated") || "Status updated!");
     } catch (error) {
       console.error("Failed to update status:", error);
       const message = error instanceof Error ? error.message : "Failed to update status";
       toast.error(message);
+      // Revert optimistic update on error
+      setProgress((prev) => {
+        if (!prev) return prev;
+        return { ...prev, status: previousStatus as SubstanceLearningProgress["status"] };
+      });
     }
   };
 

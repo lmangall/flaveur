@@ -6,9 +6,10 @@ import { PartyPopper, FlaskConical, BookOpen, Users } from "lucide-react";
 
 interface OnboardingCompleteProps {
   onFinish: () => void;
+  isLoading?: boolean;
 }
 
-export function OnboardingComplete({ onFinish }: OnboardingCompleteProps) {
+export function OnboardingComplete({ onFinish, isLoading }: OnboardingCompleteProps) {
   const t = useTranslations("Onboarding");
 
   const suggestions = [
@@ -40,7 +41,7 @@ export function OnboardingComplete({ onFinish }: OnboardingCompleteProps) {
         })}
       </ul>
 
-      <Button onClick={onFinish} className="w-full mt-4">
+      <Button onClick={onFinish} disabled={isLoading} className="w-full mt-4">
         {t("finish")}
       </Button>
     </div>

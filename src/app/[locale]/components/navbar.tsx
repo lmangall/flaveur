@@ -33,6 +33,7 @@ const publicRoutes = [
   { href: "/samples", label: "samples", protected: false },
   { href: "/jobs", label: "jobs", protected: false },
   { href: "/about", label: "about", protected: false },
+  { href: "/faq", label: "faq", protected: false },
 ];
 
 // Protected routes (shown with lock icon when logged out)
@@ -77,7 +78,7 @@ export default function Navbar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b">
       <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
-        <Link href={`/${locale}`} className="flex items-center space-x-2">
+        <Link href={`/${locale}`} className="flex items-center gap-1">
           <div className="relative h-12 w-12">
             <Image
               src="/logo_transparent_bg_tiny.png"
@@ -207,10 +208,10 @@ export default function Navbar() {
             <SheetContent side="left" className="pr-0">
               <Link
                 href={`/${locale}`}
-                className="flex items-center mb-6"
+                className="flex items-center gap-1 mb-6"
                 onClick={() => setIsOpen(false)}
               >
-                <div className="relative h-10 w-10 mr-2">
+                <div className="relative h-10 w-10">
                   <Image
                     src="/logo_transparent_bg_tiny.png"
                     alt="Flaveur Logo"

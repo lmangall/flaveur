@@ -1,13 +1,29 @@
-// Demo user for sample flavors
-// This user owns all sample/example flavors that are shown in /samples
+// Demo users for sample flavors and testing
+// These users own sample/example flavors shown in /samples
+// Must match the users created by scripts/seed-demo-users.ts
 
-export const DEMO_USER = {
-  user_id: "demo_arthur_dent",
-  email: "arthur.dent@example.com",
-  username: "Arthur Dent",
-} as const;
+export const DEMO_USERS = [
+  {
+    user_id: "demo_arthur_dent",
+    email: "arthur.dent@example.com",
+    username: "Arthur Dent",
+  },
+  {
+    user_id: "demo_ford_prefect",
+    email: "ford.prefect@example.com",
+    username: "Ford Prefect",
+  },
+  {
+    user_id: "demo_trillian",
+    email: "trillian@example.com",
+    username: "Trillian",
+  },
+] as const;
 
-export type DemoUserId = typeof DEMO_USER.user_id;
+// Primary demo user (for backwards compatibility)
+export const DEMO_USER = DEMO_USERS[0];
+
+export type DemoUserId = (typeof DEMO_USERS)[number]["user_id"];
 
 export const isDemoUser = (userId: string): boolean =>
-  userId === DEMO_USER.user_id;
+  DEMO_USERS.some((u) => u.user_id === userId);

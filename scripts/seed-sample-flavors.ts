@@ -3,6 +3,7 @@
  *
  * This script creates the demo user and duplicates specified flavors as samples.
  * The samples will be visible on the /samples page for all users.
+ * NOTE: Prefer using seed-demo-users.ts which creates demo users with full profiles.
  *
  * Usage:
  *   npx tsx scripts/seed-sample-flavors.ts --flavour-ids=1,2,3
@@ -26,6 +27,7 @@ import { join } from "path";
 // Load environment variables from .env.local
 config({ path: join(__dirname, "../.env.local") });
 
+// Use the same demo user as seed-demo-users.ts for consistency
 const DEMO_USER = {
   user_id: "demo_arthur_dent",
   email: "arthur.dent@example.com",

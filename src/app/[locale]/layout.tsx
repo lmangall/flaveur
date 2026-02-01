@@ -10,6 +10,7 @@ import { cn } from "src/app/lib/utils";
 import { getLocale } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";
+import { ImpersonateToolbar } from "@/components/dev/impersonate-toolbar";
 
 export const fontSans = FontSans({
   subsets: ["latin"],
@@ -147,6 +148,7 @@ export default async function RootLayout({
                 <OnboardingCheck />
                 {children}
                 <Toaster />
+                {process.env.NODE_ENV === "development" && <ImpersonateToolbar />}
               </ConfettiProvider>
             </NextIntlClientProvider>
           </ThemeProvider>

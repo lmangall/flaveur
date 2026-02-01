@@ -44,16 +44,16 @@ function SourceBadge({ flavour }: { flavour: FlavourWithAccess }) {
   }
 }
 
-const getStatusBadgeClasses = (status: string) => {
+const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case "published":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      return "success" as const;
     case "draft":
-      return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200";
+      return "warning" as const;
     case "archived":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200";
+      return "secondary" as const;
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200";
+      return "secondary" as const;
   }
 };
 
@@ -86,7 +86,7 @@ export function FlavourCardStack({ group, translations, onDuplicate, onDelete }:
   const flavour = group.mainFlavour;
 
   return (
-    <Card className="w-full">
+    <Card hover glow className="w-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">
@@ -169,9 +169,9 @@ export function FlavourCardStack({ group, translations, onDuplicate, onDelete }:
         <div className="space-y-2">
           <p className="text-sm">{flavour.description || translations.noDescription}</p>
           <div className="flex gap-2 flex-wrap">
-            <span className={`px-2 py-1 rounded text-xs ${getStatusBadgeClasses(flavour.status || "draft")}`}>
+            <Badge variant={getStatusBadgeVariant(flavour.status || "draft")}>
               {(flavour.status || "draft").charAt(0).toUpperCase() + (flavour.status || "draft").slice(1)}
-            </span>
+            </Badge>
             <Badge variant="outline">{flavour.is_public ? translations.public : translations.private}</Badge>
           </div>
         </div>

@@ -82,10 +82,11 @@ import { useTranslations } from "next-intl";
 import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 import { useSetBreadcrumbLabel } from "@/app/[locale]/components/layout/Breadcrumbs";
 
+// Status options - labels will be translated in component
 const STATUS_OPTIONS = [
-  { value: "draft", label: "Draft", className: "bg-amber-100 text-amber-800" },
-  { value: "published", label: "Published", className: "bg-green-100 text-green-800" },
-  { value: "archived", label: "Archived", className: "bg-gray-100 text-gray-800" },
+  { value: "draft", labelKey: "draft", className: "bg-amber-100 text-amber-800" },
+  { value: "published", labelKey: "published", className: "bg-green-100 text-green-800" },
+  { value: "archived", labelKey: "archived", className: "bg-gray-100 text-gray-800" },
 ] as const;
 
 type StatusValue = (typeof STATUS_OPTIONS)[number]["value"];
@@ -110,9 +111,20 @@ interface FlavorProfileChartProps {
   flavourId: number;
   initialProfile: FlavorProfileAttribute[] | null;
   readOnly?: boolean;
+  translations: {
+    addAttribute: string;
+    newAttributeName: string;
+    add: string;
+    cancel: string;
+    saving: string;
+    saveProfile: string;
+    minimumAttributes: string;
+    flavorProfileSaved: string;
+    failedToSaveProfile: string;
+  };
 }
 
-function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: FlavorProfileChartProps) {
+function FlavorProfileChart({ flavourId, initialProfile, readOnly = false, translations }: FlavorProfileChartProps) {
   const [profile, setProfile] = useState<FlavorProfileAttribute[]>(
     initialProfile && initialProfile.length > 0 ? initialProfile : DEFAULT_FLAVOR_PROFILE
   );
@@ -149,7 +161,7 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: Fla
       setProfile((prev) => prev.filter((_, i) => i !== index));
       setHasChanges(true);
     } else {
-      toast.error("Minimum 3 attributes required");
+      toast.error(translations.minimumAttributes);
     }
   };
 
@@ -157,11 +169,11 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: Fla
     setIsSaving(true);
     try {
       await updateFlavorProfile(flavourId, profile);
-      toast.success("Flavor profile saved");
+      toast.success(translations.flavorProfileSaved);
       setHasChanges(false);
     } catch (error) {
       console.error("Error saving flavor profile:", error);
-      toast.error("Failed to save flavor profile");
+      toast.error(translations.failedToSaveProfile);
     } finally {
       setIsSaving(false);
     }
@@ -235,12 +247,12 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: Fla
                   <Input
                     value={newAttribute}
                     onChange={(e) => setNewAttribute(e.target.value)}
-                    placeholder="New attribute name"
+                    placeholder={translations.newAttributeName}
                     className="flex-1 h-8"
                     onKeyDown={(e) => e.key === "Enter" && handleAddAttribute()}
                   />
                   <Button size="sm" onClick={handleAddAttribute}>
-                    Add
+                    {translations.add}
                   </Button>
                   <Button
                     size="sm"
@@ -250,7 +262,7 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: Fla
                       setNewAttribute("");
                     }}
                   >
-                    Cancel
+                    {translations.cancel}
                   </Button>
                 </div>
               ) : (
@@ -261,7 +273,7 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: Fla
                   className="mt-2"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Attribute
+                  {translations.addAttribute}
                 </Button>
               )}
             </>
@@ -274,7 +286,7 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false }: Fla
         <div className="flex justify-end pt-2 border-t">
           <Button onClick={handleSave} disabled={isSaving}>
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : "Save Profile"}
+            {isSaving ? translations.saving : translations.saveProfile}
           </Button>
         </div>
       )}
@@ -294,6 +306,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("Sharing");
+  const tFlavour = useTranslations("FlavourDetail");
   const [currentStatus, setCurrentStatus] = useState<StatusValue>(
     (flavor.status as StatusValue) || "draft"
   );
@@ -338,18 +351,18 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
 
   // All possible columns for the dropdown
   const allColumns = [
-    { key: "fema_number", label: "FEMA #" },
-    { key: "common_name", label: "Common Name" },
-    { key: "concentration", label: "Concentration" },
-    { key: "is_natural", label: "Natural/Synthetic" },
-    { key: "odor", label: "Odor" },
-    { key: "olfactory_taste_notes", label: "Odor Notes" },
-    { key: "functional_groups", label: "Functional Groups" },
-    { key: "flavor_profile", label: "Flavor Profile" },
-    { key: "cas_number", label: "CAS Number" },
-    { key: "supplier", label: "Supplier" },
-    { key: "dilution", label: "Dilution" },
-    { key: "price_per_kg", label: "Price/Kg" },
+    { key: "fema_number", label: tFlavour("femaNumber") },
+    { key: "common_name", label: tFlavour("commonName") },
+    { key: "concentration", label: tFlavour("concentration") },
+    { key: "is_natural", label: tFlavour("naturalSynthetic") },
+    { key: "odor", label: tFlavour("odor") },
+    { key: "olfactory_taste_notes", label: tFlavour("odorNotes") },
+    { key: "functional_groups", label: tFlavour("functionalGroups") },
+    { key: "flavor_profile", label: tFlavour("flavorProfileColumn") },
+    { key: "cas_number", label: tFlavour("casNumber") },
+    { key: "supplier", label: tFlavour("supplier") },
+    { key: "dilution", label: tFlavour("dilution") },
+    { key: "price_per_kg", label: tFlavour("pricePerKg") },
   ];
 
   // Toggle column visibility
@@ -696,10 +709,10 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
       // Close variations panel
       setVariationsSubstanceId(null);
       setSubstanceVariations([]);
-      toast.success(`Swapped to ${newSubstance.common_name}`);
+      toast.success(tFlavour("swappedTo", { name: newSubstance.common_name }));
     } catch (error) {
       console.error("Error swapping substance:", error);
-      toast.error("Failed to swap substance");
+      toast.error(tFlavour("failedToSwap"));
     }
   };
 
@@ -726,11 +739,11 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
     setIsDuplicating(true);
     try {
       const newFlavour = await duplicateFlavour(flavor.flavour_id);
-      toast.success("Flavour duplicated");
+      toast.success(tFlavour("flavourDuplicated"));
       router.push(`/${locale}/flavours/${newFlavour.flavour_id}`);
     } catch (error) {
       console.error("Error duplicating flavour:", error);
-      toast.error("Failed to duplicate flavour");
+      toast.error(tFlavour("failedToDuplicate"));
     } finally {
       setIsDuplicating(false);
     }
@@ -740,11 +753,11 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
     setIsDeleting(true);
     try {
       await deleteFlavour(flavor.flavour_id);
-      toast.success("Flavour deleted");
+      toast.success(tFlavour("flavourDeleted"));
       router.push(`/${locale}/flavours`);
     } catch (error) {
       console.error("Error deleting flavour:", error);
-      toast.error("Failed to delete flavour");
+      toast.error(tFlavour("failedToDelete"));
     } finally {
       setIsDeleting(false);
     }
@@ -775,7 +788,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
           <Button variant="outline" size="sm" asChild>
             <Link href={`/${locale}/flavours/${flavor.flavour_id}/compliance`}>
               <Shield className="h-4 w-4 mr-2" />
-              Check EU Compliance
+              {tFlavour("checkEuCompliance")}
             </Link>
           </Button>
           {/* Owner-only actions */}
@@ -788,7 +801,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/${locale}/flavours/${flavor.flavour_id}/edit`}>
                   <Pencil className="h-4 w-4 mr-2" />
-                  Edit
+                  {tFlavour("edit")}
                 </Link>
               </Button>
               <Button
@@ -798,30 +811,30 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                 disabled={isDuplicating}
               >
                 <Copy className="h-4 w-4 mr-2" />
-                {isDuplicating ? "Duplicating..." : "Duplicate"}
+                {isDuplicating ? tFlavour("duplicating") : tFlavour("duplicate")}
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                    {tFlavour("delete")}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Flavour</AlertDialogTitle>
+                    <AlertDialogTitle>{tFlavour("deleteFlavour")}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete &quot;{flavor.name}&quot;? This action cannot be undone.
+                      {tFlavour("deleteConfirmation", { name: flavor.name })}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{tFlavour("cancel")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
                       disabled={isDeleting}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {isDeleting ? "Deleting..." : "Delete"}
+                      {isDeleting ? tFlavour("deleting") : tFlavour("delete")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -863,14 +876,14 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
               {STATUS_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   <span className={`px-1 py-0.5 rounded ${option.className}`}>
-                    {option.label}
+                    {tFlavour(option.labelKey)}
                   </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Badge variant="outline">
-            {flavor.is_public ? "Public" : "Private"}
+            {flavor.is_public ? tFlavour("public") : tFlavour("private")}
           </Badge>
           {flavor.version !== null && (
             <Badge variant="outline">v{flavor.version}</Badge>
@@ -883,35 +896,35 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
 
       <Card>
         <CardHeader>
-          <CardTitle>Flavor Details</CardTitle>
+          <CardTitle>{tFlavour("flavorDetails")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div>
-                <span className="font-medium">Created:</span>{" "}
+                <span className="font-medium">{tFlavour("created")}:</span>{" "}
                 {new Date(flavor.created_at).toLocaleString()}
               </div>
               <div>
-                <span className="font-medium">Last Updated:</span>{" "}
+                <span className="font-medium">{tFlavour("lastUpdated")}:</span>{" "}
                 {new Date(flavor.updated_at).toLocaleString()}
               </div>
               <div>
-                <span className="font-medium">User ID:</span> {flavor.user_id}
+                <span className="font-medium">{tFlavour("userId")}:</span> {flavor.user_id}
               </div>
             </div>
             <div className="space-y-2">
               <div>
-                <span className="font-medium">Category:</span>{" "}
-                {categoryName || (flavor.category_id ? "Loading..." : "None")}
+                <span className="font-medium">{tFlavour("category")}:</span>{" "}
+                {categoryName || (flavor.category_id ? tFlavour("loading") : tFlavour("none"))}
               </div>
               <div>
-                <span className="font-medium">Base Unit:</span>{" "}
-                {flavor.base_unit || "None"}
+                <span className="font-medium">{tFlavour("baseUnit")}:</span>{" "}
+                {flavor.base_unit || tFlavour("none")}
               </div>
               <div>
-                <span className="font-medium">Version:</span>{" "}
-                {flavor.version !== null ? `v${flavor.version}` : "None"}
+                <span className="font-medium">{tFlavour("version")}:</span>{" "}
+                {flavor.version !== null ? `v${flavor.version}` : tFlavour("none")}
               </div>
             </div>
           </div>
@@ -920,20 +933,31 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
 
       <Card>
         <CardHeader>
-          <CardTitle>Flavor Profile</CardTitle>
+          <CardTitle>{tFlavour("flavorProfile")}</CardTitle>
         </CardHeader>
         <CardContent>
           <FlavorProfileChart
             flavourId={flavor.flavour_id}
             initialProfile={flavor.flavor_profile}
             readOnly={!isOwner}
+            translations={{
+              addAttribute: tFlavour("addAttribute"),
+              newAttributeName: tFlavour("newAttributeName"),
+              add: tFlavour("add"),
+              cancel: tFlavour("cancel"),
+              saving: tFlavour("saving"),
+              saveProfile: tFlavour("saveProfile"),
+              minimumAttributes: tFlavour("minimumAttributes"),
+              flavorProfileSaved: tFlavour("flavorProfileSaved"),
+              failedToSaveProfile: tFlavour("failedToSaveProfile"),
+            }}
           />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Substances ({flavor.substances?.length || 0})</CardTitle>
+          <CardTitle>{tFlavour("substances")} ({flavor.substances?.length || 0})</CardTitle>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -942,7 +966,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
               className="flex items-center gap-1"
             >
               <Eye className="h-4 w-4" />
-              <span className="hidden sm:inline">Show All</span>
+              <span className="hidden sm:inline">{tFlavour("showAll")}</span>
             </Button>
             <Button
               variant="outline"
@@ -951,16 +975,16 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
               className="flex items-center gap-1"
             >
               <EyeOff className="h-4 w-4" />
-              <span className="hidden sm:inline">Hide Optional</span>
+              <span className="hidden sm:inline">{tFlavour("hideOptional")}</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="ml-auto">
-                  Columns <ChevronDown className="ml-2 h-4 w-4" />
+                  {tFlavour("columns")} <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                <DropdownMenuLabel>{tFlavour("toggleColumns")}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {allColumns.map((column) => (
                   <DropdownMenuCheckboxItem
@@ -978,7 +1002,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
         <CardContent>
           {(!flavor.substances || flavor.substances.length === 0) && !isOwner ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>No substances added to this flavor yet.</p>
+              <p>{tFlavour("noSubstancesYet")}</p>
             </div>
           ) : (
             <TooltipProvider>
@@ -998,8 +1022,8 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                                   </TooltipTrigger>
                                   <TooltipContent side="top" className="max-w-xs text-left">
-                                    <p className="font-medium">How much goes into YOUR formula</p>
-                                    <p className="text-xs mt-1">Example: &quot;Use 0.5% of Vanillin in this strawberry flavor&quot;</p>
+                                    <p className="font-medium">{tFlavour("concentrationTooltipTitle")}</p>
+                                    <p className="text-xs mt-1">{tFlavour("concentrationTooltipDesc")}</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </div>
@@ -1011,8 +1035,8 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                                   </TooltipTrigger>
                                   <TooltipContent side="top" className="max-w-xs text-left">
-                                    <p className="font-medium">How the raw material is sold by the supplier</p>
-                                    <p className="text-xs mt-1">Example: &quot;10% in DPG&quot; means 10% active dissolved in 90% dipropylene glycol</p>
+                                    <p className="font-medium">{tFlavour("dilutionTooltipTitle")}</p>
+                                    <p className="text-xs mt-1">{tFlavour("dilutionTooltipDesc")}</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </div>
@@ -1022,7 +1046,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                           </TableHead>
                         )
                     )}
-                    {isOwner && <TableHead className="text-right">Actions</TableHead>}
+                    {isOwner && <TableHead className="text-right">{tFlavour("actions")}</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1084,10 +1108,10 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                             }
                           >
                             {substance.substance?.is_natural === true
-                              ? "Natural"
+                              ? tFlavour("natural")
                               : substance.substance?.is_natural === false
-                              ? "Synthetic"
-                              : "Unknown"}
+                              ? tFlavour("synthetic")
+                              : tFlavour("unknown")}
                           </Badge>
                         </TableCell>
                       )}
@@ -1124,7 +1148,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                               className="w-full px-2 py-1 border rounded text-sm bg-background"
                               value={editSupplier}
                               onChange={(e) => setEditSupplier(e.target.value)}
-                              placeholder="Supplier"
+                              placeholder={tFlavour("supplier")}
                             />
                           ) : (
                             substance.supplier || "-"
@@ -1139,7 +1163,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                               className="w-full px-2 py-1 border rounded text-sm bg-background"
                               value={editDilution}
                               onChange={(e) => setEditDilution(e.target.value)}
-                              placeholder="e.g. 10% in DPG"
+                              placeholder={tFlavour("dilutionPlaceholder")}
                             />
                           ) : (
                             substance.dilution || "-"
@@ -1154,7 +1178,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                               className="w-20 px-2 py-1 border rounded text-sm bg-background"
                               value={editPricePerKg}
                               onChange={(e) => setEditPricePerKg(e.target.value)}
-                              placeholder="€/kg"
+                              placeholder={tFlavour("pricePlaceholder")}
                             />
                           ) : (
                             substance.price_per_kg != null ? `€${substance.price_per_kg.toFixed(2)}` : "-"
@@ -1169,7 +1193,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleSaveSubstance(substance.substance_id)}
-                                title="Save"
+                                title={tFlavour("save")}
                               >
                                 <Check className="h-4 w-4 text-green-600" />
                               </Button>
@@ -1177,7 +1201,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                                 variant="ghost"
                                 size="icon"
                                 onClick={cancelEditingSubstance}
-                                title="Cancel"
+                                title={tFlavour("cancel")}
                               >
                                 <X className="h-4 w-4 text-muted-foreground" />
                               </Button>
@@ -1190,21 +1214,21 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuLabel>{tFlavour("actions")}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <button
                                   className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-muted rounded cursor-pointer"
                                   onClick={() => startEditingSubstance(substance)}
                                 >
                                   <Pencil className="h-4 w-4" />
-                                  Edit
+                                  {tFlavour("edit")}
                                 </button>
                                 <button
                                   className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-muted rounded cursor-pointer"
                                   onClick={() => handleLoadVariations(substance.substance_id)}
                                 >
                                   <RefreshCw className="h-4 w-4" />
-                                  Variations
+                                  {tFlavour("variations")}
                                   {variationsSubstanceId === substance.substance_id && (
                                     <span className="ml-auto text-xs text-muted-foreground">✓</span>
                                   )}
@@ -1215,7 +1239,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                                   onClick={() => handleRemoveSubstance(substance.substance_id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
-                                  Delete
+                                  {tFlavour("delete")}
                                 </button>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -1230,7 +1254,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
                               <RefreshCw className="h-4 w-4" />
-                              Suggested Variations for {substance.substance?.common_name}
+                              {tFlavour("suggestedVariations", { name: substance.substance?.common_name || "" })}
                               <button
                                 className="ml-auto text-muted-foreground hover:text-foreground"
                                 onClick={() => {
@@ -1244,11 +1268,11 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                             {variationsLoading ? (
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                Loading variations...
+                                {tFlavour("loadingVariations")}
                               </div>
                             ) : substanceVariations.length === 0 ? (
                               <div className="text-sm text-muted-foreground">
-                                No variations found for this substance.
+                                {tFlavour("noVariationsFound")}
                               </div>
                             ) : (
                               <div className="flex flex-wrap gap-2">
@@ -1277,11 +1301,11 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                       {visibleColumns.fema_number && (
                         <TableCell>
                           {selectedSubstance ? (
-                            <span className="text-sm font-medium">{selectedSubstance.fema_number || "N/A"}</span>
+                            <span className="text-sm font-medium">{selectedSubstance.fema_number || tFlavour("na")}</span>
                           ) : (
                             <input
                               type="text"
-                              placeholder="FEMA #"
+                              placeholder={tFlavour("femaNumber")}
                               className="w-full px-2 py-1 border rounded text-sm bg-background"
                               value={femaNumberToAdd}
                               onChange={(e) => setfemaNumberToAdd(e.target.value)}
@@ -1309,7 +1333,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                             <>
                               <input
                                 type="text"
-                                placeholder="Search name..."
+                                placeholder={tFlavour("searchName")}
                                 className="w-full px-2 py-1 border rounded text-sm bg-background"
                                 value={activeSearchField === "common_name" ? searchQuery : ""}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1358,7 +1382,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                             <>
                               <input
                                 type="text"
-                                placeholder="Search odor..."
+                                placeholder={tFlavour("searchOdor")}
                                 className="w-full px-2 py-1 border rounded text-sm bg-background"
                                 value={activeSearchField === "odor" ? searchQuery : ""}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1377,7 +1401,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                             <>
                               <input
                                 type="text"
-                                placeholder="Search notes..."
+                                placeholder={tFlavour("searchNotes")}
                                 className="w-full px-2 py-1 border rounded text-sm bg-background"
                                 value={activeSearchField === "olfactory_taste_notes" ? searchQuery : ""}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1401,7 +1425,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                             <>
                               <input
                                 type="text"
-                                placeholder="Search flavor..."
+                                placeholder={tFlavour("searchFlavor")}
                                 className="w-full px-2 py-1 border rounded text-sm bg-background"
                                 value={activeSearchField === "flavor_profile" ? searchQuery : ""}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1420,7 +1444,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                             <>
                               <input
                                 type="text"
-                                placeholder="Search CAS..."
+                                placeholder={tFlavour("searchCas")}
                                 className="w-full px-2 py-1 border rounded text-sm bg-background"
                                 value={activeSearchField === "cas_number" ? searchQuery : ""}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1435,7 +1459,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                         <TableCell>
                           <input
                             type="text"
-                            placeholder="Supplier"
+                            placeholder={tFlavour("supplier")}
                             className="w-full px-2 py-1 border rounded text-sm bg-background"
                             value={supplier}
                             onChange={(e) => setSupplier(e.target.value)}
@@ -1446,7 +1470,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                         <TableCell>
                           <input
                             type="text"
-                            placeholder="e.g. 10% in DPG"
+                            placeholder={tFlavour("dilutionPlaceholder")}
                             className="w-full px-2 py-1 border rounded text-sm bg-background"
                             value={dilution}
                             onChange={(e) => setDilution(e.target.value)}
@@ -1457,7 +1481,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                         <TableCell>
                           <input
                             type="text"
-                            placeholder="€/kg"
+                            placeholder={tFlavour("pricePlaceholder")}
                             className="w-20 px-2 py-1 border rounded text-sm bg-background"
                             value={pricePerKg}
                             onChange={(e) => setPricePerKg(e.target.value)}
@@ -1475,10 +1499,10 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                               ? "text-muted-foreground"
                               : "text-green-600 hover:text-green-700 hover:bg-green-50"
                           }`}
-                          title={!femaNumberToAdd ? "Select a substance first" : "Add substance"}
+                          title={!femaNumberToAdd ? tFlavour("selectSubstanceFirst") : tFlavour("addSubstance")}
                         >
                           <Plus className="h-4 w-4 mr-1" />
-                          Add
+                          {tFlavour("add")}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -1532,7 +1556,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                           <TableCell className="text-muted-foreground">—</TableCell>
                         )}
                         <TableCell className="text-right text-xs text-muted-foreground">
-                          Click to select
+                          {tFlavour("clickToSelect")}
                         </TableCell>
                       </TableRow>
                     ))
@@ -1540,7 +1564,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                   {isOwner && showSearchResults && searchQuery.length >= 2 && searchResults.length === 0 && !isSearching && (
                     <TableRow className="bg-muted/20">
                       <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="text-center text-sm text-muted-foreground py-4">
-                        No substances found for &quot;{searchQuery}&quot;
+                        {tFlavour("noSubstancesFound", { query: searchQuery })}
                       </TableCell>
                     </TableRow>
                   )}
@@ -1549,7 +1573,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                       <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="text-center text-sm text-muted-foreground py-4">
                         <div className="flex items-center justify-center gap-2">
                           <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                          Searching...
+                          {tFlavour("searching")}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1581,6 +1605,7 @@ export default function FlavorDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { fire: fireConfetti } = useConfetti();
+  const tFlavour = useTranslations("FlavourDetail");
   const flavorId = parseInt(params.id as string, 10);
   const [flavor, setFlavor] = useState<Flavour | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -1604,7 +1629,7 @@ export default function FlavorDetailPage() {
   useEffect(() => {
     async function fetchFlavorData() {
       if (isNaN(flavorId)) {
-        setError("Invalid flavor ID");
+        setError(tFlavour("invalidFlavorId"));
         setIsLoading(false);
         return;
       }
@@ -1616,7 +1641,7 @@ export default function FlavorDetailPage() {
         // Transform the data to match your frontend expectations
         const transformedData = {
           flavour_id: Number(data.flavour.flavour_id),
-          name: data.flavour.name || "Unnamed Flavor",
+          name: data.flavour.name || tFlavour("unnamedFlavor"),
           description: data.flavour.description || "",
           // Transform substances to match the expected nested structure
           substances: Array.isArray(data.substances)
@@ -1655,7 +1680,7 @@ export default function FlavorDetailPage() {
         setError(null);
       } catch (err) {
         console.error("Error fetching flavor:", err);
-        setError("Failed to load flavor data");
+        setError(tFlavour("failedToLoadFlavor"));
       } finally {
         setIsLoading(false);
       }
@@ -1669,10 +1694,10 @@ export default function FlavorDetailPage() {
       <div className="container py-8">
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <h2 className="text-xl font-semibold mb-2">Error</h2>
+            <h2 className="text-xl font-semibold mb-2">{tFlavour("error")}</h2>
             <p className="text-muted-foreground">{error}</p>
             <Button className="mt-4" onClick={() => window.history.back()}>
-              Go Back
+              {tFlavour("goBack")}
             </Button>
           </CardContent>
         </Card>
@@ -1689,12 +1714,12 @@ export default function FlavorDetailPage() {
       <div className="container py-8">
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <h2 className="text-xl font-semibold mb-2">Flavor not found</h2>
+            <h2 className="text-xl font-semibold mb-2">{tFlavour("flavorNotFound")}</h2>
             <p className="text-muted-foreground">
-              The flavor you are looking for does not exist or has been removed.
+              {tFlavour("flavorNotFoundDesc")}
             </p>
             <Button className="mt-4" onClick={() => window.history.back()}>
-              Go Back
+              {tFlavour("goBack")}
             </Button>
           </CardContent>
         </Card>

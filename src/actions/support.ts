@@ -64,37 +64,67 @@ const guestEmailSchema = z.object({
 // USER/GUEST ACTIONS
 // ============================================
 
-export async function getOrCreateConversation(input?: { guestEmail?: string }) {
-  const session = await getSession();
+export async function getOrCreateConversation(input?: { guestEmail?: string }): Promise<
+  | { success: true; conversationId: number; guestSessionId: string | null; messages: SupportMessage[] }
+  | { success: false; error: string }
+> {
+  try {
+    const session = await getSession();
 
-  if (session?.user) {
-    // Authenticated user - find or create conversation
-    const existing = await db
-      .select()
-      .from(support_conversation)
-      .where(
-        and(
-          eq(support_conversation.user_id, session.user.id),
-          eq(support_conversation.status, "open")
+    if (session?.user) {
+      // Authenticated user - find or create conversation
+      const existing = await db
+        .select()
+        .from(support_conversation)
+        .where(
+          and(
+            eq(support_conversation.user_id, session.user.id),
+            eq(support_conversation.status, "open")
+          )
         )
-      )
-      .limit(1);
+        .limit(1);
 
-    if (existing.length > 0) {
-      const messages = await getConversationMessages(existing[0].conversation_id);
+      if (existing.length > 0) {
+        const messages = await getConversationMessages(existing[0].conversation_id);
+        return {
+          success: true,
+          conversationId: existing[0].conversation_id,
+          guestSessionId: null,
+          messages,
+        };
+      }
+
+      // Create new conversation
+      const [newConv] = await db
+        .insert(support_conversation)
+        .values({
+          user_id: session.user.id,
+          status: "open",
+        })
+        .returning();
+
       return {
         success: true,
-        conversationId: existing[0].conversation_id,
+        conversationId: newConv.conversation_id,
         guestSessionId: null,
-        messages,
+        messages: [],
       };
     }
 
-    // Create new conversation
+    // Guest user - email is optional
+    let guestEmail: string | null = null;
+    if (input?.guestEmail) {
+      const validated = guestEmailSchema.safeParse(input);
+      if (validated.success) {
+        guestEmail = validated.data.guestEmail.toLowerCase().trim();
+      }
+    }
+
+    // Create new guest conversation
     const [newConv] = await db
       .insert(support_conversation)
       .values({
-        user_id: session.user.id,
+        guest_email: guestEmail,
         status: "open",
       })
       .returning();
@@ -102,35 +132,13 @@ export async function getOrCreateConversation(input?: { guestEmail?: string }) {
     return {
       success: true,
       conversationId: newConv.conversation_id,
-      guestSessionId: null,
+      guestSessionId: newConv.guest_session_id,
       messages: [],
     };
+  } catch (error) {
+    console.error("[getOrCreateConversation] Error:", error);
+    return { success: false, error: "Failed to create conversation" };
   }
-
-  // Guest user - email is optional
-  let guestEmail: string | null = null;
-  if (input?.guestEmail) {
-    const validated = guestEmailSchema.safeParse(input);
-    if (validated.success) {
-      guestEmail = validated.data.guestEmail.toLowerCase().trim();
-    }
-  }
-
-  // Create new guest conversation
-  const [newConv] = await db
-    .insert(support_conversation)
-    .values({
-      guest_email: guestEmail,
-      status: "open",
-    })
-    .returning();
-
-  return {
-    success: true,
-    conversationId: newConv.conversation_id,
-    guestSessionId: newConv.guest_session_id,
-    messages: [],
-  };
 }
 
 export async function getConversationByGuestSession(sessionId: string) {

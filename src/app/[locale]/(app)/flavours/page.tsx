@@ -228,7 +228,7 @@ function FlavourCard({ flavour, translations, onDuplicate, onDelete }: FlavourCa
   };
 
   return (
-    <Card className="w-full">
+    <Card hover glow className="w-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">
@@ -256,14 +256,10 @@ function FlavourCard({ flavour, translations, onDuplicate, onDelete }: FlavourCa
           <div className="space-y-2">
             <p className="text-sm">{flavour.description || translations.noDescription}</p>
             <div className="flex gap-2 flex-wrap">
-              <span
-                className={`px-2 py-1 rounded text-xs ${getStatusBadgeClasses(
-                  flavour.status || "draft"
-                )}`}
-              >
+              <Badge variant={getStatusBadgeVariant(flavour.status || "draft")}>
                 {(flavour.status || "draft").charAt(0).toUpperCase() +
                   (flavour.status || "draft").slice(1)}
-              </span>
+              </Badge>
               <Badge variant="outline">
                 {flavour.is_public ? translations.public : translations.private}
               </Badge>
@@ -317,16 +313,16 @@ function FlavourCard({ flavour, translations, onDuplicate, onDelete }: FlavourCa
   );
 }
 
-const getStatusBadgeClasses = (status: string) => {
+const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case "published":
-      return "bg-green-100 text-green-800";
+      return "success" as const;
     case "draft":
-      return "bg-amber-100 text-amber-800";
+      return "warning" as const;
     case "archived":
-      return "bg-gray-100 text-gray-800";
+      return "secondary" as const;
     default:
-      return "bg-gray-100 text-gray-800";
+      return "secondary" as const;
   }
 };
 
@@ -524,7 +520,7 @@ export default function FlavoursPage() {
         </div>
       ) : groupedFlavours.length > 0 ? (
         viewMode === "grid" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
             {groupedFlavours.map((group) => (
               <FlavourCardStack
                 key={group.groupId ?? group.mainFlavour.flavour_id}

@@ -3,7 +3,7 @@
 import { sql } from "@/lib/db";
 
 export async function getSubstances(page: number = 1) {
-  const limit = 10;
+  const limit = 20;
   const offset = (page - 1) * limit;
 
   const result = await sql`
@@ -17,7 +17,7 @@ export async function searchSubstances(
   query: string,
   category: string = "all",
   page: number = 1,
-  limit: number = 10
+  limit: number = 20
 ) {
   if (!query) {
     throw new Error("Search query is required");

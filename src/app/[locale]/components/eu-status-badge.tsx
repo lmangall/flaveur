@@ -69,7 +69,7 @@ export function EUStatusBadge({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant="secondary" className="gap-1 cursor-help">
+            <Badge variant="outline" className="gap-1 cursor-help">
               <HelpCircle className="h-3 w-3" />
               {!compact && "EU: "}Unknown
             </Badge>

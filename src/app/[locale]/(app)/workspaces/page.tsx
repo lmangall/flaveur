@@ -72,7 +72,7 @@ function getRoleBadge(role: WorkspaceRoleValue) {
 
 function WorkspaceCard({ workspace }: { workspace: WorkspaceWithRole }) {
   return (
-    <Card>
+    <Card hover glow>
       <CardHeader>
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg">
@@ -195,7 +195,7 @@ export default function WorkspacesPage() {
           <WorkspaceCardSkeleton />
         </div>
       ) : workspaces.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
           {workspaces.map((workspace) => (
             <WorkspaceCard key={workspace.workspace_id} workspace={workspace} />
           ))}

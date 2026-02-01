@@ -137,7 +137,7 @@ export default function SubstancesPage() {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [addingToQueueId, setAddingToQueueId] = useState<number | null>(null);
 
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 20;
 
   const fetchSubstancesData = useCallback(async () => {
     setIsLoading(true);
@@ -589,13 +589,13 @@ export default function SubstancesPage() {
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           {viewDetailsSubstance.is_natural && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Natural</span>
+                            <Badge variant="success">Natural</Badge>
                           )}
                           {viewDetailsSubstance.synthetic && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">Synthetic</span>
+                            <Badge variant="secondary">Synthetic</Badge>
                           )}
                           {viewDetailsSubstance.type && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">{viewDetailsSubstance.type}</span>
+                            <Badge variant="info">{viewDetailsSubstance.type}</Badge>
                           )}
                         </div>
                       </div>

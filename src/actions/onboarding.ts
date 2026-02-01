@@ -25,21 +25,27 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResult> {
     return { needsOnboarding: false, status: null };
   }
 
-  const profile = await db
-    .select({ onboarding_status: user_profile.onboarding_status })
-    .from(user_profile)
-    .where(eq(user_profile.user_id, session.user.id));
+  try {
+    const profile = await db
+      .select({ onboarding_status: user_profile.onboarding_status })
+      .from(user_profile)
+      .where(eq(user_profile.user_id, session.user.id));
 
-  if (profile.length === 0) {
-    // No profile = new user, needs onboarding
-    return { needsOnboarding: true, status: "not_started" };
+    if (profile.length === 0) {
+      // No profile = new user, needs onboarding
+      return { needsOnboarding: true, status: "not_started" };
+    }
+
+    const status = profile[0].onboarding_status as OnboardingStatusValue | null;
+    return {
+      needsOnboarding: status === "not_started" || status === "in_progress",
+      status,
+    };
+  } catch (error) {
+    console.error("Failed to get onboarding status:", error);
+    // Fail gracefully - assume no onboarding needed if we can't check
+    return { needsOnboarding: false, status: null };
   }
-
-  const status = profile[0].onboarding_status as OnboardingStatusValue | null;
-  return {
-    needsOnboarding: status === "not_started" || status === "in_progress",
-    status,
-  };
 }
 
 // Save onboarding progress (partial save)

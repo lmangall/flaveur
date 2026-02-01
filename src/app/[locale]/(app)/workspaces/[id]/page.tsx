@@ -78,17 +78,24 @@ function getRoleBadge(role: WorkspaceRoleValue) {
 }
 
 function getDocumentTypeStyle(type: string) {
+  // Cohesive subtle styling - soft muted backgrounds with pink accent icons on hover
+  const base = {
+    bg: "bg-muted/60 dark:bg-muted/40",
+    icon: "text-muted-foreground/70 group-hover:text-pink transition-colors duration-200",
+  };
+
+  // Subtle differentiation through very light tints
   switch (type) {
     case "image":
-      return { bg: "bg-purple-50 dark:bg-purple-950/30", icon: "text-purple-600 dark:text-purple-400", badge: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" };
+      return { ...base, bg: "bg-pink/5 dark:bg-pink/10" };
     case "csv":
-      return { bg: "bg-emerald-50 dark:bg-emerald-950/30", icon: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" };
+      return { ...base, bg: "bg-foreground/[0.03] dark:bg-foreground/[0.06]" };
     case "markdown":
-      return { bg: "bg-blue-50 dark:bg-blue-950/30", icon: "text-blue-600 dark:text-blue-400", badge: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" };
+      return { ...base, bg: "bg-muted/50 dark:bg-muted/30" };
     case "pdf":
-      return { bg: "bg-red-50 dark:bg-red-950/30", icon: "text-red-600 dark:text-red-400", badge: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300" };
+      return { ...base, bg: "bg-foreground/[0.04] dark:bg-foreground/[0.08]" };
     default:
-      return { bg: "bg-gray-50 dark:bg-gray-950/30", icon: "text-gray-600 dark:text-gray-400", badge: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300" };
+      return base;
   }
 }
 
@@ -134,7 +141,7 @@ function DocumentCard({ document }: { document: WorkspaceDocument }) {
 
   return (
     <Link href={`/workspaces/${document.workspace_id}/documents/${document.document_id}`}>
-      <Card className="group h-full overflow-hidden transition-all hover:shadow-sm hover:border-primary/30">
+      <Card hover className="group h-full overflow-hidden">
         <div className="flex items-center gap-3 p-3">
           {/* Thumbnail or icon */}
           {document.type === "image" && document.url ? (
@@ -157,7 +164,7 @@ function DocumentCard({ document }: { document: WorkspaceDocument }) {
               <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                 {document.name}
               </p>
-              <Badge variant="secondary" className={`shrink-0 text-[10px] px-1.5 py-0 ${style.badge} border-0`}>
+              <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 text-muted-foreground/70 border-muted-foreground/20">
                 {getDocumentTypeLabel(document.type)}
               </Badge>
             </div>
@@ -179,7 +186,7 @@ function FlavourCard({
 }) {
   const flavour = link.flavour;
   return (
-    <Card>
+    <Card hover glow>
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <FlaskConical className="h-4 w-4" />
@@ -428,7 +435,7 @@ export default function WorkspaceDetailPage() {
             </div>
           )}
           {documents.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 stagger-children-fast">
               {documents.map((doc) => (
                 <DocumentCard key={doc.document_id} document={doc} />
               ))}
@@ -468,7 +475,7 @@ export default function WorkspaceDetailPage() {
             </div>
           )}
           {flavourLinks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
               {flavourLinks.map((link) => (
                 <FlavourCard key={link.flavour_id} link={link} />
               ))}

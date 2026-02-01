@@ -117,7 +117,7 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
       <div className="flex h-16 items-center justify-between border-b px-4">
         <Link
           href={`/${locale}`}
-          className={cn("flex items-center gap-2", collapsed && "justify-center")}
+          className={cn("flex items-center gap-1", collapsed && "justify-center")}
         >
           <div className="relative h-8 w-8 shrink-0">
             <Image
@@ -252,7 +252,7 @@ export function MobileSidebar() {
           <div className="flex h-16 items-center justify-between border-b px-4">
             <Link
               href={`/${locale}`}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1"
               onClick={() => setOpen(false)}
             >
               <div className="relative h-8 w-8">

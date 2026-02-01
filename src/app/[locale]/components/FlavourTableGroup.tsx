@@ -39,16 +39,16 @@ function SourceBadge({ flavour }: { flavour: FlavourWithAccess }) {
   }
 }
 
-const getStatusBadgeClasses = (status: string) => {
+const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case "published":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      return "success" as const;
     case "draft":
-      return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200";
+      return "warning" as const;
     case "archived":
-      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200";
+      return "secondary" as const;
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200";
+      return "secondary" as const;
   }
 };
 
@@ -108,9 +108,9 @@ function FlavourTableRow({
         <SourceBadge flavour={flavour} />
       </TableCell>
       <TableCell>
-        <span className={`px-2 py-1 rounded text-xs ${getStatusBadgeClasses(flavour.status || "draft")}`}>
+        <Badge variant={getStatusBadgeVariant(flavour.status || "draft")}>
           {(flavour.status || "draft").charAt(0).toUpperCase() + (flavour.status || "draft").slice(1)}
-        </span>
+        </Badge>
       </TableCell>
       <TableCell>v{flavour.version}</TableCell>
       <TableCell className="text-right">
@@ -168,7 +168,7 @@ export function FlavourTableGroup({ group, translations, onDuplicate, onDelete }
   return (
     <>
       {/* Main row with expand toggle */}
-      <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setIsExpanded(!isExpanded)}>
+      <TableRow className="cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <TableCell>
           <div className="flex items-center gap-2">
             <Button
@@ -208,12 +208,10 @@ export function FlavourTableGroup({ group, translations, onDuplicate, onDelete }
           <SourceBadge flavour={group.mainFlavour} />
         </TableCell>
         <TableCell>
-          <span
-            className={`px-2 py-1 rounded text-xs ${getStatusBadgeClasses(group.mainFlavour.status || "draft")}`}
-          >
+          <Badge variant={getStatusBadgeVariant(group.mainFlavour.status || "draft")}>
             {(group.mainFlavour.status || "draft").charAt(0).toUpperCase() +
               (group.mainFlavour.status || "draft").slice(1)}
-          </span>
+          </Badge>
         </TableCell>
         <TableCell>v{group.mainFlavour.version}</TableCell>
         <TableCell className="text-right">
