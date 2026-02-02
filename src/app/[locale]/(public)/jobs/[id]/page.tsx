@@ -79,7 +79,7 @@ export default function JobDetailPage() {
       if (!isSignedIn || !id) return;
 
       try {
-        await addJobInteraction(parseInt(id), action, "job_detail");
+        await addJobInteraction(id, action, "job_detail");
       } catch (err) {
         console.error("Error tracking job interaction:", err);
       }
@@ -91,7 +91,7 @@ export default function JobDetailPage() {
     async function fetchJobDetail() {
       try {
         setIsLoading(true);
-        const data = await getJobById(parseInt(id));
+        const data = await getJobById(id);
         setJob(data as JobOffer);
 
         // Record interaction

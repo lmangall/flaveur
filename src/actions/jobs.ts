@@ -30,9 +30,9 @@ export async function getJobs() {
   }
 }
 
-export async function getJobById(jobId: number) {
+export async function getJobById(jobId: string) {
   const result = await db.execute(sql`
-    SELECT * FROM public.job_offers WHERE id = ${jobId}
+    SELECT * FROM public.job_offers WHERE id = ${jobId}::uuid
   `);
 
   if (result.rows.length === 0) {
@@ -114,7 +114,7 @@ export async function createJob(data: {
 }
 
 export async function addJobInteraction(
-  jobId: number,
+  jobId: string,
   action: JobInteractionValue,
   referrer?: string
 ) {
@@ -130,7 +130,7 @@ export async function addJobInteraction(
     .insert(job_offer_interactions)
     .values({
       user_id: userId,
-      job_offer_id: jobId.toString(),
+      job_offer_id: jobId,
       action,
       referrer: referrer ?? null,
     })
@@ -148,7 +148,7 @@ export async function getAllJobs() {
 }
 
 export async function updateJob(
-  jobId: number,
+  jobId: string,
   data: {
     title?: string;
     description?: string;
@@ -193,7 +193,7 @@ export async function updateJob(
       expires_at = COALESCE(${data.expires_at ?? null}, expires_at),
       status = COALESCE(${data.status ?? null}, status),
       updated_at = NOW()
-    WHERE id = ${jobId}
+    WHERE id = ${jobId}::uuid
     RETURNING *
   `);
 
@@ -204,15 +204,15 @@ export async function updateJob(
   return result.rows[0];
 }
 
-export async function deleteJob(jobId: number) {
+export async function deleteJob(jobId: string) {
   await db.execute(sql`
     DELETE FROM public.job_offer_interactions
-    WHERE job_offer_id = ${jobId}
+    WHERE job_offer_id = ${jobId}::uuid
   `);
 
   const result = await db.execute(sql`
     DELETE FROM public.job_offers
-    WHERE id = ${jobId}
+    WHERE id = ${jobId}::uuid
     RETURNING id
   `);
 
@@ -223,11 +223,11 @@ export async function deleteJob(jobId: number) {
   return { success: true };
 }
 
-export async function toggleJobStatus(jobId: number, status: boolean) {
+export async function toggleJobStatus(jobId: string, status: boolean) {
   const result = await db.execute(sql`
     UPDATE public.job_offers
     SET status = ${status}, updated_at = NOW()
-    WHERE id = ${jobId}
+    WHERE id = ${jobId}::uuid
     RETURNING *
   `);
 

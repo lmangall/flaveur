@@ -111,7 +111,7 @@ export function JobForm({ job, mode }: JobFormProps) {
         await createJob(jobData);
         toast.success(t("jobCreated"));
       } else if (job) {
-        await updateJob(Number(job.id), jobData);
+        await updateJob(String(job.id), jobData);
         toast.success(t("jobUpdated"));
       }
 

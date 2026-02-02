@@ -158,7 +158,7 @@ export default function JobsPage() {
     if (!isSignedIn) return;
 
     try {
-      await addJobInteraction(parseInt(jobId), "viewed", "jobs_listing");
+      await addJobInteraction(jobId, "viewed", "jobs_listing");
     } catch (err) {
       console.error("Error tracking job view:", err);
     }

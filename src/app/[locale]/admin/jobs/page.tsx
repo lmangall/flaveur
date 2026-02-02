@@ -96,7 +96,7 @@ export default function AdminJobsPage() {
 
   const handleToggleStatus = async (job: JobOffer) => {
     try {
-      await toggleJobStatus(Number(job.id), !job.status);
+      await toggleJobStatus(String(job.id), !job.status);
       toast.success(t("statusUpdated"));
       fetchJobs();
     } catch {
@@ -113,7 +113,7 @@ export default function AdminJobsPage() {
     if (!jobToDelete) return;
 
     try {
-      await deleteJob(Number(jobToDelete.id));
+      await deleteJob(String(jobToDelete.id));
       toast.success(t("deleteSuccess"));
       setDeleteDialogOpen(false);
       setJobToDelete(null);

@@ -11,7 +11,7 @@ export default async function EditJobPage({ params }: EditJobPageProps) {
   const { id } = await params;
 
   try {
-    const job = await getJobById(Number(id));
+    const job = await getJobById(id);
     return <JobForm job={job as JobOffer} mode="edit" />;
   } catch {
     notFound();
