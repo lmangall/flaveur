@@ -158,7 +158,7 @@ export async function getWorkspaceById(workspaceId: number): Promise<
 }
 
 /**
- * Update workspace details. Owner only.
+ * Update workspace details. Owner or Editor.
  */
 export async function updateWorkspace(data: {
   workspaceId: number;
@@ -169,14 +169,14 @@ export async function updateWorkspace(data: {
 
   const { workspaceId, name, description } = data;
 
-  // Verify owner role
+  // Verify owner or editor role
   const roleCheck = await sql`
     SELECT role FROM workspace_member
     WHERE workspace_id = ${workspaceId} AND user_id = ${userId}
   `;
 
-  if (roleCheck.length === 0 || roleCheck[0].role !== "owner") {
-    throw new Error("Only workspace owners can update workspace settings");
+  if (roleCheck.length === 0 || !["owner", "editor"].includes(roleCheck[0].role)) {
+    throw new Error("Only workspace owners and editors can update workspace settings");
   }
 
   const result = await sql`

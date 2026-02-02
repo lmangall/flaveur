@@ -394,7 +394,7 @@ export default function WorkspaceDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           {getRoleBadge(workspace.role)}
-          {workspace.role === "owner" && (
+          {(workspace.role === "owner" || workspace.role === "editor") && (
             <Button
               variant="outline"
               size="sm"

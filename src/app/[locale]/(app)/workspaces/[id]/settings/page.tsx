@@ -67,6 +67,7 @@ export default function WorkspaceSettingsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -83,10 +84,11 @@ export default function WorkspaceSettingsPage() {
         setError("Workspace not found or you don't have access");
         return;
       }
-      if (data.role !== "owner") {
-        setError("Only workspace owners can access settings");
+      if (data.role !== "owner" && data.role !== "editor") {
+        setError("Only workspace owners and editors can access settings");
         return;
       }
+      setIsOwner(data.role === "owner");
       form.reset({
         name: data.name,
         description: data.description || "",
@@ -119,6 +121,7 @@ export default function WorkspaceSettingsPage() {
         description: data.description,
       });
       toast.success("Workspace updated successfully");
+      router.push(`/workspaces/${workspaceId}`);
     } catch (error) {
       console.error("Failed to update workspace:", error);
       toast.error(
@@ -239,51 +242,53 @@ export default function WorkspaceSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
-          <CardDescription>
-            Irreversible actions that will permanently affect your workspace.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Delete Workspace</p>
-              <p className="text-sm text-muted-foreground">
-                Permanently delete this workspace and all its documents.
-              </p>
+      {isOwner && (
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+            <CardDescription>
+              Irreversible actions that will permanently affect your workspace.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Delete Workspace</p>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete this workspace and all its documents.
+                </p>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={isDeleting}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this workspace? This action
+                      cannot be undone. All documents and linked flavours will be
+                      removed from this workspace.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeleting ? "Deleting..." : "Delete Workspace"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={isDeleting}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete this workspace? This action
-                    cannot be undone. All documents and linked flavours will be
-                    removed from this workspace.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {isDeleting ? "Deleting..." : "Delete Workspace"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
