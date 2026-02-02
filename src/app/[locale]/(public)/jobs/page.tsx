@@ -55,7 +55,7 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<JobOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");

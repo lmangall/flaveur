@@ -6,6 +6,7 @@ export const EMPLOYMENT_TYPE_OPTIONS = [
   { value: "Part-time", label: "Part-time" },
   { value: "Contract", label: "Contract" },
   { value: "Internship", label: "Internship" },
+  { value: "Alternance", label: "Alternance" },
   { value: "Freelance", label: "Freelance" },
   { value: "CDI", label: "CDI" },
   { value: "CDD", label: "CDD" },
@@ -18,10 +19,10 @@ export const isValidEmploymentType = (value: string): value is EmploymentTypeVal
   EMPLOYMENT_TYPE_OPTIONS.some((e) => e.value === value);
 
 export const EXPERIENCE_LEVEL_OPTIONS = [
-  { value: "Entry", label: "Entry Level" },
-  { value: "Mid", label: "Mid Level" },
-  { value: "Senior", label: "Senior" },
-  { value: "Executive", label: "Executive" },
+  { value: "0-2", label: "0-2 years" },
+  { value: "3-5", label: "3-5 years" },
+  { value: "6-10", label: "6-10 years" },
+  { value: "10+", label: "10+ years" },
 ] as const;
 
 export type ExperienceLevelValue = (typeof EXPERIENCE_LEVEL_OPTIONS)[number]["value"];

@@ -50,11 +50,11 @@ export const job_offers = pgTable(
       .using("btree", table.status.asc().nullsLast().op("bool_ops")),
     check(
       "job_offers_employment_type_check",
-      sql`employment_type = ANY (ARRAY['Full-time'::text, 'Part-time'::text, 'Contract'::text, 'Internship'::text, 'Freelance'::text, 'CDI'::text, 'CDD'::text, 'Interim'::text])`
+      sql`employment_type = ANY (ARRAY['Full-time'::text, 'Part-time'::text, 'Contract'::text, 'Internship'::text, 'Alternance'::text, 'Freelance'::text, 'CDI'::text, 'CDD'::text, 'Interim'::text])`
     ),
     check(
       "job_offers_experience_level_check",
-      sql`experience_level = ANY (ARRAY['Entry'::text, 'Mid'::text, 'Senior'::text, 'Executive'::text])`
+      sql`experience_level = ANY (ARRAY['0-2'::text, '3-5'::text, '6-10'::text, '10+'::text])`
     ),
   ]
 );
