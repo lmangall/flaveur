@@ -168,6 +168,7 @@
 	  },
 	  "JobDetail": {
 		"backToJobs": "Retour aux offres",
+		"backToLab": "Retour au labo",
 		"jobNotFound": "Offre Non Trouvée",
 		"jobNotAvailable": "Cette offre d'emploi n'est plus disponible",
 		"browseAllJobs": "Parcourir toutes les offres",
@@ -928,6 +929,7 @@
 		"backToQueue": "Retour à la file",
 		"backToLearning": "Retour à l'apprentissage",
 		"viewDetails": "Voir les détails",
+		"viewSubstance": "Voir la substance",
 		"substanceNotFound": "Substance introuvable",
 		"substanceNotFoundDescription": "Cette substance n'existe pas ou vous n'y avez pas accès.",
 		"learningProgress": "Progression d'apprentissage",

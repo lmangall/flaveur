@@ -145,17 +145,27 @@ export default function JobDetailPage() {
   };
 
   if (isLoading) {
-    return <JobDetailSkeleton onBack={() => router.back()} t={t} />;
+    return <JobDetailSkeleton onBack={() => router.back()} onBackToLab={() => router.push("/flavours")} t={t} />;
   }
 
   if (error || !job) {
     return (
       <div className="min-h-screen">
         <div className="container mx-auto px-4 md:px-6 py-8">
-          <Button variant="ghost" className="mb-6 gap-2" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
-            {t("backToJobs")}
-          </Button>
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" className="gap-2" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4" />
+              {t("backToJobs")}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => router.push("/flavours")}
+            >
+              <Beaker className="h-4 w-4" />
+              {t("backToLab")}
+            </Button>
+          </div>
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-6">
               <BriefcaseBusiness className="h-8 w-8 text-muted-foreground" />
@@ -196,15 +206,25 @@ export default function JobDetailPage() {
         </div>
 
         <div className="container relative mx-auto px-4 md:px-6 py-8 md:py-12">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            className="mb-6 gap-2 -ml-2 text-muted-foreground hover:text-foreground"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t("backToJobs")}
-          </Button>
+          {/* Back buttons */}
+          <div className="flex items-center gap-3 mb-6">
+            <Button
+              variant="ghost"
+              className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t("backToJobs")}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => router.push("/flavours")}
+            >
+              <Beaker className="h-4 w-4" />
+              {t("backToLab")}
+            </Button>
+          </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main header content */}
@@ -553,9 +573,11 @@ export default function JobDetailPage() {
 // Loading Skeleton
 function JobDetailSkeleton({
   onBack,
+  onBackToLab,
   t
 }: {
   onBack: () => void;
+  onBackToLab: () => void;
   t: ReturnType<typeof useTranslations>;
 }) {
   return (
@@ -563,10 +585,16 @@ function JobDetailSkeleton({
       {/* Header skeleton */}
       <div className="border-b border-border/40 bg-gradient-to-br from-amber-50/60 via-background to-pink-50/40 dark:from-amber-950/20 dark:via-background dark:to-pink-950/20">
         <div className="container mx-auto px-4 md:px-6 py-8 md:py-12">
-          <Button variant="ghost" className="mb-6 gap-2 -ml-2" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" />
-            {t("backToJobs")}
-          </Button>
+          <div className="flex items-center gap-3 mb-6">
+            <Button variant="ghost" className="gap-2 -ml-2" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4" />
+              {t("backToJobs")}
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={onBackToLab}>
+              <Beaker className="h-4 w-4" />
+              {t("backToLab")}
+            </Button>
+          </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">

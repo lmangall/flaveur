@@ -173,6 +173,7 @@
 	  },
 	  "JobDetail": {
 		"backToJobs": "Back to Jobs",
+		"backToLab": "Back to the Lab",
 		"jobNotFound": "Job Not Found",
 		"jobNotAvailable": "This job listing is no longer available",
 		"browseAllJobs": "Browse All Jobs",
@@ -933,6 +934,7 @@
 		"backToQueue": "Back to Queue",
 		"backToLearning": "Back to Learning",
 		"viewDetails": "View Full Details",
+		"viewSubstance": "View Substance",
 		"substanceNotFound": "Substance not found",
 		"substanceNotFoundDescription": "This substance doesn't exist or you don't have access.",
 		"learningProgress": "Learning Progress",
