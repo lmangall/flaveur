@@ -47,6 +47,10 @@ import {
 import { getSubstanceWithRelations } from "@/actions/substances";
 import { LEARNING_STATUS_OPTIONS } from "@/constants";
 import type { SubstanceLearningProgress, Substance } from "@/app/type";
+import {
+  SubstanceDetailsModal,
+  type SubstanceForModal,
+} from "@/app/[locale]/components/substance-details-modal";
 
 export default function SubstanceStudyPage() {
   const { data: session, isPending } = useSession();
@@ -69,6 +73,7 @@ export default function SubstanceStudyPage() {
   const [associations, setAssociations] = useState("");
   const [concentrationNotes, setConcentrationNotes] = useState("");
   const [isReferenceOpen, setIsReferenceOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!substanceId) return;
@@ -152,11 +157,6 @@ export default function SubstanceStudyPage() {
         await addToLearningQueue(substanceId);
       }
       await recordSensoryExperience(substanceId, type);
-      toast.success(
-        type === "smell"
-          ? t("smelledRecorded") || "Smelled recorded!"
-          : t("tastedRecorded") || "Tasted recorded!"
-      );
     } catch (error) {
       console.error("Failed to record sensory experience:", error);
       toast.error(t("errorRecording") || "Failed to record");
@@ -316,7 +316,7 @@ export default function SubstanceStudyPage() {
 
           <Button
             variant="outline"
-            onClick={() => router.push(`/${locale}/substances?search=${substance.common_name}`)}
+            onClick={() => setIsDetailsModalOpen(true)}
           >
             <Eye className="h-4 w-4 mr-2" />
             {t("viewDetails") || "View Full Details"}
@@ -591,6 +591,14 @@ export default function SubstanceStudyPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Substance Details Modal */}
+      <SubstanceDetailsModal
+        substance={substance as SubstanceForModal}
+        open={isDetailsModalOpen}
+        onOpenChange={setIsDetailsModalOpen}
+        showAddToQueue={false}
+      />
     </div>
   );
 }
