@@ -209,7 +209,8 @@ export async function getAllMyProgress(): Promise<SubstanceLearningProgress[]> {
 
 export async function recordSensoryExperience(
   substanceId: number,
-  type: "smell" | "taste"
+  type: "smell" | "taste",
+  value: boolean = true
 ) {
   const userId = await getUserId();
 
@@ -223,9 +224,9 @@ export async function recordSensoryExperience(
   if (type === "smell") {
     await sql`
       UPDATE substance_learning_progress
-      SET has_smelled = TRUE,
-          smelled_at = NOW(),
-          status = CASE WHEN status = 'not_started' THEN 'learning' ELSE status END,
+      SET has_smelled = ${value},
+          smelled_at = ${value ? sql`NOW()` : sql`NULL`},
+          status = CASE WHEN status = 'not_started' AND ${value} THEN 'learning' ELSE status END,
           started_at = COALESCE(started_at, NOW()),
           updated_at = NOW()
       WHERE user_id = ${userId} AND substance_id = ${substanceId}
@@ -233,22 +234,24 @@ export async function recordSensoryExperience(
   } else {
     await sql`
       UPDATE substance_learning_progress
-      SET has_tasted = TRUE,
-          tasted_at = NOW(),
-          status = CASE WHEN status = 'not_started' THEN 'learning' ELSE status END,
+      SET has_tasted = ${value},
+          tasted_at = ${value ? sql`NOW()` : sql`NULL`},
+          status = CASE WHEN status = 'not_started' AND ${value} THEN 'learning' ELSE status END,
           started_at = COALESCE(started_at, NOW()),
           updated_at = NOW()
       WHERE user_id = ${userId} AND substance_id = ${substanceId}
     `;
   }
 
-  // Check for first-time badges
-  await checkAndAwardBadge(userId, type === "smell" ? "first_sniff" : "taste_explorer");
+  // Check for first-time badges only when checking (not unchecking)
+  if (value) {
+    await checkAndAwardBadge(userId, type === "smell" ? "first_sniff" : "taste_explorer");
+  }
 
   // Update streak
   await updateStreak(userId);
 
-  revalidatePath("/learn");
+  // No revalidatePath - client uses optimistic updates
   return { success: true };
 }
 

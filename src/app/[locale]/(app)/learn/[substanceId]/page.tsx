@@ -37,6 +37,7 @@ import {
   CollapsibleTrigger,
 } from "@/app/[locale]/components/ui/collapsible";
 import { cn } from "@/app/lib/utils";
+import { PageContainer } from "@/components/layout";
 import {
   getMyProgress,
   recordSensoryExperience,
@@ -109,14 +110,14 @@ export default function SubstanceStudyPage() {
     }
   }, [isPending, session, substanceId, fetchData]);
 
-  const handleSensoryCheck = async (type: "smell" | "taste") => {
+  const handleSensoryCheck = async (type: "smell" | "taste", value: boolean) => {
     const setLoading = type === "smell" ? setSavingSmell : setSavingTaste;
-    setLoading(true);
 
     const now = new Date().toISOString();
     const hadProgress = !!progress;
+    const previousProgress = progress;
 
-    // Optimistic update
+    // Optimistic update - apply immediately for instant feedback
     setProgress((prev) => {
       if (!prev) {
         // Create new progress record optimistically
@@ -125,10 +126,10 @@ export default function SubstanceStudyPage() {
           user_id: session?.user?.id || "",
           substance_id: substanceId,
           status: "not_started",
-          has_smelled: type === "smell" ? true : false,
-          has_tasted: type === "taste" ? true : false,
-          smelled_at: type === "smell" ? now : null,
-          tasted_at: type === "taste" ? now : null,
+          has_smelled: type === "smell" ? value : false,
+          has_tasted: type === "taste" ? value : false,
+          smelled_at: type === "smell" && value ? now : null,
+          tasted_at: type === "taste" && value ? now : null,
           personal_notes: null,
           personal_descriptors: [],
           associations: null,
@@ -144,25 +145,33 @@ export default function SubstanceStudyPage() {
       }
       return {
         ...prev,
-        has_smelled: type === "smell" ? true : prev.has_smelled,
-        has_tasted: type === "taste" ? true : prev.has_tasted,
-        smelled_at: type === "smell" ? now : prev.smelled_at,
-        tasted_at: type === "taste" ? now : prev.tasted_at,
+        has_smelled: type === "smell" ? value : prev.has_smelled,
+        has_tasted: type === "taste" ? value : prev.has_tasted,
+        smelled_at: type === "smell" ? (value ? now : null) : prev.smelled_at,
+        tasted_at: type === "taste" ? (value ? now : null) : prev.tasted_at,
       };
     });
 
+    setLoading(true);
+
     try {
       // If not in queue, add it first
-      if (!hadProgress) {
+      if (!hadProgress && value) {
         await addToLearningQueue(substanceId);
       }
-      await recordSensoryExperience(substanceId, type);
+      await recordSensoryExperience(substanceId, type, value);
+      if (value) {
+        toast.success(
+          type === "smell"
+            ? t("smelledRecorded") || "Smelled recorded!"
+            : t("tastedRecorded") || "Tasted recorded!"
+        );
+      }
     } catch (error) {
       console.error("Failed to record sensory experience:", error);
       toast.error(t("errorRecording") || "Failed to record");
       // Revert optimistic update on error
-      setProgress(null);
-      await fetchData();
+      setProgress(previousProgress);
     } finally {
       setLoading(false);
     }
@@ -216,7 +225,7 @@ export default function SubstanceStudyPage() {
 
   if (isPending || isLoading) {
     return (
-      <div className="container max-w-4xl mx-auto py-8 px-4">
+      <PageContainer>
         <Skeleton className="h-8 w-32 mb-4" />
         <Skeleton className="h-10 w-64 mb-2" />
         <Skeleton className="h-5 w-96 mb-8" />
@@ -224,14 +233,14 @@ export default function SubstanceStudyPage() {
           <Skeleton className="h-64" />
           <Skeleton className="h-64" />
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!session) {
     return (
-      <div className="container max-w-2xl mx-auto py-8">
-        <Card>
+      <PageContainer>
+        <Card className="max-w-md mx-auto">
           <CardHeader className="text-center">
             <CardTitle>{t("signInRequired") || "Sign in required"}</CardTitle>
           </CardHeader>
@@ -241,14 +250,14 @@ export default function SubstanceStudyPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   if (!substance) {
     return (
-      <div className="container max-w-2xl mx-auto py-8">
-        <Card>
+      <PageContainer>
+        <Card className="max-w-md mx-auto">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
               {t("substanceNotFound") || "Substance not found"}
@@ -263,14 +272,14 @@ export default function SubstanceStudyPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     );
   }
 
   const canAdvance = progress?.has_smelled && progress?.has_tasted;
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
+    <PageContainer>
       {/* Header */}
       <div className="mb-8">
         <Button
@@ -319,7 +328,7 @@ export default function SubstanceStudyPage() {
             onClick={() => setIsDetailsModalOpen(true)}
           >
             <Eye className="h-4 w-4 mr-2" />
-            {t("viewDetails") || "View Full Details"}
+            {t("viewSubstance") || "View Substance"}
           </Button>
         </div>
       </div>
@@ -344,12 +353,12 @@ export default function SubstanceStudyPage() {
                   <Checkbox
                     id="smelled"
                     checked={progress?.has_smelled || false}
-                    onCheckedChange={() => {
-                      if (!progress?.has_smelled && !savingSmell) {
-                        handleSensoryCheck("smell");
+                    onCheckedChange={(checked) => {
+                      if (!savingSmell) {
+                        handleSensoryCheck("smell", checked === true);
                       }
                     }}
-                    disabled={progress?.has_smelled || savingSmell}
+                    disabled={savingSmell}
                   />
                   <div>
                     <Label htmlFor="smelled" className="text-base font-medium">
@@ -376,12 +385,12 @@ export default function SubstanceStudyPage() {
                   <Checkbox
                     id="tasted"
                     checked={progress?.has_tasted || false}
-                    onCheckedChange={() => {
-                      if (!progress?.has_tasted && !savingTaste) {
-                        handleSensoryCheck("taste");
+                    onCheckedChange={(checked) => {
+                      if (!savingTaste) {
+                        handleSensoryCheck("taste", checked === true);
                       }
                     }}
-                    disabled={progress?.has_tasted || savingTaste}
+                    disabled={savingTaste}
                   />
                   <div>
                     <Label htmlFor="tasted" className="text-base font-medium">
@@ -599,6 +608,6 @@ export default function SubstanceStudyPage() {
         onOpenChange={setIsDetailsModalOpen}
         showAddToQueue={false}
       />
-    </div>
+    </PageContainer>
   );
 }
