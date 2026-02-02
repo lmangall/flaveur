@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AppSidebar, MobileSidebar } from "@/components/layout/app-sidebar";
 import { BreadcrumbProvider, ConnectedBreadcrumbs } from "@/components/layout/Breadcrumbs";
+import { SupportChatWidget } from "@/app/[locale]/components/support/SupportChatWidget";
 import { cn } from "@/app/lib/utils";
 
 export function AppLayoutClient({ children }: { children: React.ReactNode }) {
@@ -51,6 +52,9 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
             {children}
           </main>
         </div>
+
+        {/* Support Chat Widget */}
+        <SupportChatWidget />
       </div>
     </BreadcrumbProvider>
   );
