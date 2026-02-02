@@ -138,7 +138,8 @@ export function MarkdownEditor({
     editorProps: {
       attributes: {
         class: cn(
-          "prose prose-neutral dark:prose-invert max-w-none",
+          "prose dark:prose-invert max-w-none",
+          "prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:text-foreground",
           "focus:outline-none p-4 h-full"
         ),
       },
