@@ -60,6 +60,8 @@ export default function SubstanceStudyPage() {
   const [progress, setProgress] = useState<SubstanceLearningProgress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [savingSmell, setSavingSmell] = useState(false);
+  const [savingTaste, setSavingTaste] = useState(false);
 
   // Form state
   const [notes, setNotes] = useState("");
@@ -103,7 +105,11 @@ export default function SubstanceStudyPage() {
   }, [isPending, session, substanceId, fetchData]);
 
   const handleSensoryCheck = async (type: "smell" | "taste") => {
+    const setLoading = type === "smell" ? setSavingSmell : setSavingTaste;
+    setLoading(true);
+
     const now = new Date().toISOString();
+    const hadProgress = !!progress;
 
     // Optimistic update
     setProgress((prev) => {
@@ -142,7 +148,7 @@ export default function SubstanceStudyPage() {
 
     try {
       // If not in queue, add it first
-      if (!progress) {
+      if (!hadProgress) {
         await addToLearningQueue(substanceId);
       }
       await recordSensoryExperience(substanceId, type);
@@ -155,7 +161,10 @@ export default function SubstanceStudyPage() {
       console.error("Failed to record sensory experience:", error);
       toast.error(t("errorRecording") || "Failed to record");
       // Revert optimistic update on error
+      setProgress(null);
       await fetchData();
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -336,11 +345,11 @@ export default function SubstanceStudyPage() {
                     id="smelled"
                     checked={progress?.has_smelled || false}
                     onCheckedChange={() => {
-                      if (!progress?.has_smelled) {
+                      if (!progress?.has_smelled && !savingSmell) {
                         handleSensoryCheck("smell");
                       }
                     }}
-                    disabled={progress?.has_smelled}
+                    disabled={progress?.has_smelled || savingSmell}
                   />
                   <div>
                     <Label htmlFor="smelled" className="text-base font-medium">
@@ -353,7 +362,9 @@ export default function SubstanceStudyPage() {
                     )}
                   </div>
                 </div>
-                {progress?.has_smelled ? (
+                {savingSmell ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                ) : progress?.has_smelled ? (
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 ) : (
                   <Circle className="h-5 w-5 text-muted-foreground" />
@@ -366,11 +377,11 @@ export default function SubstanceStudyPage() {
                     id="tasted"
                     checked={progress?.has_tasted || false}
                     onCheckedChange={() => {
-                      if (!progress?.has_tasted) {
+                      if (!progress?.has_tasted && !savingTaste) {
                         handleSensoryCheck("taste");
                       }
                     }}
-                    disabled={progress?.has_tasted}
+                    disabled={progress?.has_tasted || savingTaste}
                   />
                   <div>
                     <Label htmlFor="tasted" className="text-base font-medium">
@@ -383,7 +394,9 @@ export default function SubstanceStudyPage() {
                     )}
                   </div>
                 </div>
-                {progress?.has_tasted ? (
+                {savingTaste ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                ) : progress?.has_tasted ? (
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 ) : (
                   <Circle className="h-5 w-5 text-muted-foreground" />
