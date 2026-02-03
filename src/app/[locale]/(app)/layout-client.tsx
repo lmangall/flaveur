@@ -5,9 +5,22 @@ import { AppSidebar, MobileSidebar } from "@/components/layout/app-sidebar";
 import { BreadcrumbProvider, ConnectedBreadcrumbs } from "@/components/layout/Breadcrumbs";
 import { SupportChatWidget } from "@/app/[locale]/components/support/SupportChatWidget";
 import { cn } from "@/app/lib/utils";
+import { useSession } from "@/lib/auth-client";
+import posthog from "posthog-js";
 
 export function AppLayoutClient({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
+
+  // Identify user in PostHog when session is available
+  useEffect(() => {
+    if (session?.user) {
+      posthog.identify(session.user.id, {
+        email: session.user.email,
+        name: session.user.name,
+      });
+    }
+  }, [session?.user]);
 
   // Persist sidebar state in localStorage
   useEffect(() => {
