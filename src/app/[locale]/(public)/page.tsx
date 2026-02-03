@@ -150,6 +150,37 @@ export default function Home() {
             </ScrollReveal>
           </div>
         </section>
+
+        {/* Trusted By Section - Logo social proof */}
+        <section className="w-full py-16 md:py-24 bg-muted/30">
+          <div className="container mx-auto px-4 md:px-6">
+            <ScrollReveal animation="fade-up">
+              <p className="text-center text-sm font-medium text-muted-foreground mb-10 tracking-wide uppercase">
+                {t("trustedBy")}
+              </p>
+            </ScrollReveal>
+            <div className="mx-auto grid max-w-4xl grid-cols-2 gap-8 md:grid-cols-4 items-center justify-items-center">
+              {[
+                { src: "/school_logo/ISIPCA.png", alt: "ISIPCA", width: 100, height: 100 },
+                { src: "/school_logo/mane.png", alt: "Mane", width: 120, height: 120 },
+                { src: "/school_logo/Universite_monptellier.png", alt: "Université de Montpellier", width: 70, height: 90 },
+                { src: "/school_logo/universite_le_havre.jpg", alt: "Université Le Havre", width: 110, height: 110 },
+              ].map((logo, i) => (
+                <ScrollReveal key={logo.alt} animation="scale" delay={i * 100}>
+                  <div className="relative opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 hover:scale-110">
+                    <Image
+                      src={logo.src}
+                      alt={logo.alt}
+                      width={logo.width}
+                      height={logo.height}
+                      className="object-contain"
+                    />
+                  </div>
+                </ScrollReveal>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );

@@ -76,7 +76,7 @@ export default function SignInPage() {
           locale,
         });
 
-        router.push(`/${locale}`);
+        router.push(`/${locale}/dashboard`);
         router.refresh();
       }
     } catch (err) {
@@ -102,7 +102,7 @@ export default function SignInPage() {
       const baseUrl = window.location.origin;
       await signIn.social({
         provider: "google",
-        callbackURL: `${baseUrl}/${locale}`,
+        callbackURL: `${baseUrl}/${locale}/dashboard`,
       });
     } catch (err) {
       posthog.captureException(err);

@@ -454,6 +454,27 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
     cas_id: string | null;
   } | null>(null);
 
+  // First-time search hint state
+  const [showSearchHint, setShowSearchHint] = useState(false);
+  const [searchHintOpen, setSearchHintOpen] = useState(false);
+
+  // Check localStorage for first-time hint
+  useEffect(() => {
+    const hasSeenHint = localStorage.getItem("oumamie_search_hint_seen");
+    if (!hasSeenHint && isOwner) {
+      setShowSearchHint(true);
+      // Auto-open tooltip after a short delay
+      const timer = setTimeout(() => setSearchHintOpen(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isOwner]);
+
+  const dismissSearchHint = () => {
+    setShowSearchHint(false);
+    setSearchHintOpen(false);
+    localStorage.setItem("oumamie_search_hint_seen", "true");
+  };
+
   // Search for substances when query changes
   useEffect(() => {
     const searchForSubstances = async () => {
@@ -1344,7 +1365,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                               </button>
                             </div>
                           ) : (
-                            <>
+                            <div className="flex items-center gap-1">
                               <input
                                 type="text"
                                 placeholder={tFlavour("searchName")}
@@ -1354,7 +1375,31 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                                 onFocus={() => handleSearchFocus("common_name")}
                                 onBlur={handleSearchBlur}
                               />
-                                                          </>
+                              <Tooltip open={showSearchHint ? searchHintOpen : undefined} onOpenChange={showSearchHint ? setSearchHintOpen : undefined}>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => showSearchHint && setSearchHintOpen(!searchHintOpen)}
+                                    className={showSearchHint ? "animate-pulse" : ""}
+                                  >
+                                    <HelpCircle className={`h-3.5 w-3.5 cursor-help shrink-0 transition-colors ${showSearchHint ? "text-primary" : "text-muted-foreground"}`} />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs text-left">
+                                  <p className="font-medium">{tFlavour("searchNameHintTitle")}</p>
+                                  <p className="text-xs mt-1">{tFlavour("searchNameHintDesc")}</p>
+                                  {showSearchHint && (
+                                    <button
+                                      type="button"
+                                      onClick={dismissSearchHint}
+                                      className="mt-2 text-xs text-primary hover:underline"
+                                    >
+                                      OK
+                                    </button>
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
                           )}
                         </TableCell>
                       )}

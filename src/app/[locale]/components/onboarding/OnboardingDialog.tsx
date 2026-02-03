@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,8 @@ const TOTAL_STEPS = 5;
 
 export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) {
   const t = useTranslations("Onboarding");
+  const router = useRouter();
+  const locale = useLocale();
   const { fire: fireConfetti } = useConfetti();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,6 +76,7 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
       });
       fireConfetti();
       onOpenChange(false);
+      router.push(`/${locale}/dashboard`);
     } finally {
       setIsLoading(false);
     }
