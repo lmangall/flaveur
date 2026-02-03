@@ -30,6 +30,12 @@ export const createFlavourSchema = z.object({
     .max(500, "Description must be less than 500 characters")
     .optional()
     .transform((val) => val?.trim() || null),
+  notes: z
+    .string()
+    .max(10000, "Notes must be less than 10000 characters")
+    .nullable()
+    .optional()
+    .transform((val) => val?.trim() || null),
   is_public: z.boolean().default(false),
   category_id: z.number().int().positive().nullable().optional(),
   status: z.enum(validStatuses).default("draft"),
@@ -40,7 +46,7 @@ export const createFlavourSchema = z.object({
 export type CreateFlavourInput = z.infer<typeof createFlavourSchema>;
 
 // Update flavour schema (all fields optional except id)
-// Note: description uses nullable() to distinguish between:
+// Note: description and notes use nullable() to distinguish between:
 // - undefined: field not provided, keep existing value
 // - null or "": explicitly cleared, set to null
 // - string: set to that value
@@ -54,6 +60,16 @@ export const updateFlavourSchema = z.object({
   description: z
     .string()
     .max(500, "Description must be less than 500 characters")
+    .nullable()
+    .optional()
+    .transform((val) => {
+      if (val === undefined) return undefined; // Not provided, keep existing
+      if (val === null || val.trim() === "") return null; // Explicitly cleared
+      return val.trim(); // Has value
+    }),
+  notes: z
+    .string()
+    .max(10000, "Notes must be less than 10000 characters")
     .nullable()
     .optional()
     .transform((val) => {

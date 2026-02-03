@@ -26,7 +26,7 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Save, Share2, Shield, HelpCircle, MoreVertical, Check, RefreshCw, Loader2 } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Share2, Shield, HelpCircle, MoreVertical, Check, RefreshCw, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -78,6 +78,7 @@ import {
 } from "@/app/[locale]/components/ui/chart";
 import { ShareFlavourDialog } from "@/app/[locale]/components/share-flavour-dialog";
 import { VariationPills } from "@/app/[locale]/components/VariationPills";
+import { FlavourNotesCard } from "@/app/[locale]/components/FlavourNotesCard";
 import { useTranslations } from "next-intl";
 import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 import { useSetBreadcrumbLabel } from "@/app/[locale]/components/layout/Breadcrumbs";
@@ -103,7 +104,7 @@ const DEFAULT_FLAVOR_PROFILE: FlavorProfileAttribute[] = [
 const chartConfig = {
   value: {
     label: "Intensity",
-    color: "hsl(var(--primary))",
+    color: "hsl(330 50% 70%)", // Soft pink
   },
 } satisfies ChartConfig;
 
@@ -132,6 +133,26 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false, trans
   const [isSaving, setIsSaving] = useState(false);
   const [newAttribute, setNewAttribute] = useState("");
   const [isAddingAttribute, setIsAddingAttribute] = useState(false);
+
+  // Autosave with debounce
+  useEffect(() => {
+    if (!hasChanges || readOnly) return;
+
+    const saveTimer = setTimeout(async () => {
+      setIsSaving(true);
+      try {
+        await updateFlavorProfile(flavourId, profile);
+        setHasChanges(false);
+      } catch (error) {
+        console.error("Error auto-saving flavor profile:", error);
+        toast.error(translations.failedToSaveProfile);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 800);
+
+    return () => clearTimeout(saveTimer);
+  }, [profile, hasChanges, readOnly, flavourId, translations.failedToSaveProfile]);
 
   const handleValueChange = (index: number, newValue: number) => {
     setProfile((prev) =>
@@ -165,20 +186,6 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false, trans
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updateFlavorProfile(flavourId, profile);
-      toast.success(translations.flavorProfileSaved);
-      setHasChanges(false);
-    } catch (error) {
-      console.error("Error saving flavor profile:", error);
-      toast.error(translations.failedToSaveProfile);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-6">
@@ -194,10 +201,11 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false, trans
               <PolarAngleAxis dataKey="attribute" />
               <Radar
                 dataKey="value"
-                fill="hsl(var(--primary))"
-                fillOpacity={0.5}
-                stroke="hsl(var(--primary))"
-                dot={{ r: 4, fillOpacity: 1 }}
+                fill="hsl(330 55% 75%)"
+                fillOpacity={0.35}
+                stroke="hsl(330 50% 60%)"
+                strokeWidth={1.5}
+                dot={{ r: 3, fillOpacity: 0.9, fill: "hsl(330 55% 55%)" }}
               />
             </RadarChart>
           </ChartContainer>
@@ -281,13 +289,13 @@ function FlavorProfileChart({ flavourId, initialProfile, readOnly = false, trans
         </div>
       </div>
 
-      {/* Save Button - only for owners */}
-      {!readOnly && hasChanges && (
+      {/* Autosave indicator - only show while saving */}
+      {!readOnly && isSaving && (
         <div className="flex justify-end pt-2 border-t">
-          <Button onClick={handleSave} disabled={isSaving}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? translations.saving : translations.saveProfile}
-          </Button>
+          <span className="text-sm text-muted-foreground flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-pink-500 animate-pulse" />
+            {translations.saving}
+          </span>
         </div>
       )}
     </div>
@@ -954,6 +962,12 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
           />
         </CardContent>
       </Card>
+
+      <FlavourNotesCard
+        flavourId={flavor.flavour_id}
+        initialNotes={flavor.notes}
+        readOnly={!isOwner}
+      />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -1643,6 +1657,7 @@ export default function FlavorDetailPage() {
           flavour_id: Number(data.flavour.flavour_id),
           name: data.flavour.name || tFlavour("unnamedFlavor"),
           description: data.flavour.description || "",
+          notes: data.flavour.notes || null,
           // Transform substances to match the expected nested structure
           substances: Array.isArray(data.substances)
             ? data.substances.map(

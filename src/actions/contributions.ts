@@ -5,6 +5,7 @@ import { sql } from "@/lib/db";
 import type { Substance, SubstanceFeedback } from "@/app/type";
 import type { FeedbackTypeValue } from "@/constants";
 import { sendNewSubmissionNotification, sendNewFeedbackNotification } from "@/lib/email/resend";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // ===========================================
 // DUPLICATE CHECKING
@@ -185,6 +186,20 @@ export async function createUserSubstance(
   } catch (e) {
     console.error("Failed to send submission notification:", e);
   }
+
+  // Track substance submission in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "substance_submitted",
+    properties: {
+      substance_id: newSubstance.substance_id,
+      substance_name: newSubstance.common_name,
+      has_cas_id: !!data.cas_id,
+      has_fema_number: !!data.fema_number,
+      has_pubchem_id: !!data.pubchem_id,
+    },
+  });
 
   return newSubstance;
 }
@@ -371,6 +386,20 @@ export async function createSubstanceFeedback(
   } catch (e) {
     console.error("Failed to send feedback notification:", e);
   }
+
+  // Track feedback submission in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "feedback_submitted",
+    properties: {
+      feedback_id: feedback.feedback_id,
+      substance_id: data.substance_id,
+      feedback_type: data.feedback_type,
+      has_target_field: !!data.target_field,
+      has_suggested_value: !!data.suggested_value,
+    },
+  });
 
   return feedback;
 }

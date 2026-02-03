@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Slider } from "@/app/[locale]/components/ui/slider";
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/[locale]/compone
 import { Switch } from "@/app/[locale]/components/ui/switch";
 import { toast } from "sonner";
 import EditableBadge from "@/app/[locale]/components/EditableBadge";
+import posthog from "posthog-js";
 
 // Create a price badge component
 const PriceBadge = ({
@@ -136,6 +137,7 @@ const FlavoringCalculator = () => {
   const [sendEmail, setSendEmail] = useState(false);
   const [advancedOptions, setAdvancedOptions] = useState(false);
   const [manualAlcoholInput, setManualAlcoholInput] = useState(false);
+  const hasTrackedCalculation = useRef(false);
 
   const calculateMix = () => {
     const {
@@ -216,8 +218,20 @@ const FlavoringCalculator = () => {
   };
 
   useEffect(() => {
-    setResult(calculateMix());
-  }, [params, prices]);
+    const newResult = calculateMix();
+    setResult(newResult);
+
+    // Track calculator usage once per session when user changes parameters
+    if (newResult.isValid && !hasTrackedCalculation.current) {
+      hasTrackedCalculation.current = true;
+      posthog.capture("calculator_used", {
+        target_brix: params.targetBrix,
+        target_alcohol: params.targetAlcohol,
+        total_mass: params.totalMass,
+        advanced_options_enabled: advancedOptions,
+      });
+    }
+  }, [params, prices, advancedOptions]);
 
   const handleParamChange = (paramName: keyof Params, value: number) => {
     if (paramName === "alcoholMass") {

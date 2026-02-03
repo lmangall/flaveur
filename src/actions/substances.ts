@@ -1,6 +1,8 @@
 "use server";
 
 import { sql } from "@/lib/db";
+import { getPostHogClient } from "@/lib/posthog-server";
+import { getSession } from "@/lib/auth-server";
 
 export async function getSubstances(page: number = 1) {
   const limit = 20;
@@ -135,6 +137,25 @@ export async function searchSubstances(
       `;
       totalResults = parseInt(allCount[0].count as string);
       break;
+  }
+
+  // Track substance search in PostHog (non-blocking)
+  try {
+    const session = await getSession();
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: session?.user?.id ?? "anonymous",
+      event: "substance_search_performed",
+      properties: {
+        query_length: query.length,
+        category,
+        result_count: results.length,
+        total_results: totalResults,
+        page,
+      },
+    });
+  } catch {
+    // Ignore tracking errors
   }
 
   return {

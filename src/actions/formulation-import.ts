@@ -5,6 +5,7 @@ import { sql } from "@/lib/db";
 import type { Substance } from "@/app/type";
 import { checkDuplicateSubstance } from "./contributions";
 import type { FormulationData } from "@/lib/formulation-parser";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // Re-export types from the parser
 export type { FormulationIngredient, FormulationVersion, FormulationData } from "@/lib/formulation-parser";
@@ -300,6 +301,22 @@ export async function importFormulation(
         VALUES (${sub.substance_id}, ${newFlavour.flavour_id}, ${sub.concentration}, '%(v/v)', ${sub.order_index})
       `;
     }
+
+    // Track formulation import in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "formulation_imported",
+      properties: {
+        flavour_id: newFlavour.flavour_id,
+        flavour_name: newFlavour.name,
+        version_imported: options.version_to_import,
+        substance_count: substancesToAdd.length,
+        auto_created_substances: substanceMatches.filter((m) => m.status === "created").length,
+        fuzzy_matched_substances: substanceMatches.filter((m) => m.status === "fuzzy_match").length,
+        not_found_substances: substanceMatches.filter((m) => m.status === "not_found").length,
+      },
+    });
 
     return {
       success: true,

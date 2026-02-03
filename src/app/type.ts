@@ -99,6 +99,7 @@ export type Flavour = {
   flavour_id: number;
   name: string;
   description: string | null;
+  notes: string | null;
   is_public: boolean;
   user_id: string | null;
   category_id: number | null;

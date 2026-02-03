@@ -14,6 +14,7 @@ import { FlaskConical, GitBranch, ArrowRight, Beaker } from "lucide-react";
 import { DEMO_USER } from "@/constants/samples";
 import { getTranslations } from "next-intl/server";
 import { SamplesHowItWorks } from "./SamplesHowItWorks";
+import { SamplesPageTracker } from "./SamplesPageTracker";
 
 function SampleFlavorCard({ flavor }: { flavor: SampleFlavor }) {
   const hasVariations = flavor.variation_count > 1;
@@ -74,6 +75,10 @@ export default async function SamplesPage() {
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
+      <SamplesPageTracker
+        sampleCount={samples.length}
+        variationsCount={samplesWithVariations.length}
+      />
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground max-w-2xl">

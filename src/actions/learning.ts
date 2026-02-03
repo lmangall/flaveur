@@ -12,6 +12,7 @@ import type {
   LearningDashboardStats,
   UserBadge,
 } from "@/app/type";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // ─────────────────────────────────────────────────────────────
 // QUEUE MANAGEMENT
@@ -88,6 +89,18 @@ export async function addToLearningQueue(
     VALUES (${userId}, ${substanceId})
     ON CONFLICT (user_id, substance_id) DO NOTHING
   `;
+
+  // Track substance added to queue in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "substance_added_to_queue",
+    properties: {
+      substance_id: substanceId,
+      priority,
+      has_target_date: !!targetDate,
+    },
+  });
 
   revalidatePath("/learn");
   return { success: true };
@@ -294,6 +307,17 @@ export async function updateProgressStatus(substanceId: number, newStatus: strin
   // Check milestone badges
   await checkMilestoneBadges(userId);
 
+  // Track learning progress update in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "learning_progress_updated",
+    properties: {
+      substance_id: substanceId,
+      new_status: newStatus,
+    },
+  });
+
   revalidatePath("/learn");
   return { success: true };
 }
@@ -450,6 +474,19 @@ export async function submitQuizAttempt(
     VALUES (${userId}, ${substanceId}, ${guessedName}, ${observations}, ${result})
   `;
 
+  // Track quiz completion in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "quiz_completed",
+    properties: {
+      substance_id: substanceId,
+      result,
+      had_guess: !!guessedName,
+      had_observations: !!observations,
+    },
+  });
+
   // Check quiz badges
   await checkQuizBadges(userId);
 
@@ -486,6 +523,19 @@ export async function createStudySession(data: {
       VALUES (${sessionId}, ${data.substance_ids[i]}, ${i}, ${code})
     `;
   }
+
+  // Track study session creation in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "study_session_created",
+    properties: {
+      session_id: sessionId,
+      substance_count: data.substance_ids.length,
+      has_scheduled_time: !!data.scheduled_for,
+      duration_minutes: data.duration_minutes ?? null,
+    },
+  });
 
   revalidatePath("/learn/sessions");
   return { session_id: sessionId };
@@ -565,6 +615,17 @@ export async function completeSession(sessionId: number, reflectionNotes?: strin
     WHERE session_id = ${sessionId} AND user_id = ${userId}
   `;
 
+  // Track study session completion in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "study_session_completed",
+    properties: {
+      session_id: sessionId,
+      has_reflection_notes: !!reflectionNotes,
+    },
+  });
+
   revalidatePath("/learn/sessions");
   return { success: true };
 }
@@ -633,6 +694,18 @@ async function checkAndAwardBadge(userId: string, badgeKey: string) {
     await sql`
       INSERT INTO user_badge (user_id, badge_key) VALUES (${userId}, ${badgeKey})
     `;
+
+    // Track badge earned in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "badge_earned",
+      properties: {
+        badge_key: badgeKey,
+        badge_name: BADGE_DEFINITIONS[badgeKey as BadgeKey]?.name ?? badgeKey,
+        badge_description: BADGE_DEFINITIONS[badgeKey as BadgeKey]?.description ?? null,
+      },
+    });
   }
 }
 

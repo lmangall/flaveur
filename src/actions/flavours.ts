@@ -7,6 +7,7 @@ import {
   isValidFlavourStatus,
 } from "@/constants";
 import { createFlavourSchema, updateFlavourSchema } from "@/lib/validations/flavour";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export type FlavourAccessSource = "own" | "shared" | "workspace";
 
@@ -14,6 +15,7 @@ export type FlavourWithAccess = {
   flavour_id: number;
   name: string;
   description: string | null;
+  notes: string | null;
   is_public: boolean;
   user_id: string | null;
   category_id: number | null;
@@ -80,6 +82,7 @@ export async function getFlavours(): Promise<FlavourWithAccess[]> {
     flavour_id: Number(f.flavour_id),
     name: String(f.name),
     description: f.description ? String(f.description) : null,
+    notes: f.notes ? String(f.notes) : null,
     is_public: Boolean(f.is_public),
     user_id: f.user_id ? String(f.user_id) : null,
     category_id: f.category_id ? Number(f.category_id) : null,
@@ -269,6 +272,20 @@ export async function createFlavour(data: {
     insertedSubstances.push(result[0]);
   }
 
+  // Track flavour creation in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "flavour_created",
+    properties: {
+      flavour_id: newFlavour.flavour_id,
+      flavour_name: name,
+      is_public: is_public,
+      status: status,
+      substance_count: substances.length,
+    },
+  });
+
   return { flavour: newFlavour, substances: insertedSubstances };
 }
 
@@ -449,6 +466,7 @@ export async function updateFlavour(
   data: {
     name?: string;
     description?: string;
+    notes?: string | null;
     is_public?: boolean;
     category_id?: number | null;
     status?: string;
@@ -491,6 +509,7 @@ export async function updateFlavour(
   const finalData = {
     name: validatedData.name ?? existing.name,
     description: validatedData.description !== undefined ? validatedData.description : existing.description,
+    notes: validatedData.notes !== undefined ? validatedData.notes : existing.notes,
     is_public: validatedData.is_public ?? existing.is_public,
     category_id: validatedData.category_id !== undefined ? validatedData.category_id : existing.category_id,
     status: validatedData.status ?? existing.status,
@@ -502,6 +521,7 @@ export async function updateFlavour(
     SET
       name = ${finalData.name},
       description = ${finalData.description},
+      notes = ${finalData.notes},
       is_public = ${finalData.is_public},
       category_id = ${finalData.category_id},
       status = ${finalData.status},
@@ -557,6 +577,19 @@ export async function duplicateFlavour(flavourId: number, newName?: string) {
     `;
   }
 
+  // Track flavour duplication in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "flavour_duplicated",
+    properties: {
+      original_flavour_id: flavourId,
+      new_flavour_id: newFlavour.flavour_id,
+      new_flavour_name: duplicateName,
+      substance_count: originalSubstances.length,
+    },
+  });
+
   return newFlavour;
 }
 
@@ -572,11 +605,24 @@ export async function deleteFlavour(flavourId: number) {
     throw new Error("Flavour not found or access denied");
   }
 
+  const flavourName = flavourCheck[0].name;
+
   // Delete substance links first
   await sql`DELETE FROM public.substance_flavour WHERE flavour_id = ${flavourId}`;
 
   // Delete flavour
   await sql`DELETE FROM public.flavour WHERE flavour_id = ${flavourId} AND user_id = ${userId}`;
+
+  // Track flavour deletion in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "flavour_deleted",
+    properties: {
+      flavour_id: flavourId,
+      flavour_name: flavourName,
+    },
+  });
 
   return { success: true };
 }
@@ -619,6 +665,42 @@ export async function updateFlavorProfile(
   const result = await sql`
     UPDATE public.flavour
     SET flavor_profile = ${JSON.stringify(flavorProfile)}::jsonb, updated_at = CURRENT_TIMESTAMP
+    WHERE flavour_id = ${flavourId}
+    RETURNING *
+  `;
+
+  return result[0];
+}
+
+export async function updateFlavourNotes(
+  flavourId: number,
+  notes: string | null
+) {
+  const userId = await getUserId();
+
+  // Validate notes length
+  if (notes && notes.length > 10000) {
+    throw new Error("Notes must be less than 10000 characters");
+  }
+
+  // Check flavour exists and user has edit access (owner OR workspace editor/owner)
+  const accessCheck = await sql`
+    SELECT f.*
+    FROM public.flavour f
+    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
+      AND wm.user_id = ${userId}
+    WHERE f.flavour_id = ${flavourId}
+      AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
+  `;
+
+  if (accessCheck.length === 0) {
+    throw new Error("Flavour not found or access denied");
+  }
+
+  const result = await sql`
+    UPDATE public.flavour
+    SET notes = ${notes}, updated_at = CURRENT_TIMESTAMP
     WHERE flavour_id = ${flavourId}
     RETURNING *
   `;

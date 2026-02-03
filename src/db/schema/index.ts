@@ -11,6 +11,7 @@ export * from "./workspace";
 export * from "./learning";
 export * from "./jobs";
 export * from "./support";
+export * from "./referral";
 
 // Relations
 export * from "./relations";

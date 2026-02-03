@@ -6,6 +6,7 @@ import {
 } from "@/lib/eu-compliance/checker";
 import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 /**
  * Check EU compliance for a flavour
@@ -30,7 +31,22 @@ export async function checkFlavourEUCompliance(
     throw new Error("Forbidden: You do not have access to this flavour");
   }
 
-  return checkEUCompliance(flavourId);
+  const result = await checkEUCompliance(flavourId);
+
+  // Track compliance check in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "compliance_check_run",
+    properties: {
+      flavour_id: flavourId,
+      is_compliant: result.isCompliant,
+      issue_count: result.issues?.length ?? 0,
+      region: "EU",
+    },
+  });
+
+  return result;
 }
 
 // Re-export types for convenience

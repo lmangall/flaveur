@@ -50,6 +50,7 @@ export const flavour = pgTable(
     flavour_id: serial().primaryKey().notNull(),
     name: varchar({ length: 255 }).notNull(),
     description: text(),
+    notes: text(), // Markdown-formatted formula notes
     created_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
     updated_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
     is_public: boolean().default(true),

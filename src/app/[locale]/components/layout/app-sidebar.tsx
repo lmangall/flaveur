@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { ScrollArea } from "@/app/[locale]/components/ui/scroll-area";
@@ -32,6 +33,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/app/[locale]/components/ui/
 import { Separator } from "@/app/[locale]/components/ui/separator";
 import { cn } from "@/app/lib/utils";
 import { useState } from "react";
+import { InviteFriendDialog } from "@/app/[locale]/components/invite-friend-dialog";
 
 const navItems = [
   { href: "/dashboard", label: "dashboard", icon: LayoutDashboard },
@@ -154,8 +156,14 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
         </nav>
       </ScrollArea>
 
-      {/* Footer - User Menu */}
+      {/* Footer - Jobs + Invite + User Menu */}
       <div className="border-t p-3">
+        <nav className="mb-3">
+          <NavLink href="/jobs" label="jobs" icon={Briefcase} />
+        </nav>
+        <div className="mb-3">
+          <InviteFriendDialog collapsed={collapsed} />
+        </div>
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
           {user?.image ? (
             <Image
@@ -293,8 +301,27 @@ export function MobileSidebar() {
             </nav>
           </ScrollArea>
 
-          {/* Footer - User Menu */}
+          {/* Footer - Jobs + Invite + User Menu */}
           <div className="border-t p-3">
+            <nav className="mb-3">
+              <Link
+                href={`/${locale}/jobs`}
+                onClick={() => setOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  isActiveRoute("/jobs")
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                <Briefcase className="h-5 w-5" />
+                <span>{t("jobs")}</span>
+              </Link>
+            </nav>
+            <div className="mb-3">
+              <InviteFriendDialog />
+            </div>
             <div className="flex items-center gap-3">
               {user?.image ? (
                 <Image

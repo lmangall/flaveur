@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { user_profile, user_social_link, users } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export type UserProfile = InferSelectModel<typeof user_profile>;
 export type NewUserProfile = InferInsertModel<typeof user_profile>;
@@ -175,6 +176,23 @@ export async function updateUserProfile(data: ProfileFormData): Promise<{
         .set(profileData)
         .where(eq(user_profile.user_id, userId));
     }
+
+    // Track profile update in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "profile_updated",
+      properties: {
+        has_bio: !!data.bio,
+        profile_type: data.profile_type,
+        has_organization: !!data.organization,
+        has_job_title: !!data.job_title,
+        has_location: !!data.location,
+        is_public: data.is_profile_public ?? true,
+        open_to_opportunities: data.open_to_opportunities ?? false,
+        is_new_profile: existing.length === 0,
+      },
+    });
 
     return { success: true };
   } catch (error) {

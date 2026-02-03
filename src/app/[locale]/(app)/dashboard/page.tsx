@@ -23,6 +23,8 @@ import {
   Database,
   Globe,
   Users,
+  Briefcase,
+  ArrowRight,
 } from "lucide-react";
 import {
   Tabs,
@@ -309,6 +311,29 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Job Opportunities CTA */}
+      <Card className="bg-linear-to-r from-primary/5 to-primary/10 border-primary/20">
+        <CardContent className="flex items-center justify-between p-6">
+          <div className="flex items-center gap-4">
+            <div className="rounded-full bg-primary/10 p-3">
+              <Briefcase className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Job Opportunities</h3>
+              <p className="text-sm text-muted-foreground">
+                Explore career opportunities in the flavor industry
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" asChild>
+            <Link href="/jobs">
+              Browse Jobs
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <Tabs
         defaultValue="recent"

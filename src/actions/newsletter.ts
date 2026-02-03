@@ -5,6 +5,7 @@ import { newsletter_subscribers } from "@/db/schema";
 import { eq, and, isNull, isNotNull } from "drizzle-orm";
 import { sendWelcomeEmail, sendUnsubscribeConfirmationEmail, sendNewSubscriberNotification } from "@/lib/email/resend";
 import { newsletterSubscribeSchema, confirmationTokenSchema } from "@/lib/validations/newsletter";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function subscribeToNewsletter(email: string, source: string, locale: string) {
   const validation = newsletterSubscribeSchema.safeParse({ email, source, locale });
@@ -57,6 +58,17 @@ export async function subscribeToNewsletter(email: string, source: string, local
     sendWelcomeEmail(normalizedEmail, locale),
     sendNewSubscriberNotification(normalizedEmail, source, locale),
   ]);
+
+  // Track newsletter subscription in PostHog (using email as distinct ID for anonymous users)
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: normalizedEmail,
+    event: "newsletter_subscribed",
+    properties: {
+      source,
+      locale,
+    },
+  });
 
   return { success: true, message: "subscribed" };
 }

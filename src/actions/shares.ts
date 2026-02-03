@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { flavour, flavour_shares, flavour_invites, users, substance_flavour } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { sendFlavourInviteEmail, sendFlavourShareNotification, sendShareAdminNotification } from "@/lib/email/resend";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // Types
 export interface ShareInfo {
@@ -122,6 +123,18 @@ export async function shareFlavour(data: {
       console.error("[shareFlavour] Failed to send admin notification:", adminEmailError);
     }
 
+    // Track flavour share in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "flavour_shared",
+      properties: {
+        flavour_id: flavourId,
+        flavour_name: String(flavourData.name),
+        recipient_type: "existing_user",
+      },
+    });
+
     return {
       type: "share" as const,
       share: result[0],
@@ -190,6 +203,18 @@ export async function shareFlavour(data: {
     } catch (adminEmailError) {
       console.error("[shareFlavour] Failed to send admin notification:", adminEmailError);
     }
+
+    // Track flavour invite in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "flavour_shared",
+      properties: {
+        flavour_id: flavourId,
+        flavour_name: String(flavourData.name),
+        recipient_type: "new_user_invite",
+      },
+    });
 
     return {
       type: "invite" as const,
@@ -394,6 +419,17 @@ export async function acceptInvite(token: string): Promise<{ flavourId: number }
       accepted_at: new Date().toISOString(),
     })
     .where(eq(flavour_invites.invite_id, invite.invite_id));
+
+  // Track invite acceptance in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "share_invite_accepted",
+    properties: {
+      flavour_id: invite.flavour_id,
+      invited_by_user_id: invite.invited_by_user_id,
+    },
+  });
 
   return { flavourId: invite.flavour_id };
 }

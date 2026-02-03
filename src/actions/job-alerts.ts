@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { job_alert_preferences } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { jobAlertPreferencesSchema, type JobAlertPreferencesInput } from "@/lib/validations/job-alerts";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export interface JobAlertPreferences {
   id: number;
@@ -90,6 +91,21 @@ export async function saveJobAlertPreferences(input: JobAlertPreferencesInput) {
       updated_at = NOW()
     RETURNING id
   `);
+
+  // Track job alert preferences saved in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "job_alert_preferences_saved",
+    properties: {
+      location_count: locations.length,
+      employment_type_count: employmentTypes.length,
+      experience_level_count: experienceLevels.length,
+      keyword_count: keywords.length,
+      frequency,
+      is_active: isActive,
+    },
+  });
 
   return { success: true, id: (result.rows[0] as { id: number }).id };
 }

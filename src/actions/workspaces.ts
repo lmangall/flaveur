@@ -10,6 +10,7 @@ import type {
   Flavour,
 } from "@/app/type";
 import type { WorkspaceRoleValue } from "@/constants";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // ===========================================
 // WORKSPACE CRUD
@@ -44,6 +45,17 @@ export async function createWorkspace(data: {
     INSERT INTO workspace_member (workspace_id, user_id, role)
     VALUES (${workspace.workspace_id}, ${userId}, 'owner')
   `;
+
+  // Track workspace creation in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "workspace_created",
+    properties: {
+      workspace_id: Number(workspace.workspace_id),
+      workspace_name: String(workspace.name),
+    },
+  });
 
   return {
     workspace_id: Number(workspace.workspace_id),
@@ -295,6 +307,18 @@ export async function addWorkspaceMember(data: {
       VALUES (${workspaceId}, ${targetUser.user_id}, ${role})
     `;
 
+    // Track member addition in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "workspace_member_added",
+      properties: {
+        workspace_id: workspaceId,
+        new_member_role: role,
+        member_type: "existing_user",
+      },
+    });
+
     return { type: "member", email: normalizedEmail };
   } else {
     // Create invite for non-user
@@ -321,6 +345,18 @@ export async function addWorkspaceMember(data: {
       INSERT INTO workspace_invite (workspace_id, invited_email, invited_by_user_id, role)
       VALUES (${workspaceId}, ${normalizedEmail}, ${userId}, ${role})
     `;
+
+    // Track invite in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "workspace_member_added",
+      properties: {
+        workspace_id: workspaceId,
+        new_member_role: role,
+        member_type: "invite_sent",
+      },
+    });
 
     // TODO: Send invite email
 
@@ -759,6 +795,17 @@ export async function linkFlavourToWorkspace(data: {
     INSERT INTO workspace_flavour (workspace_id, flavour_id, added_by)
     VALUES (${workspaceId}, ${flavourId}, ${userId})
   `;
+
+  // Track flavour linking in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "flavour_linked_to_workspace",
+    properties: {
+      flavour_id: flavourId,
+      workspace_id: workspaceId,
+    },
+  });
 }
 
 /**

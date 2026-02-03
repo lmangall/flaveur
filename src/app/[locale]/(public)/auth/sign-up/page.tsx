@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Loader2 } from "lucide-react";
+import posthog from "posthog-js";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -56,12 +57,19 @@ export default function SignUpPage() {
     setError("");
     setIsGoogleLoading(true);
 
+    // Track sign-up attempt with Google
+    posthog.capture("user_signed_up", {
+      method: "google",
+      locale,
+    });
+
     try {
       await signIn.social({
         provider: "google",
         callbackURL: `/${locale}`,
       });
     } catch (err) {
+      posthog.captureException(err);
       setError("Failed to sign up with Google");
       setIsGoogleLoading(false);
     }
@@ -93,10 +101,23 @@ export default function SignUpPage() {
       if (result.error) {
         setError(result.error.message || "Failed to create account");
       } else {
+        // Identify the user in PostHog
+        posthog.identify(email, {
+          email,
+          name,
+        });
+
+        // Track successful sign-up
+        posthog.capture("user_signed_up", {
+          method: "email",
+          locale,
+        });
+
         router.push(`/${locale}`);
         router.refresh();
       }
     } catch (err) {
+      posthog.captureException(err);
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);

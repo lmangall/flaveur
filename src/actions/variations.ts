@@ -2,6 +2,7 @@
 
 import { getUserId } from "@/lib/auth-server";
 import { sql } from "@/lib/db";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // Types for variation system
 export type VariationGroup = {
@@ -184,6 +185,20 @@ export async function createVariation(
       )
     `;
   }
+
+  // Track variation creation in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "variation_created",
+    properties: {
+      source_flavour_id: sourceFlavourId,
+      new_flavour_id: newFlavour.flavour_id,
+      variation_label: label,
+      group_id: groupId,
+      substance_count: substances.length,
+    },
+  });
 
   return {
     flavour: {
@@ -594,6 +609,18 @@ export async function deleteVariation(flavourId: number): Promise<void> {
 
   // Delete flavour
   await sql`DELETE FROM flavour WHERE flavour_id = ${flavourId}`;
+
+  // Track variation deletion in PostHog
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: "variation_deleted",
+    properties: {
+      flavour_id: flavourId,
+      variation_label: flavour.variation_label,
+      group_id: flavour.variation_group_id,
+    },
+  });
 }
 
 /**

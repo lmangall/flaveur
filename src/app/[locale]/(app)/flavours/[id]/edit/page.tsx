@@ -20,6 +20,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/app/[locale]/components/ui/skeleton";
 import { getFlavourById, updateFlavour } from "@/actions/flavours";
+import { MarkdownEditor } from "@/app/[locale]/components/markdown-editor";
 import { getCategories, type CategoryWithDetails } from "@/actions/categories";
 
 export default function EditFlavourPage() {
@@ -37,6 +38,7 @@ export default function EditFlavourPage() {
   const [flavour, setFlavour] = useState({
     name: "",
     description: "",
+    notes: "",
     isPublic: false,
     category: "",
     status: "draft",
@@ -62,6 +64,7 @@ export default function EditFlavourPage() {
         setFlavour({
           name: String(flavourData.flavour.name || ""),
           description: String(flavourData.flavour.description || ""),
+          notes: String(flavourData.flavour.notes || ""),
           isPublic: Boolean(flavourData.flavour.is_public),
           category: flavourData.flavour.category_id
             ? String(flavourData.flavour.category_id)
@@ -104,6 +107,7 @@ export default function EditFlavourPage() {
       await updateFlavour(flavourId, {
         name: flavour.name,
         description: flavour.description,
+        notes: flavour.notes || null,
         is_public: flavour.isPublic,
         category_id: flavour.category ? parseInt(flavour.category) : null,
         status: flavour.status,
@@ -224,6 +228,15 @@ export default function EditFlavourPage() {
                   onChange={handleFlavourChange}
                   placeholder={t("describeYourFlavor")}
                   rows={3}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="notes">{t("notes")}</Label>
+                <MarkdownEditor
+                  value={flavour.notes}
+                  onChange={(value) => setFlavour({ ...flavour, notes: value })}
+                  placeholder={t("notesPlaceholder")}
+                  minHeight="min-h-[150px]"
                 />
               </div>
               <div className="space-y-2">

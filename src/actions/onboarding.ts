@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { user_profile } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { OnboardingStatusValue } from "@/constants/profile";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export interface OnboardingData {
   profile_type: string | null;
@@ -149,6 +150,19 @@ export async function completeOnboarding(data: OnboardingData): Promise<{
         .where(eq(user_profile.user_id, userId));
     }
 
+    // Track onboarding completion in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "onboarding_completed",
+      properties: {
+        profile_type: data.profile_type,
+        has_bio: !!data.bio,
+        has_organization: !!data.organization,
+        has_location: !!data.location,
+      },
+    });
+
     return { success: true };
   } catch (error) {
     console.error("Failed to complete onboarding:", error);
@@ -188,6 +202,13 @@ export async function skipOnboarding(): Promise<{
         .set({ onboarding_status: "skipped" })
         .where(eq(user_profile.user_id, userId));
     }
+
+    // Track onboarding skip in PostHog
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: "onboarding_skipped",
+    });
 
     return { success: true };
   } catch (error) {

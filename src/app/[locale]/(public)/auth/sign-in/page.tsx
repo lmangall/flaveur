@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Loader2 } from "lucide-react";
+import posthog from "posthog-js";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -64,10 +65,22 @@ export default function SignInPage() {
       if (result.error) {
         setError(result.error.message || "Failed to sign in");
       } else {
+        // Identify the user in PostHog
+        posthog.identify(email, {
+          email,
+        });
+
+        // Track successful sign-in
+        posthog.capture("user_signed_in", {
+          method: "email",
+          locale,
+        });
+
         router.push(`/${locale}`);
         router.refresh();
       }
     } catch (err) {
+      posthog.captureException(err);
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
@@ -78,6 +91,12 @@ export default function SignInPage() {
     setError("");
     setIsGoogleLoading(true);
 
+    // Track sign-in attempt with Google
+    posthog.capture("user_signed_in", {
+      method: "google",
+      locale,
+    });
+
     try {
       // Use absolute URL for OAuth callback to ensure proper redirect
       const baseUrl = window.location.origin;
@@ -86,6 +105,7 @@ export default function SignInPage() {
         callbackURL: `${baseUrl}/${locale}`,
       });
     } catch (err) {
+      posthog.captureException(err);
       setError("Failed to sign in with Google");
       setIsGoogleLoading(false);
     }
