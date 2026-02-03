@@ -1,7 +1,8 @@
 {
 	"Home": {
-	  "headline": "Flavor Creation",
-	  "heroDescription": "Learn, create, and showcase your flavor compositions. The ultimate platform for aspiring flavorists.",
+	  "headline": "Your Flavor Lab",
+	  "heroDescription": "From learning to creation.",
+	  "heroDescription2": "For flavorist students and professionals.",
 	  "heroTagline": "The platform for flavor creators",
 	  "createButton": "Create Your First Flavor",
 	  "exploreButton": "Explore Substances",

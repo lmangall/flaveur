@@ -1,7 +1,8 @@
 {
 	"Home": {
-	  "headline": "Création d'arômes",
-	  "heroDescription": "Apprenez, créez et montrez vos compositions de saveurs. La plateforme ultime pour les futurs aromaticiens, qu'ils soient étudiants ou pros.",
+	  "headline": "Votre laboratoire d'arômes",
+	  "heroDescription": "De l'apprentissage à la création.",
+	  "heroDescription2": "Pour aromaticiens en formation ou confirmés.",
 	  "heroTagline": "La plateforme des créateurs d'arômes",
 	  "createButton": "Crée ton premier arôme",
 	  "exploreButton": "Explore nos matières premières",
@@ -56,7 +57,7 @@
 	  "invalidEmail": "Veuillez entrer une adresse email valide.",
 	  "explorePlatform": "Explorer la Plateforme",
 	  "exploreSubstances": "Substances disponibles",
-	  "NewsletterDescription": "Inscris-toi pour recevoir les dernières actualités et nouveautés directement dans ta boîte mail.",
+	  "NewsletterDescription": "Mamie bouge vite, mets ton mail si tu veux être au courant.",
 	  "NewsletterTitle": "Inscris-toi pour suivre les nouveautés",
 	  "startCreating": "Le Labo",
 	  "socialProofSubstances": "500+ molécules aromatiques",
@@ -823,7 +824,7 @@
 		"facebook": "Facebook",
 		"copyLink": "Copier le lien",
 		"linkCopied": "Lien copié !",
-		"inviteMessage": "{name} vous invite à rejoindre Oumamie - la plateforme pour les créateurs de saveurs !",
+		"inviteMessage": "Regarde ce que j'ai trouvé, une plateforme pour la formulation de saveurs avec une super base de données !",
 		"shareStarted": "Lien de partage ouvert",
 		"yourReferralLink": "Votre lien de parrainage",
 		"generatingLink": "Génération du lien...",

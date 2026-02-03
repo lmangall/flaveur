@@ -42,17 +42,19 @@ export default function Home() {
               {/* Left content */}
               <div className="flex flex-col justify-center space-y-8">
                 {/* Headline */}
-                <div className="space-y-4 reveal-up delay-100">
-                  <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl text-foreground/70">
+                <div className="space-y-4">
+                  <h1 className="hero-title text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl text-foreground/70">
                     {t("headline")}
                   </h1>
-                  <p className="max-w-[600px] text-foreground/80 text-lg md:text-xl leading-relaxed reveal-up delay-200">
-                    {t("heroDescription")}
+                  <p className="max-w-[600px] text-foreground/80 text-lg md:text-xl leading-relaxed">
+                    <span className="hero-desc delay-300 inline-block">{t("heroDescription")}</span>
+                    <br />
+                    <span className="hero-desc delay-500 inline-block">{t("heroDescription2")}</span>
                   </p>
                 </div>
 
                 {/* Social proof */}
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6 reveal-up delay-300">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 reveal-up delay-700">
                   <div className="flex items-center gap-2 text-sm">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-pink/10">
                       <FlaskConical className="h-4 w-4 text-pink" />
@@ -76,7 +78,7 @@ export default function Home() {
                 </div>
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col gap-4 sm:flex-row reveal-up delay-400">
+                <div className="flex flex-col gap-4 sm:flex-row reveal-up delay-1000">
                   <Link
                     href="/dashboard"
                     className="group relative inline-flex h-14 items-center justify-center overflow-hidden rounded-xl bg-linear-to-r from-pink to-pink/80 px-10 text-base font-semibold text-white shadow-lg shadow-pink/25 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-pink/40"
@@ -91,14 +93,14 @@ export default function Home() {
               </div>
 
               {/* Right - Hero visual */}
-              <div className="flex items-center justify-center lg:justify-end scale-in delay-200">
+              <div className="flex items-center justify-center lg:justify-end logo-bounce delay-200">
                 <div className="relative h-[230px] w-[320px] sm:h-[290px] sm:w-[400px] lg:h-[310px] lg:w-[450px] overflow-hidden">
                   <Image
                     src="/logo_transparent_bg.png"
                     alt="Flaveur Logo"
                     width={450}
                     height={450}
-                    className="object-cover object-top"
+                    className="object-cover object-top logo-adaptive"
                     priority
                   />
                 </div>

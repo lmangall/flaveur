@@ -221,6 +221,75 @@ body {
   opacity: 0;
 }
 
+/* Hero title - dramatic blur + scale entrance */
+@keyframes hero-title-reveal {
+  0% {
+    opacity: 0;
+    filter: blur(20px);
+    transform: translateY(40px) scale(0.95);
+  }
+  60% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+.hero-title {
+  animation: hero-title-reveal 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+/* Hero description - staggered line reveal */
+@keyframes hero-desc-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.hero-desc {
+  animation: hero-desc-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+/* Logo bounce entrance */
+@keyframes logo-bounce {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) rotate(-5deg);
+  }
+  50% {
+    transform: scale(1.05) rotate(2deg);
+  }
+  70% {
+    transform: scale(0.98) rotate(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.logo-bounce {
+  animation: logo-bounce 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+/* Logo color modes - invert to white in dark mode */
+.dark .logo-adaptive {
+  filter: invert(1);
+}
+
 /* Scale in animation */
 @keyframes scale-in {
   0% {
