@@ -21,11 +21,11 @@ export const fontSans = FontSans({
 
 export const metadata = {
   title: {
-    default: "Flavor Composition App",
-    template: "%s | Flavor Composition App",
+    default: "Votre laboratoire d'arômes",
+    template: "%s | Votre laboratoire d'arômes",
   },
   description:
-    "Create and manage flavor compositions. The ultimate platform for aspiring flavor scientists to learn, create, and showcase their expertise.",
+    "De l'apprentissage à la création. Pour aromaticiens en formation ou confirmés.",
   keywords: [
     "flavor",
     "composition",
@@ -60,9 +60,9 @@ export const metadata = {
     },
   },
   openGraph: {
-    title: "Flavor Composition App",
+    title: "Votre laboratoire d'arômes",
     description:
-      "Create and manage flavor compositions. The ultimate platform for aspiring flavorists.",
+      "Pour aromaticiens en formation ou confirmés.",
     url: "https://Oumamie.com",
     siteName: "Oumamie",
     images: [
@@ -78,9 +78,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Flavor Composition App",
+    title: "Votre laboratoire d'arômes",
     description:
-      "Create and manage flavor compositions. The ultimate platform for aspiring flavor scientists.",
+      "De l'apprentissage à la création. Pour aromaticiens en formation ou confirmés.",
     images: ["/twitter-image.jpg"],
     creator: "@Oumamie",
   },
