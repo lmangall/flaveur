@@ -62,11 +62,8 @@ export default function SignUpPage() {
     setError("");
     setIsGoogleLoading(true);
 
-    // Track sign-up attempt with Google
-    posthog.capture("user_signed_up", {
-      method: "google",
-      locale,
-    });
+    // Note: Google OAuth tracking is handled server-side in auth.ts databaseHooks
+    // (client-side capture here would be interrupted by the OAuth redirect)
 
     try {
       await signIn.social({

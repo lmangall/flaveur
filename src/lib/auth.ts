@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "./db";
 import * as schema from "@/db/schema";
+import { getPostHogClient } from "./posthog-server";
 
 // Determine the base URL for auth - critical for cookie domain and OAuth redirects
 function getBaseURL() {
@@ -87,6 +88,27 @@ export const auth = betterAuth({
 
   // Plugins
   plugins: [nextCookies()],
+
+  // Database hooks for tracking
+  databaseHooks: {
+    account: {
+      create: {
+        after: async (account) => {
+          // Track Google OAuth signups server-side (client-side capture gets interrupted by redirect)
+          if (account.providerId === "google") {
+            const posthog = getPostHogClient();
+            posthog.capture({
+              distinctId: account.userId,
+              event: "user_signed_up",
+              properties: {
+                method: "google",
+              },
+            });
+          }
+        },
+      },
+    },
+  },
 });
 
 // Export types for use in components

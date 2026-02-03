@@ -91,11 +91,8 @@ export default function SignInPage() {
     setError("");
     setIsGoogleLoading(true);
 
-    // Track sign-in attempt with Google
-    posthog.capture("user_signed_in", {
-      method: "google",
-      locale,
-    });
+    // Note: Google OAuth tracking is handled server-side in auth.ts databaseHooks
+    // (client-side capture here would be interrupted by the OAuth redirect)
 
     try {
       // Use absolute URL for OAuth callback to ensure proper redirect
