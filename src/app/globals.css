@@ -356,6 +356,22 @@ body {
   animation: breathe 4s ease-in-out infinite;
 }
 
+/* Pink button glow - pulsing shadow effect */
+@keyframes pink-button-glow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(236, 72, 153, 0.4),
+                0 0 24px rgba(236, 72, 153, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.6),
+                0 0 40px rgba(236, 72, 153, 0.3);
+  }
+}
+
+.animate-pink-glow {
+  animation: pink-button-glow 2s ease-in-out infinite;
+}
+
 /* Animated gradient for text */
 @keyframes gradient-shift {
   0% {

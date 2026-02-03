@@ -139,7 +139,21 @@ export function InviteFriendDialog({ collapsed = false }: InviteFriendDialogProp
   };
 
   const triggerButton = (
-    <Button variant="outline" size={collapsed ? "icon" : "sm"} className={collapsed ? "" : "w-full"}>
+    <Button
+      variant="outline"
+      size={collapsed ? "icon" : "sm"}
+      className={`
+        ${collapsed ? "" : "w-full"}
+        border-pink-500
+        bg-pink-500
+        hover:bg-pink-600
+        dark:bg-pink-600
+        dark:hover:bg-pink-700
+        text-white font-medium
+        animate-pink-glow
+        transition-all duration-300
+      `}
+    >
       <Share2 className={collapsed ? "h-4 w-4" : "h-4 w-4 mr-2"} />
       {!collapsed && t("inviteFriend")}
     </Button>

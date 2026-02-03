@@ -161,14 +161,14 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
         </nav>
       </ScrollArea>
 
-      {/* Footer - Jobs + Invite + User Menu */}
+      {/* Footer - Invite + Jobs + User Menu */}
       <div className="border-t p-3">
-        <nav className="mb-3">
-          <NavLink href="/jobs" label="jobs" icon={Briefcase} />
-        </nav>
         <div className="mb-3">
           <InviteFriendDialog collapsed={collapsed} />
         </div>
+        <nav className="mb-3">
+          <NavLink href="/jobs" label="jobs" icon={Briefcase} />
+        </nav>
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
           {user?.image ? (
             <Image
@@ -311,8 +311,11 @@ export function MobileSidebar() {
             </nav>
           </ScrollArea>
 
-          {/* Footer - Jobs + Invite + User Menu */}
+          {/* Footer - Invite + Jobs + User Menu */}
           <div className="border-t p-3">
+            <div className="mb-3">
+              <InviteFriendDialog />
+            </div>
             <nav className="mb-3">
               <Link
                 href={`/${locale}/jobs`}
@@ -329,9 +332,6 @@ export function MobileSidebar() {
                 <span>{t("jobs")}</span>
               </Link>
             </nav>
-            <div className="mb-3">
-              <InviteFriendDialog />
-            </div>
             <div className="flex items-center gap-3">
               {user?.image ? (
                 <Image
