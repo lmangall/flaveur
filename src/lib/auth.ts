@@ -104,6 +104,8 @@ export const auth = betterAuth({
                 method: "google",
               },
             });
+            // Flush immediately - serverless functions can terminate before async sends complete
+            await posthog.flush();
           }
         },
       },
