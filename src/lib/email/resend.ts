@@ -606,6 +606,59 @@ export async function sendShareAdminNotification(data: {
   });
 }
 
+/**
+ * Notify admin when a new user signs up
+ */
+export async function sendNewUserNotification(data: {
+  userId: string;
+  email: string;
+  name: string;
+  signupMethod: "email" | "google";
+  referrerName: string | null;
+  referrerEmail: string | null;
+  referralCode: string | null;
+}) {
+  const { userId, email, name, signupMethod, referrerName, referrerEmail, referralCode } = data;
+  const methodLabel = signupMethod === 'google' ? 'Google OAuth' : 'Email/Password';
+  const adminUrl = `${BASE_URL}/en/admin`;
+
+  const referralSection = referrerName
+    ? `
+  <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin-top: 15px;">
+    <p style="margin: 0; color: #2e7d32; font-weight: bold;">Referred by:</p>
+    <p style="margin: 5px 0 0 0;">${referrerName} (${referrerEmail})</p>
+    <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Code: ${referralCode}</p>
+  </div>
+    `
+    : '';
+
+  await resend.emails.send({
+    from: 'Oumamie <hello@oumamie.xyz>',
+    to: DEV_EMAIL,
+    subject: `[Oumamie] New user signup: ${email}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+  <h2>New User Registration</h2>
+  <p><strong>Name:</strong> ${name}</p>
+  <p><strong>Email:</strong> ${email}</p>
+  <p><strong>User ID:</strong> ${userId}</p>
+  <p><strong>Method:</strong> ${methodLabel}</p>
+  <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+  ${referralSection}
+  <p style="margin-top: 20px;">
+    <a href="${adminUrl}" style="display: inline-block; background: #111; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Admin Dashboard</a>
+  </p>
+</body>
+</html>
+    `,
+  });
+}
+
 function getJobAlertEmailEn(jobs: JobAlertJob[], unsubscribeUrl: string): string {
   const jobsHtml = jobs.map(job => `
     <div style="background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; margin-bottom: 15px;">

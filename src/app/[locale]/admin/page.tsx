@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/[locale]/components/ui/card";
-import { Briefcase, Users, Eye, MousePointerClick, UserPlus, Bell, Mail, FlaskConical, Share2, Clock } from "lucide-react";
+import { Briefcase, Users, Eye, MousePointerClick, UserPlus, Bell, Mail, FlaskConical, Share2, Clock, Gift, TrendingUp } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -156,14 +156,68 @@ async function getUsersWithStats(): Promise<UserWithStats[]> {
   return result.rows as UserWithStats[];
 }
 
+async function getReferralStats() {
+  const result = await db.execute(sql`
+    SELECT
+      COUNT(*) as total_referrals,
+      COUNT(referred_user_id) as total_conversions,
+      COUNT(*) FILTER (WHERE converted_at > NOW() - INTERVAL '7 days') as recent_conversions
+    FROM referral
+  `);
+
+  const stats = result.rows[0] as Record<string, unknown>;
+  const totalReferrals = Number(stats?.total_referrals ?? 0);
+  const totalConversions = Number(stats?.total_conversions ?? 0);
+
+  return {
+    totalReferrals,
+    totalConversions,
+    recentConversions: Number(stats?.recent_conversions ?? 0),
+    conversionRate: totalReferrals > 0 ? Math.round((totalConversions / totalReferrals) * 100) : 0,
+  };
+}
+
+type ReferralConversion = {
+  id: number;
+  platform: string;
+  converted_at: string;
+  referrer_name: string | null;
+  referrer_email: string;
+  referred_name: string | null;
+  referred_email: string;
+};
+
+async function getRecentConversions(): Promise<ReferralConversion[]> {
+  const result = await db.execute(sql`
+    SELECT
+      r.id,
+      r.platform,
+      r.converted_at,
+      referrer.username as referrer_name,
+      referrer.email as referrer_email,
+      referred.username as referred_name,
+      referred.email as referred_email
+    FROM referral r
+    JOIN users referrer ON r.referrer_id = referrer.user_id
+    JOIN users referred ON r.referred_user_id = referred.user_id
+    WHERE r.converted_at IS NOT NULL
+    ORDER BY r.converted_at DESC
+    LIMIT 20
+  `);
+
+  return result.rows as ReferralConversion[];
+}
+
 export default async function AdminDashboard() {
   const t = await getTranslations("Admin");
-  const [stats, userStats, users, sharingStats, pendingInvites] = await Promise.all([
+  const [stats, userStats, users, sharingStats, pendingInvites, referralStats, recentConversions] = await Promise.all([
     getStats(),
     getUserStats(),
     getUsersWithStats(),
     getSharingStats(),
     getPendingInvites(),
+    getReferralStats(),
+    getRecentConversions(),
   ]);
 
   return (
@@ -312,6 +366,98 @@ export default async function AdminDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Referral Stats */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Referral Program</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Referrals</CardTitle>
+              <Gift className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{referralStats.totalReferrals}</div>
+              <p className="text-xs text-muted-foreground">Links shared</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversions</CardTitle>
+              <UserPlus className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{referralStats.totalConversions}</div>
+              <p className="text-xs text-muted-foreground">Users who signed up</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Recent (7d)</CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{referralStats.recentConversions}</div>
+              <p className="text-xs text-muted-foreground">Last 7 days</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{referralStats.conversionRate}%</div>
+              <p className="text-xs text-muted-foreground">Of referral links</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Recent Referral Conversions */}
+      {recentConversions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-green-500" />
+              Recent Referral Conversions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Referrer</TableHead>
+                  <TableHead>Referred User</TableHead>
+                  <TableHead>Platform</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentConversions.map((conversion) => (
+                  <TableRow key={conversion.id}>
+                    <TableCell className="font-medium">
+                      {conversion.referrer_name || conversion.referrer_email}
+                    </TableCell>
+                    <TableCell>
+                      {conversion.referred_name || conversion.referred_email}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{conversion.platform}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(conversion.converted_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pending Invites List */}
       {pendingInvites.length > 0 && (

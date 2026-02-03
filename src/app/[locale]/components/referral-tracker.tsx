@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { trackReferralConversion } from "@/actions/referrals";
+import { notifyNewUserSignup } from "@/actions/users";
 
 const REFERRAL_CODE_KEY = "oumamie_referral_code";
 const REFERRAL_TRACKED_KEY = "oumamie_referral_tracked";
@@ -59,6 +60,16 @@ export function ReferralTracker() {
           // Clean up the referral code
           localStorage.removeItem(REFERRAL_CODE_KEY);
           console.log("[ReferralTracker] Referral conversion tracked successfully");
+
+          // Notify admin of new referred user (fire and forget)
+          // This handles Google OAuth signups that bypass the sign-up page
+          notifyNewUserSignup({
+            userId: session.user.id,
+            email: session.user.email || "",
+            name: session.user.name || session.user.email || "Unknown",
+            signupMethod: "google", // Most likely Google if via referral tracker
+            referralCode,
+          });
         } else {
           // Referral code was invalid or already used
           // Still clean up to prevent repeated attempts

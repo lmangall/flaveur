@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { signUp, signIn } from "@/lib/auth-client";
+import { notifyNewUserSignup } from "@/actions/users";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Input } from "@/app/[locale]/components/ui/input";
 import { Label } from "@/app/[locale]/components/ui/label";
@@ -45,6 +46,7 @@ function GoogleIcon({ className }: { className?: string }) {
 export default function SignUpPage() {
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +54,9 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // Get referral code from URL if present
+  const referralCode = searchParams.get("ref") || undefined;
 
   const handleGoogleSignUp = async () => {
     setError("");
@@ -66,7 +71,7 @@ export default function SignUpPage() {
     try {
       await signIn.social({
         provider: "google",
-        callbackURL: `/${locale}`,
+        callbackURL: `/${locale}/dashboard`,
       });
     } catch (err) {
       posthog.captureException(err);
@@ -113,7 +118,18 @@ export default function SignUpPage() {
           locale,
         });
 
-        router.push(`/${locale}`);
+        // Notify admin of new signup (don't await - fire and forget)
+        if (result.data?.user?.id) {
+          notifyNewUserSignup({
+            userId: result.data.user.id,
+            email,
+            name,
+            signupMethod: "email",
+            referralCode,
+          });
+        }
+
+        router.push(`/${locale}/dashboard`);
         router.refresh();
       }
     } catch (err) {
