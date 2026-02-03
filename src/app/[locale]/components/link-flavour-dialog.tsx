@@ -56,6 +56,7 @@ export function LinkFlavourDialog({
           version: Number(f.version),
           base_unit: String(f.base_unit) as Flavour["base_unit"],
           flavor_profile: f.flavor_profile as Flavour["flavor_profile"],
+          notes: f.notes ? String(f.notes) : null,
           created_at: String(f.created_at),
           updated_at: String(f.updated_at),
         }))

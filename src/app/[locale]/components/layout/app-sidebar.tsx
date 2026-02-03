@@ -32,7 +32,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/app/[locale]/components/ui/sheet";
 import { Separator } from "@/app/[locale]/components/ui/separator";
 import { cn } from "@/app/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { InviteFriendDialog } from "@/app/[locale]/components/invite-friend-dialog";
 
 const navItems = [
@@ -57,6 +57,11 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
   const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActiveRoute = (href: string) => {
     const fullPath = `/${locale}${href}`;
@@ -180,8 +185,8 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
           )}
           {!collapsed && (
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium">{user?.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+              <p className="truncate text-sm font-medium">{mounted ? user?.name : ""}</p>
+              <p className="truncate text-xs text-muted-foreground">{mounted ? user?.email : ""}</p>
             </div>
           )}
         </div>
@@ -228,12 +233,17 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
 // Mobile sidebar using Sheet
 export function MobileSidebar() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const locale = useLocale();
   const t = useTranslations("Navbar");
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActiveRoute = (href: string) => {
     const fullPath = `/${locale}${href}`;
@@ -337,8 +347,8 @@ export function MobileSidebar() {
                 </div>
               )}
               <div className="flex-1 overflow-hidden">
-                <p className="truncate text-sm font-medium">{user?.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+                <p className="truncate text-sm font-medium">{mounted ? user?.name : ""}</p>
+                <p className="truncate text-xs text-muted-foreground">{mounted ? user?.email : ""}</p>
               </div>
             </div>
             <Separator className="my-3" />

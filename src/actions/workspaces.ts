@@ -714,6 +714,7 @@ export async function getWorkspaceFlavours(
       f.version,
       f.base_unit,
       f.flavor_profile,
+      f.notes,
       f.created_at as flavour_created_at,
       f.updated_at as flavour_updated_at,
       u.username as added_by_username
@@ -740,6 +741,7 @@ export async function getWorkspaceFlavours(
       version: Number(row.version),
       base_unit: String(row.base_unit) as Flavour["base_unit"],
       flavor_profile: row.flavor_profile,
+      notes: row.notes ? String(row.notes) : null,
       created_at: String(row.flavour_created_at),
       updated_at: String(row.flavour_updated_at),
     },

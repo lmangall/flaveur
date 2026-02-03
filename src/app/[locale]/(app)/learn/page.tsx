@@ -334,7 +334,7 @@ export default function LearnDashboardPage() {
                               : "ml-2"
                       }
                     >
-                      {item.progress_status.replace("_", " ")}
+                      {item.progress_status?.replace("_", " ") ?? "new"}
                     </Badge>
                   </div>
                 ))}
