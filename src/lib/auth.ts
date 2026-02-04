@@ -1,9 +1,11 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { eq } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "@/db/schema";
 import { getPostHogClient } from "./posthog-server";
+import { sendNewUserNotification } from "./email/resend";
 
 // Determine the base URL for auth - critical for cookie domain and OAuth redirects
 function getBaseURL() {
@@ -106,6 +108,29 @@ export const auth = betterAuth({
             });
             // Flush immediately - serverless functions can terminate before async sends complete
             await posthog.flush();
+
+            // Send admin notification for Google OAuth signups
+            try {
+              const user = await db
+                .select({ email: schema.users.email, name: schema.users.name })
+                .from(schema.users)
+                .where(eq(schema.users.id, account.userId))
+                .limit(1);
+
+              if (user[0]) {
+                await sendNewUserNotification({
+                  userId: account.userId,
+                  email: user[0].email || "",
+                  name: user[0].name || "Unknown",
+                  signupMethod: "google",
+                  referrerName: null,
+                  referrerEmail: null,
+                  referralCode: null,
+                });
+              }
+            } catch (error) {
+              console.error("[auth] Failed to send new user notification:", error);
+            }
           }
         },
       },
