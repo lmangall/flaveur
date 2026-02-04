@@ -12,6 +12,7 @@ export * from "./learning";
 export * from "./jobs";
 export * from "./support";
 export * from "./referral";
+export * from "./snippets";
 
 // Relations
 export * from "./relations";
