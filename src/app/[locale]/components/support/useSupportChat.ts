@@ -39,27 +39,7 @@ export function useSupportChat() {
   // Get the last message ID for polling
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1].message_id : 0;
 
-  // Auto-initialize a guest session without requiring email
-  const autoInitGuestSession = async () => {
-    try {
-      const result = await getOrCreateConversation();
-      if (result.success) {
-        const sessionId = result.guestSessionId!;
-        localStorage.setItem(
-          GUEST_SESSION_KEY,
-          JSON.stringify({ sessionId, email: "" })
-        );
-        setGuestSessionId(sessionId);
-        setConversationId(result.conversationId!);
-        setMessages(result.messages || []);
-        setNeedsEmailInput(false);
-      }
-    } catch (err) {
-      console.error("[useSupportChat] Error auto-initializing guest session:", err);
-    }
-  };
-
-  // Initialize conversation
+  // Initialize conversation - only loads existing conversations, does NOT create new ones
   const initialize = useCallback(async () => {
     if (isSessionLoading) return;
 
@@ -68,7 +48,7 @@ export function useSupportChat() {
 
     try {
       if (session?.user) {
-        // Authenticated user
+        // Authenticated user - check for existing conversation
         const result = await getMyConversation();
         if (result.success) {
           if (result.conversation) {
@@ -78,7 +58,7 @@ export function useSupportChat() {
           setNeedsEmailInput(false);
         }
       } else {
-        // Guest - check localStorage for existing session
+        // Guest - check localStorage for existing session only
         const storedSession = localStorage.getItem(GUEST_SESSION_KEY);
         if (storedSession) {
           try {
@@ -91,18 +71,14 @@ export function useSupportChat() {
               setMessages(result.messages || []);
               setNeedsEmailInput(false);
             } else {
-              // Session invalid, clear it and auto-create new one
+              // Session invalid, clear it (don't auto-create)
               localStorage.removeItem(GUEST_SESSION_KEY);
-              await autoInitGuestSession();
             }
           } catch {
             localStorage.removeItem(GUEST_SESSION_KEY);
-            await autoInitGuestSession();
           }
-        } else {
-          // No existing session, auto-create one
-          await autoInitGuestSession();
         }
+        // No existing session? Don't create one yet - wait for user to interact
       }
     } catch (err) {
       console.error("[useSupportChat] Error initializing:", err);
@@ -112,6 +88,49 @@ export function useSupportChat() {
       setIsInitialized(true);
     }
   }, [session?.user, isSessionLoading]);
+
+  // Ensure a conversation exists - creates one if needed (call when user opens chat)
+  const ensureConversation = useCallback(async () => {
+    // Already have a conversation
+    if (conversationId) return true;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (session?.user) {
+        // Authenticated user - create conversation
+        const result = await getOrCreateConversation();
+        if (result.success) {
+          setConversationId(result.conversationId!);
+          setMessages(result.messages || []);
+          return true;
+        }
+      } else {
+        // Guest - create conversation without email
+        const result = await getOrCreateConversation();
+        if (result.success) {
+          const sessionId = result.guestSessionId!;
+          localStorage.setItem(
+            GUEST_SESSION_KEY,
+            JSON.stringify({ sessionId, email: "" })
+          );
+          setGuestSessionId(sessionId);
+          setConversationId(result.conversationId!);
+          setMessages(result.messages || []);
+          setNeedsEmailInput(false);
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      console.error("[useSupportChat] Error ensuring conversation:", err);
+      setError("Failed to start conversation");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [conversationId, session?.user]);
 
   // Initialize on mount and when session changes
   useEffect(() => {
@@ -318,6 +337,7 @@ export function useSupportChat() {
     needsEmailInput,
     initGuestSession,
     initUserConversation,
+    ensureConversation,
     error,
     isAuthenticated: !!session?.user,
     isInitialized,

@@ -45,7 +45,15 @@ export function SupportChatWidget() {
     isInitialized,
     adminIsTyping,
     setTyping,
+    ensureConversation,
   } = useSupportChat();
+
+  // Create conversation when chat is opened (lazy initialization)
+  useEffect(() => {
+    if (isOpen && isInitialized) {
+      ensureConversation();
+    }
+  }, [isOpen, isInitialized, ensureConversation]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
