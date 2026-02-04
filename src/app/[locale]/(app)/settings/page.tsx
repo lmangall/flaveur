@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useSession } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
 import { useTranslations, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -36,6 +36,17 @@ import { Input } from "@/app/[locale]/components/ui/input";
 import { Textarea } from "@/app/[locale]/components/ui/textarea";
 import { Switch } from "@/app/[locale]/components/ui/switch";
 import { Label } from "@/app/[locale]/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/app/[locale]/components/ui/alert-dialog";
 import { cn } from "@/app/lib/utils";
 
 import {
@@ -68,6 +79,7 @@ import {
   type ProfileWithLinks,
   type ProfileFormData,
 } from "@/actions/profile";
+import { deleteAccount } from "@/actions/account";
 
 export default function SettingsPage() {
   const { data: session, isPending } = useSession();
@@ -126,6 +138,11 @@ export default function SettingsPage() {
   const [isAddingSocialLink, setIsAddingSocialLink] = useState(false);
   const [newSocialPlatform, setNewSocialPlatform] = useState("linkedin");
   const [newSocialUrl, setNewSocialUrl] = useState("");
+
+  // Delete account state
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -440,6 +457,32 @@ export default function SettingsPage() {
       case "github": return <Github className="h-4 w-4" />;
       case "website": return <Globe className="h-4 w-4" />;
       default: return <ExternalLink className="h-4 w-4" />;
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!email || deleteConfirmEmail.toLowerCase().trim() !== email.toLowerCase().trim()) {
+      setDeleteError(t("emailMismatch"));
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const result = await deleteAccount(deleteConfirmEmail);
+
+      if (result.success) {
+        await signOut();
+        router.push(`/${locale}`);
+        toast.success(t("accountDeleted"));
+      } else {
+        setDeleteError(t(result.error || "deletionFailed"));
+      }
+    } catch {
+      setDeleteError(t("deletionFailed"));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -1205,6 +1248,85 @@ export default function SettingsPage() {
           }}
         />
       </div>
+
+      {/* Danger Zone */}
+      <Card className="border-destructive mt-8">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <CardTitle className="text-destructive">{t("dangerZone")}</CardTitle>
+          </div>
+          <CardDescription>{t("dangerZoneDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="font-medium">{t("deleteAccount")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("deleteAccountDescription")}
+              </p>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isDeleting}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t("delete")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("deleteAccountTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-4">
+                      <p>{t("deleteAccountWarning")}</p>
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 text-sm">
+                        <p className="font-medium text-destructive">{t("deleteAccountList")}</p>
+                        <ul className="list-disc list-inside mt-2 text-muted-foreground">
+                          <li>{t("deleteItem1")}</li>
+                          <li>{t("deleteItem2")}</li>
+                          <li>{t("deleteItem3")}</li>
+                          <li>{t("deleteItem4")}</li>
+                        </ul>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-email">{t("typeEmailToConfirm")}</Label>
+                        <Input
+                          id="confirm-email"
+                          type="email"
+                          placeholder={email}
+                          value={deleteConfirmEmail}
+                          onChange={(e) => {
+                            setDeleteConfirmEmail(e.target.value);
+                            setDeleteError(null);
+                          }}
+                        />
+                        {deleteError && (
+                          <p className="text-sm text-destructive">{deleteError}</p>
+                        )}
+                      </div>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => {
+                    setDeleteConfirmEmail("");
+                    setDeleteError(null);
+                  }}>
+                    {t("cancel")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting || deleteConfirmEmail.toLowerCase().trim() !== email.toLowerCase().trim()}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeleting ? t("deleting") : t("deleteAccountConfirm")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
