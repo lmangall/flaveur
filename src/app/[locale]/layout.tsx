@@ -6,6 +6,8 @@ import { Toaster } from "@/app/[locale]/components/ui/sonner";
 import { ConfettiProvider } from "@/app/[locale]/components/ui/confetti";
 import { OnboardingCheck } from "@/app/[locale]/components/onboarding";
 import { ReferralTracker } from "@/app/[locale]/components/referral-tracker";
+import { PostHogPageView } from "@/app/[locale]/components/posthog-pageview";
+import { PostHogIdentify } from "@/app/[locale]/components/posthog-identify";
 import { Mona_Sans as FontSans } from "next/font/google";
 import { TooltipProvider } from "@/app/[locale]/components/ui/tooltip";
 import { cn } from "src/app/lib/utils";
@@ -148,6 +150,10 @@ export default async function RootLayout({
                   Skip to main content
                 </a>
                 <OnboardingCheck />
+                <Suspense fallback={null}>
+                  <PostHogPageView />
+                  <PostHogIdentify />
+                </Suspense>
                 <Suspense fallback={null}>
                   <ReferralTracker />
                 </Suspense>

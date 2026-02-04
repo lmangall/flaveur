@@ -21,6 +21,7 @@ import {
   Menu,
   X,
   Briefcase,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { ScrollArea } from "@/app/[locale]/components/ui/scroll-area";
@@ -34,6 +35,9 @@ import { Separator } from "@/app/[locale]/components/ui/separator";
 import { cn } from "@/app/lib/utils";
 import { useState, useEffect } from "react";
 import { InviteFriendDialog } from "@/app/[locale]/components/invite-friend-dialog";
+
+// Admin emails - must match the server-side list in src/lib/admin.ts
+const ADMIN_EMAILS = ["l.mangallon@gmail.com"];
 
 const navItems = [
   { href: "/dashboard", label: "dashboard", icon: LayoutDashboard },
@@ -58,6 +62,9 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
   const { data: session } = useSession();
   const user = session?.user;
   const [mounted, setMounted] = useState(false);
+
+  // Check if user is admin
+  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
 
   useEffect(() => {
     setMounted(true);
@@ -158,6 +165,12 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
           {navItems.map((item) => (
             <NavLink key={item.href} {...item} />
           ))}
+          {isAdmin && (
+            <>
+              <div className="my-2 h-px bg-border" />
+              <NavLink href="/admin" label="admin" icon={Shield} />
+            </>
+          )}
         </nav>
       </ScrollArea>
 
@@ -241,6 +254,9 @@ export function MobileSidebar() {
   const { data: session } = useSession();
   const user = session?.user;
 
+  // Check if user is admin
+  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -308,6 +324,25 @@ export function MobileSidebar() {
                   </Link>
                 );
               })}
+              {isAdmin && (
+                <>
+                  <div className="my-2 h-px bg-border" />
+                  <Link
+                    href={`/${locale}/admin`}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      "hover:bg-accent hover:text-accent-foreground",
+                      isActiveRoute("/admin")
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <Shield className="h-5 w-5" />
+                    <span>{t("admin")}</span>
+                  </Link>
+                </>
+              )}
             </nav>
           </ScrollArea>
 

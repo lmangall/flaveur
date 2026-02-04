@@ -296,7 +296,8 @@
 		"queue": "File d'attente",
 		"documents": "Documents",
 		"submit": "Soumettre",
-		"invite": "Inviter"
+		"invite": "Inviter",
+		"admin": "Admin"
 	  },
 	  "Workspaces": {
 		"title": "Espaces de travail",

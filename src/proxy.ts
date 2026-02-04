@@ -34,6 +34,11 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip middleware for PostHog ingest proxy - must bypass before intl adds locale prefix
+  if (pathname.startsWith("/ingest")) {
+    return NextResponse.next();
+  }
+
   // Handle root path redirect
   if (pathname === "/") {
     return NextResponse.redirect(new URL(`/${routing.defaultLocale}`, req.url));

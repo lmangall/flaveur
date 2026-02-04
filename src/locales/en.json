@@ -301,7 +301,8 @@
 		"queue": "Queue",
 		"documents": "Documents",
 		"submit": "Submit",
-		"invite": "Invite"
+		"invite": "Invite",
+		"admin": "Admin"
 	  },
 	  "Workspaces": {
 		"title": "Workspaces",
