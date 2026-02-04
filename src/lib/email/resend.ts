@@ -783,6 +783,68 @@ export async function sendNewFeedbackNotification(data: {
   });
 }
 
+// Job URL checker report to admin
+export async function sendJobCheckReport(data: {
+  checked: number;
+  deactivated: number;
+  active: number;
+  errors: number;
+  deadJobs: Array<{ title: string; company: string | null; source_url: string; reason?: string }>;
+}) {
+  const { checked, deactivated, active, errors, deadJobs } = data;
+
+  const deadJobsHtml = deadJobs.map(job => `
+    <div style="background: #fff3f3; border-left: 4px solid #e53e3e; padding: 12px 15px; margin-bottom: 10px; border-radius: 0 6px 6px 0;">
+      <p style="margin: 0 0 4px 0; font-weight: 600; color: #111;">${job.title}</p>
+      <p style="margin: 0 0 4px 0; color: #666; font-size: 13px;">${job.company ?? "Unknown company"}</p>
+      <p style="margin: 0 0 4px 0; color: #e53e3e; font-size: 13px; font-weight: 500;">Reason: ${job.reason ?? "Unknown"}</p>
+      <p style="margin: 0;"><a href="${job.source_url}" style="color: #888; font-size: 12px; word-break: break-all;">${job.source_url}</a></p>
+    </div>
+  `).join('');
+
+  await resend.emails.send({
+    from: 'Oumamie <hello@oumamie.xyz>',
+    to: DEV_EMAIL,
+    subject: `[Oumamie] Job URL check: ${deactivated} deactivated`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 40px; width: auto;" />
+  </div>
+
+  <h2 style="color: #111; margin-bottom: 20px;">Job URL Check Report</h2>
+
+  <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <p style="margin: 0 0 8px 0;"><strong>Checked:</strong> ${checked} jobs</p>
+    <p style="margin: 0 0 8px 0;"><strong>Still active:</strong> ${active}</p>
+    <p style="margin: 0 0 8px 0; color: #e53e3e; font-weight: 600;"><strong>Deactivated:</strong> ${deactivated}</p>
+    ${errors > 0 ? `<p style="margin: 0; color: #d69e2e;"><strong>Errors:</strong> ${errors}</p>` : ''}
+    <p style="margin: 8px 0 0 0; color: #888; font-size: 12px;">${new Date().toISOString()}</p>
+  </div>
+
+  ${deadJobs.length > 0 ? `
+  <h3 style="color: #e53e3e; margin-bottom: 15px;">Deactivated Jobs</h3>
+  ${deadJobsHtml}
+  ` : ''}
+
+  <div style="text-align: center; margin-top: 25px;">
+    <a href="${BASE_URL}/en/admin/jobs" style="display: inline-block; background: #111; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View Admin Jobs</a>
+  </div>
+
+  <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px;">
+    Oumamie - Automated Job URL Checker
+  </p>
+</body>
+</html>
+    `,
+  });
+}
+
 // Support chat notification to admin
 export async function sendSupportNotification(data: {
   conversationId: number;
