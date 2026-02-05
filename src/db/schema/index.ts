@@ -13,6 +13,8 @@ export * from "./jobs";
 export * from "./support";
 export * from "./referral";
 export * from "./snippets";
+export * from "./job-monitors";
+export * from "./job-social-posts";
 
 // Relations
 export * from "./relations";

@@ -8,8 +8,10 @@ import type {
   FeedbackStatusValue,
 } from "@/constants";
 
+import { DEMO_USERS } from "@/constants/samples";
+
 // Admin email whitelist - in production, use a proper admin role system
-const ADMIN_EMAILS = ["l.mangallon@gmail.com"];
+const ADMIN_EMAILS = ["l.mangallon@gmail.com", ...DEMO_USERS.map((u) => u.email)];
 
 async function requireAdmin() {
   const session = await getSession();

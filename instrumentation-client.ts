@@ -1,5 +1,10 @@
 import posthog from "posthog-js";
 
+console.log("[PostHog] instrumentation-client.ts loaded", {
+  hasWindow: typeof window !== "undefined",
+  hasKey: !!process.env.NEXT_PUBLIC_POSTHOG_KEY,
+});
+
 if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
   // In development, use direct PostHog URL to avoid proxy issues with Turbopack
   // In production, use /ingest proxy to avoid ad blockers

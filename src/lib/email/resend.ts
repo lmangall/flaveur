@@ -845,6 +845,70 @@ export async function sendJobCheckReport(data: {
   });
 }
 
+// Job search monitor report to admin
+export async function sendMonitorSearchReport(data: {
+  totalMonitors: number;
+  newListings: Array<{
+    title: string;
+    company: string | null;
+    location: string | null;
+    employmentType: string | null;
+    url: string;
+    monitorLabel: string;
+  }>;
+}) {
+  const { totalMonitors, newListings } = data;
+
+  const listingsHtml = newListings
+    .map(
+      (listing) => `
+    <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 15px; margin-bottom: 10px; border-radius: 0 6px 6px 0;">
+      <p style="margin: 0 0 4px 0; font-weight: 600; color: #111;">${listing.title}</p>
+      <p style="margin: 0 0 4px 0; color: #666; font-size: 13px;">${listing.company ?? "Unknown company"} ${listing.location ? `· ${listing.location}` : ""} ${listing.employmentType ? `· ${listing.employmentType}` : ""}</p>
+      <p style="margin: 0 0 4px 0; color: #888; font-size: 12px;">Source: ${listing.monitorLabel}</p>
+      <p style="margin: 0;"><a href="${listing.url}" style="color: #2563eb; font-size: 13px;">View listing</a></p>
+    </div>
+  `
+    )
+    .join("");
+
+  await resend.emails.send({
+    from: "Oumamie <hello@oumamie.xyz>",
+    to: DEV_EMAIL,
+    subject: `[Oumamie] ${newListings.length} new job listing${newListings.length > 1 ? "s" : ""} found`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 40px; width: auto;" />
+  </div>
+
+  <h2 style="color: #111; margin-bottom: 20px;">New Job Listings Detected</h2>
+
+  <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <p style="margin: 0 0 8px 0;"><strong>Monitors checked:</strong> ${totalMonitors}</p>
+    <p style="margin: 0 0 8px 0; color: #22c55e; font-weight: 600;"><strong>New listings:</strong> ${newListings.length}</p>
+    <p style="margin: 8px 0 0 0; color: #888; font-size: 12px;">${new Date().toISOString()}</p>
+  </div>
+
+  <h3 style="color: #22c55e; margin-bottom: 15px;">New Listings</h3>
+  ${listingsHtml}
+
+  <div style="text-align: center; margin-top: 25px;">
+    <a href="${BASE_URL}/en/admin/job-monitors" style="display: inline-block; background: #111; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px;">View in Admin</a>
+  </div>
+
+  <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px;">
+    Oumamie - Job Search Monitor
+  </p>
+</body>
+</html>
+    `,
+  });
+}
+
 // Support chat notification to admin
 export async function sendSupportNotification(data: {
   conversationId: number;

@@ -85,6 +85,20 @@
       "when": 1770241776957,
       "tag": "0011_common_praxagora",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1770249449811,
+      "tag": "0012_lumpy_christian_walker",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1770250502404,
+      "tag": "0013_square_scarecrow",
+      "breakpoints": true
     }
   ]
 }

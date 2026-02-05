@@ -14,7 +14,11 @@
     },
     {
       "path": "/api/cron/check-jobs",
-      "schedule": "0 7 * * 1,3"
+      "schedule": "0 7 * * 1,3,5"
+    },
+    {
+      "path": "/api/cron/monitor-searches",
+      "schedule": "0 8 * * *"
     }
   ]
 }

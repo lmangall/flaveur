@@ -29,6 +29,8 @@ export async function GET() {
   authUrl.searchParams.set("redirect_uri", redirectUri);
   authUrl.searchParams.set("scope", scopes);
   authUrl.searchParams.set("response_type", "code");
+  // Force re-request of permissions to ensure Page selection
+  authUrl.searchParams.set("auth_type", "rerequest");
 
   return NextResponse.redirect(authUrl.toString());
 }
