@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ScrollReveal } from "./scroll-reveal";
 import Link from "next/link";
+import Image from "next/image";
 
 // Animated counter component
 function AnimatedCounter({ target, duration = 2000 }: { target: number; duration?: number }) {
@@ -125,14 +126,14 @@ const FEATURE_SHOWCASE: FeatureItem[] = [
     imagePosition: "left",
     accentColor: "secondary",
   },
-  {
-    icon: UserCircle,
-    titleKey: "featureProfilesTitle",
-    descriptionKey: "featureProfilesDesc",
-    bullets: ["featureProfilesBullet1", "featureProfilesBullet2", "featureProfilesBullet3"],
-    imagePosition: "right",
-    accentColor: "primary",
-  },
+  // {
+  //   icon: UserCircle,
+  //   titleKey: "featureProfilesTitle",
+  //   descriptionKey: "featureProfilesDesc",
+  //   bullets: ["featureProfilesBullet1", "featureProfilesBullet2", "featureProfilesBullet3"],
+  //   imagePosition: "right",
+  //   accentColor: "primary",
+  // },
   {
     icon: ShieldCheck,
     titleKey: "featureComplianceTitle",
@@ -399,7 +400,18 @@ export function FeatureShowcase({ videoSrc = "/videos/flavour-creation-demo.mp4"
                   className="flex-1 w-full lg:w-1/2"
                 >
                   <div className="flex items-center justify-center w-full">
-                    {index === 0 ? (
+                    {index === 1 ? (
+                      // AI section - show screenshot
+                      <div className="relative w-full max-w-2xl aspect-video rounded-3xl overflow-hidden shadow-2xl shadow-pink/10">
+                        <Image
+                          src="/screenshots/ai-demo.png"
+                          alt="AI Formula Recognition Demo"
+                          width={1280}
+                          height={720}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (index === 0 || index === 2 || index === 3 || index === 4) ? (
                       <div className="relative w-full max-w-2xl aspect-video rounded-3xl overflow-hidden shadow-2xl shadow-pink/10">
                         <video
                           className="w-full h-full object-cover"
@@ -408,7 +420,15 @@ export function FeatureShowcase({ videoSrc = "/videos/flavour-creation-demo.mp4"
                           muted
                           playsInline
                         >
-                          <source src={videoSrc} type="video/mp4" />
+                          <source
+                            src={
+                              index === 0 ? videoSrc :
+                              index === 2 ? "/videos/workspaces-demo.mp4" :
+                              index === 3 ? "/videos/learning-demo.mp4" :
+                              "/videos/compliance-demo.mp4"
+                            }
+                            type="video/mp4"
+                          />
                         </video>
                       </div>
                     ) : (
