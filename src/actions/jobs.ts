@@ -102,7 +102,7 @@ export async function createJob(data: {
       ${data.source_website ?? null}, ${data.source_url ?? null},
       ${data.location ?? null}, ${data.employment_type ?? null},
       ${data.salary ?? null}, ${data.requirements ?? null},
-      ${data.tags ?? null}, ${data.posted_at ?? null},
+      ${data.tags ?? null}, ${data.posted_at ?? new Date().toISOString()},
       ${data.expires_at ?? null}, ${data.industry ?? null},
       ${data.experience_level ?? null}, ${contactPersonJson}::jsonb,
       ${data.status ?? true}

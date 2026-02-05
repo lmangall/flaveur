@@ -27,6 +27,7 @@ import {
 } from "@/app/[locale]/components/ui/card";
 
 import { createJob, updateJob } from "@/actions/jobs";
+import { linkListingToJob } from "@/actions/admin/job-monitors";
 import {
   EMPLOYMENT_TYPE_OPTIONS,
   EXPERIENCE_LEVEL_OPTIONS,
@@ -35,37 +36,40 @@ import {
   type ContactPerson,
 } from "@/constants";
 import type { JobOffer } from "@/app/type";
+import type { JobFormPrefillData } from "@/lib/job-monitors/field-mapping";
 
 interface JobFormProps {
   job?: JobOffer;
   mode: "create" | "edit";
+  prefillData?: JobFormPrefillData;
+  sourceListingId?: number;
 }
 
-export function JobForm({ job, mode }: JobFormProps) {
+export function JobForm({ job, mode, prefillData, sourceListingId }: JobFormProps) {
   const t = useTranslations("Admin");
   const locale = useLocale();
   const router = useRouter();
 
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    title: job?.title || "",
-    description: job?.description || "",
-    company_name: job?.company_name || "",
+    title: prefillData?.title || job?.title || "",
+    description: prefillData?.description || job?.description || "",
+    company_name: prefillData?.company_name || job?.company_name || "",
     original_company_name: job?.original_company_name || "",
     through_recruiter: job?.through_recruiter || false,
-    location: job?.location || "",
-    employment_type: job?.employment_type || "",
-    experience_level: job?.experience_level || "",
-    salary: job?.salary || "",
-    industry: job?.industry || "",
+    location: prefillData?.location || job?.location || "",
+    employment_type: prefillData?.employment_type || job?.employment_type || "",
+    experience_level: prefillData?.experience_level || job?.experience_level || "",
+    salary: prefillData?.salary || job?.salary || "",
+    industry: prefillData?.industry || job?.industry || "",
     requirements: job?.requirements?.join("\n") || "",
     tags: job?.tags?.join(", ") || "",
     contact_name: job?.contact_person?.name || "",
     contact_email: job?.contact_person?.email || "",
     contact_phone: job?.contact_person?.phone || "",
-    source_website: job?.source_website || "",
-    source_url: job?.source_url || "",
-    expires_at: job?.expires_at ? job.expires_at.split("T")[0] : "",
+    source_website: prefillData?.source_website || job?.source_website || "",
+    source_url: prefillData?.source_url || job?.source_url || "",
+    expires_at: prefillData?.expires_at || (job?.expires_at ? job.expires_at.split("T")[0] : ""),
     status: job?.status ?? true,
   });
 
@@ -108,7 +112,10 @@ export function JobForm({ job, mode }: JobFormProps) {
       };
 
       if (mode === "create") {
-        await createJob(jobData);
+        const newJob = await createJob(jobData);
+        if (sourceListingId && newJob?.id) {
+          await linkListingToJob(sourceListingId, String(newJob.id));
+        }
         toast.success(t("jobCreated"));
       } else if (job) {
         await updateJob(String(job.id), jobData);
@@ -136,6 +143,12 @@ export function JobForm({ job, mode }: JobFormProps) {
           {mode === "create" ? t("createJob") : t("editJob")}
         </h1>
       </div>
+
+      {prefillData && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950 p-4 text-sm text-blue-800 dark:text-blue-200">
+          Imported from {prefillData.source_website} — review before saving
+        </div>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Basic Info */}

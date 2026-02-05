@@ -4,8 +4,11 @@ import { job_search_monitors } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import puppeteer from "puppeteer-core";
 import { getExtractor } from "@/lib/job-monitors/extractors";
+import { extractLinkedInListings } from "@/lib/job-monitors/extractors/linkedin";
+import { extractIndeedListings } from "@/lib/job-monitors/extractors/indeed";
 import { sendMonitorSearchReport } from "@/lib/email/resend";
 import type { ExtractedListing } from "@/lib/job-monitors/types";
+import { API_BASED_SITE_KEYS } from "@/constants/job-monitor";
 
 export const maxDuration = 60;
 
@@ -20,13 +23,6 @@ export async function GET(request: Request) {
     }
   }
 
-  if (!BROWSERLESS_TOKEN) {
-    return NextResponse.json(
-      { error: "BROWSERLESS_TOKEN is not configured" },
-      { status: 500 }
-    );
-  }
-
   try {
     const result = await processMonitors();
     return NextResponse.json(result);
@@ -39,6 +35,81 @@ export async function GET(request: Request) {
   }
 }
 
+type MonitorRow = typeof job_search_monitors.$inferSelect;
+
+/** Upsert listings for a monitor and return count of new ones */
+async function upsertListings(
+  monitor: MonitorRow,
+  listings: ExtractedListing[],
+  allNewListings: Array<ExtractedListing & { monitorLabel: string }>
+): Promise<number> {
+  if (listings.length === 0) {
+    await db
+      .update(job_search_monitors)
+      .set({
+        last_checked_at: new Date().toISOString(),
+        last_listing_count: 0,
+        last_error: "0 listings found",
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(job_search_monitors.id, monitor.id));
+
+    console.warn(
+      `[monitor-searches] ${monitor.label}: 0 listings extracted`
+    );
+    return 0;
+  }
+
+  const newForThisMonitor: ExtractedListing[] = [];
+
+  for (const listing of listings) {
+    const result = await db.execute(sql`
+      INSERT INTO monitored_listings (
+        monitor_id, external_id, title, company, location,
+        employment_type, salary, listing_url, first_seen_at, last_seen_at
+      )
+      VALUES (
+        ${monitor.id}, ${listing.externalId}, ${listing.title},
+        ${listing.company}, ${listing.location},
+        ${listing.employmentType}, ${listing.salary},
+        ${listing.listingUrl}, NOW(), NOW()
+      )
+      ON CONFLICT (monitor_id, external_id) DO UPDATE SET
+        last_seen_at = NOW(),
+        title = EXCLUDED.title,
+        company = EXCLUDED.company,
+        location = EXCLUDED.location,
+        employment_type = EXCLUDED.employment_type,
+        salary = EXCLUDED.salary
+      RETURNING
+        id,
+        (xmax = 0) AS is_new
+    `);
+
+    const row = result.rows[0] as { id: number; is_new: boolean };
+    if (row.is_new) {
+      newForThisMonitor.push(listing);
+      allNewListings.push({ ...listing, monitorLabel: monitor.label });
+    }
+  }
+
+  await db
+    .update(job_search_monitors)
+    .set({
+      last_checked_at: new Date().toISOString(),
+      last_listing_count: listings.length,
+      last_error: null,
+      updated_at: new Date().toISOString(),
+    })
+    .where(eq(job_search_monitors.id, monitor.id));
+
+  console.log(
+    `[monitor-searches] ${monitor.label}: ${listings.length} total, ${newForThisMonitor.length} new`
+  );
+
+  return newForThisMonitor.length;
+}
+
 async function processMonitors() {
   const monitors = await db
     .select()
@@ -49,133 +120,136 @@ async function processMonitors() {
     return { success: true, monitorsProcessed: 0, newListings: 0 };
   }
 
-  const browser = await puppeteer.connect({
-    browserWSEndpoint: `wss://production-sfo.browserless.io?token=${BROWSERLESS_TOKEN}&stealth`,
-  });
+  // Split monitors by extraction strategy
+  const apiMonitors = monitors.filter((m) =>
+    API_BASED_SITE_KEYS.includes(m.site_key as (typeof API_BASED_SITE_KEYS)[number])
+  );
+  const browserMonitors = monitors.filter(
+    (m) => !API_BASED_SITE_KEYS.includes(m.site_key as (typeof API_BASED_SITE_KEYS)[number])
+  );
 
   let totalNew = 0;
   const allNewListings: Array<ExtractedListing & { monitorLabel: string }> = [];
 
-  try {
-    for (const monitor of monitors) {
-      const extractor = getExtractor(monitor.site_key);
-      if (!extractor) {
+  // --- Process API-based monitors (LinkedIn) ---
+  for (const monitor of apiMonitors) {
+    try {
+      let listings: ExtractedListing[];
+
+      if (monitor.site_key === "linkedin") {
+        listings = await extractLinkedInListings(monitor.search_url);
+      } else if (monitor.site_key === "indeed") {
+        listings = await extractIndeedListings(monitor.search_url);
+      } else {
         console.error(
-          `[monitor-searches] No extractor for site_key: ${monitor.site_key}`
+          `[monitor-searches] No API extractor for site_key: ${monitor.site_key}`
         );
         await db
           .update(job_search_monitors)
           .set({
-            last_error: `No extractor for site_key: ${monitor.site_key}`,
+            last_error: `No API extractor for site_key: ${monitor.site_key}`,
             updated_at: new Date().toISOString(),
           })
           .where(eq(job_search_monitors.id, monitor.id));
         continue;
       }
 
-      let page;
+      totalNew += await upsertListings(monitor, listings, allNewListings);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(
+        `[monitor-searches] Error for ${monitor.label}:`,
+        message
+      );
+
+      await db
+        .update(job_search_monitors)
+        .set({
+          last_error: message,
+          updated_at: new Date().toISOString(),
+        })
+        .where(eq(job_search_monitors.id, monitor.id));
+    }
+  }
+
+  // --- Process browser-based monitors (HelloWork, Indeed) ---
+  if (browserMonitors.length > 0) {
+    if (!BROWSERLESS_TOKEN) {
+      console.error(
+        "[monitor-searches] BROWSERLESS_TOKEN not configured — skipping browser monitors"
+      );
+      for (const monitor of browserMonitors) {
+        await db
+          .update(job_search_monitors)
+          .set({
+            last_error: "BROWSERLESS_TOKEN not configured",
+            updated_at: new Date().toISOString(),
+          })
+          .where(eq(job_search_monitors.id, monitor.id));
+      }
+    } else {
+      const browser = await puppeteer.connect({
+        browserWSEndpoint: `wss://production-sfo.browserless.io?token=${BROWSERLESS_TOKEN}&stealth`,
+      });
+
       try {
-        page = await browser.newPage();
-        await page.setUserAgent(
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-        );
+        for (const monitor of browserMonitors) {
+          const extractor = getExtractor(monitor.site_key);
+          if (!extractor) {
+            console.error(
+              `[monitor-searches] No extractor for site_key: ${monitor.site_key}`
+            );
+            await db
+              .update(job_search_monitors)
+              .set({
+                last_error: `No extractor for site_key: ${monitor.site_key}`,
+                updated_at: new Date().toISOString(),
+              })
+              .where(eq(job_search_monitors.id, monitor.id));
+            continue;
+          }
 
-        await page.goto(monitor.search_url, {
-          waitUntil: "domcontentloaded",
-          timeout: 20_000,
-        });
+          let page;
+          try {
+            page = await browser.newPage();
+            await page.setUserAgent(
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+            );
 
-        const listings = await extractor.extract(page);
+            await page.goto(monitor.search_url, {
+              waitUntil: "domcontentloaded",
+              timeout: 20_000,
+            });
 
-        // Warn if page loaded but no listings extracted (possible structure change)
-        if (listings.length === 0) {
-          await db
-            .update(job_search_monitors)
-            .set({
-              last_checked_at: new Date().toISOString(),
-              last_listing_count: 0,
-              last_error:
-                "0 listings extracted — possible site structure change",
-              updated_at: new Date().toISOString(),
-            })
-            .where(eq(job_search_monitors.id, monitor.id));
+            const listings = await extractor.extract(page);
+            totalNew += await upsertListings(
+              monitor,
+              listings,
+              allNewListings
+            );
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error);
+            console.error(
+              `[monitor-searches] Error for ${monitor.label}:`,
+              message
+            );
 
-          console.warn(
-            `[monitor-searches] ${monitor.label}: 0 listings extracted`
-          );
-          continue;
-        }
-
-        // Upsert each listing, detect new ones via xmax = 0
-        const newForThisMonitor: ExtractedListing[] = [];
-
-        for (const listing of listings) {
-          const result = await db.execute(sql`
-            INSERT INTO monitored_listings (
-              monitor_id, external_id, title, company, location,
-              employment_type, salary, listing_url, first_seen_at, last_seen_at
-            )
-            VALUES (
-              ${monitor.id}, ${listing.externalId}, ${listing.title},
-              ${listing.company}, ${listing.location},
-              ${listing.employmentType}, ${listing.salary},
-              ${listing.listingUrl}, NOW(), NOW()
-            )
-            ON CONFLICT (monitor_id, external_id) DO UPDATE SET
-              last_seen_at = NOW(),
-              title = EXCLUDED.title,
-              company = EXCLUDED.company,
-              location = EXCLUDED.location,
-              employment_type = EXCLUDED.employment_type,
-              salary = EXCLUDED.salary
-            RETURNING
-              id,
-              (xmax = 0) AS is_new
-          `);
-
-          const row = result.rows[0] as { id: number; is_new: boolean };
-          if (row.is_new) {
-            newForThisMonitor.push(listing);
-            allNewListings.push({ ...listing, monitorLabel: monitor.label });
+            await db
+              .update(job_search_monitors)
+              .set({
+                last_error: message,
+                updated_at: new Date().toISOString(),
+              })
+              .where(eq(job_search_monitors.id, monitor.id));
+          } finally {
+            if (page) await page.close().catch(() => {});
           }
         }
-
-        totalNew += newForThisMonitor.length;
-
-        await db
-          .update(job_search_monitors)
-          .set({
-            last_checked_at: new Date().toISOString(),
-            last_listing_count: listings.length,
-            last_error: null,
-            updated_at: new Date().toISOString(),
-          })
-          .where(eq(job_search_monitors.id, monitor.id));
-
-        console.log(
-          `[monitor-searches] ${monitor.label}: ${listings.length} total, ${newForThisMonitor.length} new`
-        );
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : String(error);
-        console.error(
-          `[monitor-searches] Error for ${monitor.label}:`,
-          message
-        );
-
-        await db
-          .update(job_search_monitors)
-          .set({
-            last_error: message,
-            updated_at: new Date().toISOString(),
-          })
-          .where(eq(job_search_monitors.id, monitor.id));
       } finally {
-        if (page) await page.close().catch(() => {});
+        await browser.close();
       }
     }
-  } finally {
-    await browser.close();
   }
 
   // Cross-reference ALL monitored listings (not just new ones) against job_offers.source_url
