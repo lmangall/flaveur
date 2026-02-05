@@ -6,7 +6,7 @@ import puppeteer from "puppeteer-core";
 import { getExtractor } from "@/lib/job-monitors/extractors";
 import { extractLinkedInListings } from "@/lib/job-monitors/extractors/linkedin";
 import { extractIndeedListings } from "@/lib/job-monitors/extractors/indeed";
-import { sendMonitorSearchReport } from "@/lib/email/resend";
+import { sendMonitorSearchReport, sendCronErrorNotification } from "@/lib/email/resend";
 import type { ExtractedListing } from "@/lib/job-monitors/types";
 import { API_BASED_SITE_KEYS } from "@/constants/job-monitor";
 
@@ -28,6 +28,17 @@ export async function GET(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error processing search monitors:", error);
+
+    try {
+      await sendCronErrorNotification({
+        cronRoute: "monitor-searches",
+        errorMessage: error instanceof Error ? error.stack || error.message : String(error),
+        timestamp: new Date().toISOString(),
+      });
+    } catch (emailError) {
+      console.error("[monitor-searches] Failed to send error notification email:", emailError);
+    }
+
     return NextResponse.json(
       { error: "Failed to process search monitors" },
       { status: 500 }
@@ -130,6 +141,7 @@ async function processMonitors() {
 
   let totalNew = 0;
   const allNewListings: Array<ExtractedListing & { monitorLabel: string }> = [];
+  const failedMonitorLabels: string[] = [];
 
   // --- Process API-based monitors (LinkedIn) ---
   for (const monitor of apiMonitors) {
@@ -161,6 +173,7 @@ async function processMonitors() {
         `[monitor-searches] Error for ${monitor.label}:`,
         message
       );
+      failedMonitorLabels.push(monitor.label);
 
       await db
         .update(job_search_monitors)
@@ -179,6 +192,7 @@ async function processMonitors() {
         "[monitor-searches] BROWSERLESS_TOKEN not configured — skipping browser monitors"
       );
       for (const monitor of browserMonitors) {
+        failedMonitorLabels.push(monitor.label);
         await db
           .update(job_search_monitors)
           .set({
@@ -234,6 +248,7 @@ async function processMonitors() {
               `[monitor-searches] Error for ${monitor.label}:`,
               message
             );
+            failedMonitorLabels.push(monitor.label);
 
             await db
               .update(job_search_monitors)
@@ -289,6 +304,20 @@ async function processMonitors() {
       });
     } catch (emailError) {
       console.error("[monitor-searches] Failed to send email:", emailError);
+    }
+  }
+
+  // Notify admin if ALL monitors failed (cron returned 200 but nothing worked)
+  if (failedMonitorLabels.length > 0 && failedMonitorLabels.length === monitors.length) {
+    try {
+      await sendCronErrorNotification({
+        cronRoute: "monitor-searches",
+        errorMessage: `All ${monitors.length} monitors failed: ${failedMonitorLabels.join(", ")}`,
+        timestamp: new Date().toISOString(),
+        context: "The cron returned HTTP 200 but every monitor encountered an error. Check individual monitor last_error fields in the database.",
+      });
+    } catch (emailError) {
+      console.error("[monitor-searches] Failed to send all-failed notification:", emailError);
     }
   }
 

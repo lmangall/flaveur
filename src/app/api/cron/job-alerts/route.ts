@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { job_alert_preferences } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { sendJobAlertEmail, type JobAlertJob } from "@/lib/email/resend";
+import { sendJobAlertEmail, sendCronErrorNotification, type JobAlertJob } from "@/lib/email/resend";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://oumamie.xyz";
 
@@ -33,6 +33,17 @@ export async function GET(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error processing job alerts:", error);
+
+    try {
+      await sendCronErrorNotification({
+        cronRoute: "job-alerts",
+        errorMessage: error instanceof Error ? error.stack || error.message : String(error),
+        timestamp: new Date().toISOString(),
+      });
+    } catch (emailError) {
+      console.error("[job-alerts] Failed to send error notification email:", emailError);
+    }
+
     return NextResponse.json(
       { error: "Failed to process job alerts" },
       { status: 500 }

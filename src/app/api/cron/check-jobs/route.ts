@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { job_offers } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import puppeteer from "puppeteer-core";
-import { sendJobCheckReport } from "@/lib/email/resend";
+import { sendJobCheckReport, sendCronErrorNotification } from "@/lib/email/resend";
 
 export const maxDuration = 60;
 
@@ -66,6 +66,17 @@ export async function GET(request: Request) {
   }
 
   if (!BROWSERLESS_TOKEN) {
+    try {
+      await sendCronErrorNotification({
+        cronRoute: "check-jobs",
+        errorMessage: "BROWSERLESS_TOKEN environment variable is not configured",
+        timestamp: new Date().toISOString(),
+        context: "Missing required environment variable — no jobs were checked",
+      });
+    } catch (emailError) {
+      console.error("[check-jobs] Failed to send error notification email:", emailError);
+    }
+
     return NextResponse.json(
       { error: "BROWSERLESS_TOKEN is not configured" },
       { status: 500 }
@@ -77,6 +88,17 @@ export async function GET(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error checking job URLs:", error);
+
+    try {
+      await sendCronErrorNotification({
+        cronRoute: "check-jobs",
+        errorMessage: error instanceof Error ? error.stack || error.message : String(error),
+        timestamp: new Date().toISOString(),
+      });
+    } catch (emailError) {
+      console.error("[check-jobs] Failed to send error notification email:", emailError);
+    }
+
     return NextResponse.json(
       { error: "Failed to check job URLs" },
       { status: 500 }

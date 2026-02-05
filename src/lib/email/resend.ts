@@ -960,3 +960,49 @@ export async function sendSupportNotification(data: {
     `,
   });
 }
+
+// Cron job failure notification to admin
+export async function sendCronErrorNotification(data: {
+  cronRoute: string;
+  errorMessage: string;
+  timestamp: string;
+  context?: string;
+}) {
+  const { cronRoute, errorMessage, timestamp, context } = data;
+
+  await resend.emails.send({
+    from: "Oumamie <hello@oumamie.xyz>",
+    to: DEV_EMAIL,
+    subject: `[Oumamie] CRON FAILURE: ${cronRoute}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 40px; width: auto;" />
+  </div>
+
+  <h2 style="color: #e53e3e; margin-bottom: 20px;">Cron Job Failure</h2>
+
+  <div style="background: #fff5f5; border-left: 4px solid #e53e3e; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+    <p style="margin: 0 0 8px 0;"><strong>Route:</strong> /api/cron/${cronRoute}</p>
+    <p style="margin: 0 0 8px 0;"><strong>Time:</strong> ${timestamp}</p>
+    ${context ? `<p style="margin: 0;"><strong>Context:</strong> ${context}</p>` : ""}
+  </div>
+
+  <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <p style="margin: 0 0 8px 0; font-weight: 600;">Error Message:</p>
+    <pre style="margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 13px; color: #e53e3e; background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #e5e5e5;">${errorMessage}</pre>
+  </div>
+
+  <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px;">
+    Oumamie - Automated Cron Monitor
+  </p>
+</body>
+</html>
+    `,
+  });
+}
