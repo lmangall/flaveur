@@ -5,8 +5,7 @@ import { eq } from "drizzle-orm";
 import puppeteer from "puppeteer-core";
 import { sendJobCheckReport } from "@/lib/email/resend";
 
-// Allow up to 300s on Vercel Pro for browser-based checks
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;

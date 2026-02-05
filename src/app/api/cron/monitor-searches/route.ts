@@ -7,7 +7,7 @@ import { getExtractor } from "@/lib/job-monitors/extractors";
 import { sendMonitorSearchReport } from "@/lib/email/resend";
 import type { ExtractedListing } from "@/lib/job-monitors/types";
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
