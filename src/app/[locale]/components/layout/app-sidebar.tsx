@@ -22,6 +22,12 @@ import {
   X,
   Briefcase,
   Shield,
+  Radar,
+  Share2,
+  Image as ImageIcon,
+  Database,
+  MessageCircle,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { ScrollArea } from "@/app/[locale]/components/ui/scroll-area";
@@ -49,6 +55,32 @@ const navItems = [
   { href: "/calculator", label: "calculator", icon: Calculator },
 ];
 
+const adminNavItems = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  {
+    section: "Jobs",
+    items: [
+      { href: "/admin/jobs", label: "Jobs", icon: Briefcase },
+      { href: "/admin/job-monitors", label: "Monitors", icon: Radar },
+    ]
+  },
+  {
+    section: "Content",
+    items: [
+      { href: "/admin/jobs-social", label: "Jobs Social", icon: Share2 },
+      { href: "/admin/snippets", label: "Snippets", icon: ImageIcon },
+      { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+    ]
+  },
+  {
+    section: "System",
+    items: [
+      { href: "/admin/data-quality", label: "Data Quality", icon: Database },
+      { href: "/admin/support", label: "Support", icon: MessageCircle },
+    ]
+  }
+];
+
 interface AppSidebarProps {
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
@@ -74,6 +106,8 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
     const fullPath = `/${locale}${href}`;
     return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
   };
+
+  const isOnAdminRoute = pathname.includes('/admin');
 
   const handleSignOut = async () => {
     await signOut();
@@ -162,13 +196,41 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="flex flex-col gap-1">
-          {navItems.map((item) => (
-            <NavLink key={item.href} {...item} />
-          ))}
-          {isAdmin && (
+          {isOnAdminRoute && isAdmin ? (
+            // Show admin navigation
             <>
+              {adminNavItems.map((item, index) => {
+                if ('section' in item) {
+                  return (
+                    <div key={item.section}>
+                      {!collapsed && (
+                        <p className="px-3 pt-4 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          {item.section}
+                        </p>
+                      )}
+                      {item.items.map((subItem) => (
+                        <NavLink key={subItem.href} {...subItem} />
+                      ))}
+                    </div>
+                  );
+                }
+                return <NavLink key={item.href} {...item} />;
+              })}
               <div className="my-2 h-px bg-border" />
-              <NavLink href="/admin" label="admin" icon={Shield} />
+              <NavLink href="/dashboard" label="dashboard" icon={LayoutDashboard} />
+            </>
+          ) : (
+            // Show regular navigation
+            <>
+              {navItems.map((item) => (
+                <NavLink key={item.href} {...item} />
+              ))}
+              {isAdmin && (
+                <>
+                  <div className="my-2 h-px bg-border" />
+                  <NavLink href="/admin" label="admin" icon={Shield} />
+                </>
+              )}
             </>
           )}
         </nav>
@@ -266,6 +328,8 @@ export function MobileSidebar() {
     return pathname === fullPath || pathname.startsWith(`${fullPath}/`);
   };
 
+  const isOnAdminRoute = pathname.includes('/admin');
+
   const handleSignOut = async () => {
     await signOut();
     router.push(`/${locale}`);
@@ -304,43 +368,116 @@ export function MobileSidebar() {
           {/* Navigation */}
           <ScrollArea className="flex-1 px-3 py-4">
             <nav className="flex flex-col gap-1">
-              {navItems.map((item) => {
-                const isActive = isActiveRoute(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      isActive
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span>{t(item.label)}</span>
-                  </Link>
-                );
-              })}
-              {isAdmin && (
+              {isOnAdminRoute && isAdmin ? (
+                // Show admin navigation
                 <>
+                  {adminNavItems.map((item) => {
+                    if ('section' in item) {
+                      return (
+                        <div key={item.section}>
+                          <p className="px-3 pt-4 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            {item.section}
+                          </p>
+                          {item.items.map((subItem) => {
+                            const isActive = isActiveRoute(subItem.href);
+                            return (
+                              <Link
+                                key={subItem.href}
+                                href={`/${locale}${subItem.href}`}
+                                onClick={() => setOpen(false)}
+                                className={cn(
+                                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                  "hover:bg-accent hover:text-accent-foreground",
+                                  isActive
+                                    ? "bg-accent text-accent-foreground"
+                                    : "text-muted-foreground"
+                                )}
+                              >
+                                <subItem.icon className="h-5 w-5" />
+                                <span>{subItem.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+                    const isActive = isActiveRoute(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={`/${locale}${item.href}`}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          isActive
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
                   <div className="my-2 h-px bg-border" />
                   <Link
-                    href={`/${locale}/admin`}
+                    href={`/${locale}/dashboard`}
                     onClick={() => setOpen(false)}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                       "hover:bg-accent hover:text-accent-foreground",
-                      isActiveRoute("/admin")
+                      isActiveRoute("/dashboard")
                         ? "bg-accent text-accent-foreground"
                         : "text-muted-foreground"
                     )}
                   >
-                    <Shield className="h-5 w-5" />
-                    <span>{t("admin")}</span>
+                    <LayoutDashboard className="h-5 w-5" />
+                    <span>{t("dashboard")}</span>
                   </Link>
+                </>
+              ) : (
+                // Show regular navigation
+                <>
+                  {navItems.map((item) => {
+                    const isActive = isActiveRoute(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={`/${locale}${item.href}`}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          isActive
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{t(item.label)}</span>
+                      </Link>
+                    );
+                  })}
+                  {isAdmin && (
+                    <>
+                      <div className="my-2 h-px bg-border" />
+                      <Link
+                        href={`/${locale}/admin`}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          isActiveRoute("/admin")
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        <Shield className="h-5 w-5" />
+                        <span>{t("admin")}</span>
+                      </Link>
+                    </>
+                  )}
                 </>
               )}
             </nav>

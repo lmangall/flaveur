@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/[locale]/components/ui/card";
@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/app/[locale]/components/ui/table";
 import { Badge } from "@/app/[locale]/components/ui/badge";
+import Link from "next/link";
 
 async function getStats() {
   const [jobsResult, interactionsResult] = await Promise.all([
@@ -210,6 +211,7 @@ async function getRecentConversions(): Promise<ReferralConversion[]> {
 
 export default async function AdminDashboard() {
   const t = await getTranslations("Admin");
+  const locale = await getLocale();
   const [stats, userStats, users, sharingStats, pendingInvites, referralStats, recentConversions] = await Promise.all([
     getStats(),
     getUserStats(),
@@ -326,16 +328,18 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("newsletterSubscribers")}</CardTitle>
-              <Mail className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{userStats.newsletterSubscribers}</div>
-              <p className="text-xs text-muted-foreground">{t("confirmedSubscribers")}</p>
-            </CardContent>
-          </Card>
+          <Link href={`/${locale}/admin/newsletter`}>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t("newsletterSubscribers")}</CardTitle>
+                <Mail className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{userStats.newsletterSubscribers}</div>
+                <p className="text-xs text-muted-foreground">{t("confirmedSubscribers")}</p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
 

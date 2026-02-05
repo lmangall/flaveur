@@ -17,7 +17,8 @@ import {
 } from "@/actions/admin/job-monitors";
 
 import { MonitorOverview } from "./components/MonitorOverview";
-import { MonitorCard, type Monitor } from "./components/MonitorCard";
+import type { Monitor } from "./components/MonitorCard";
+import { MonitorTable } from "./components/MonitorTable";
 import { AddMonitorForm } from "./components/AddMonitorForm";
 import { DeleteMonitorDialog } from "./components/DeleteMonitorDialog";
 
@@ -110,9 +111,9 @@ export default function AdminJobMonitorsPage() {
             <Skeleton key={i} className="h-20 w-full" />
           ))}
         </div>
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
       </div>
@@ -210,7 +211,7 @@ export default function AdminJobMonitorsPage() {
         </div>
       )}
 
-      {/* Monitor Cards */}
+      {/* Monitor Table */}
       {monitors.length === 0 ? (
         <EmptyState
           icon="search"
@@ -237,16 +238,11 @@ export default function AdminJobMonitorsPage() {
           size="sm"
         />
       ) : (
-        <div className="space-y-4">
-          {filteredMonitors.map((monitor) => (
-            <MonitorCard
-              key={monitor.id}
-              monitor={monitor}
-              onToggleActive={handleToggleActive}
-              onDelete={handleDeleteClick}
-            />
-          ))}
-        </div>
+        <MonitorTable
+          monitors={filteredMonitors}
+          onToggleActive={handleToggleActive}
+          onDelete={handleDeleteClick}
+        />
       )}
 
       {/* Delete Confirmation */}
