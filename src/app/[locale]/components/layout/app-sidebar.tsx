@@ -19,7 +19,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X,
   Briefcase,
   Shield,
   Radar,
@@ -199,7 +198,7 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
           {isOnAdminRoute && isAdmin ? (
             // Show admin navigation
             <>
-              {adminNavItems.map((item, index) => {
+              {adminNavItems.map((item) => {
                 if ('section' in item) {
                   return (
                     <div key={item.section}>
@@ -208,7 +207,7 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
                           {item.section}
                         </p>
                       )}
-                      {item.items.map((subItem) => (
+                      {item.items?.map((subItem) => (
                         <NavLink key={subItem.href} {...subItem} />
                       ))}
                     </div>
@@ -378,7 +377,7 @@ export function MobileSidebar() {
                           <p className="px-3 pt-4 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             {item.section}
                           </p>
-                          {item.items.map((subItem) => {
+                          {item.items?.map((subItem) => {
                             const isActive = isActiveRoute(subItem.href);
                             return (
                               <Link
