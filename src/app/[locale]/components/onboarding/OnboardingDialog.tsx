@@ -168,7 +168,7 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md pt-10">
         <div className="mb-4">
           <Progress value={progressValue} className="h-2" />
           <p className="text-xs text-muted-foreground text-center mt-2">

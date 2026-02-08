@@ -37,6 +37,7 @@ export function ConfettiProvider({ children }: { children: React.ReactNode }) {
           recycle={false}
           numberOfPieces={200}
           gravity={0.3}
+          colors={["#FF69B4", "#FF1493", "#FFB6C1", "#FFC0CB", "#FF85A2", "#DB7093"]}
           style={{ position: "fixed", top: 0, left: 0, zIndex: 9999 }}
         />
       )}

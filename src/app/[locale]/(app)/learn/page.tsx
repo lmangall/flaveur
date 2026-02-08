@@ -19,6 +19,7 @@ import {
   Target,
   Repeat,
   Award,
+  Play,
 } from "lucide-react";
 
 import { Button } from "@/app/[locale]/components/ui/button";
@@ -406,7 +407,13 @@ export default function LearnDashboardPage() {
 
       {/* Quick Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button onClick={() => router.push(`/${locale}/learn/queue`)}>
+        {queue.length > 0 && (
+          <Button onClick={() => router.push(`/${locale}/learn/${queue[0].substance_id}`)}>
+            <Play className="h-4 w-4 mr-2" />
+            {t("startLearning") || "Start Learning"}
+          </Button>
+        )}
+        <Button variant={queue.length > 0 ? "outline" : "default"} onClick={() => router.push(`/${locale}/learn/queue`)}>
           <BookOpen className="h-4 w-4 mr-2" />
           {t("manageQueue") || "Manage Queue"}
         </Button>
