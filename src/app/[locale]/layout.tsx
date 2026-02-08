@@ -46,6 +46,7 @@ export const metadata = {
     title: "Oumamie",
   },
   icons: {
+    icon: "/favicon.png",
     apple: "/apple-touch-icon.png",
   },
   formatDetection: {
