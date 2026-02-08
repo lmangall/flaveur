@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Minimize2, Send, Loader2, User, Shield } from "lucide-react";
+import Image from "next/image";
+import { MessageCircle, X, Minimize2, Send, Loader2, User } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Card } from "@/app/[locale]/components/ui/card";
 import { ScrollArea } from "@/app/[locale]/components/ui/scroll-area";
@@ -116,7 +117,7 @@ export function SupportChatWidget() {
           )}
           <Button
             onClick={() => setIsOpen(true)}
-            className="h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform"
+            className="h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform bg-pink hover:bg-pink/90 text-white"
             size="icon"
             aria-label={t("openChat")}
           >
@@ -134,13 +135,13 @@ export function SupportChatWidget() {
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground shrink-0">
+          <div className="flex items-center justify-between p-4 border-b bg-pink text-white shrink-0">
             <span className="font-semibold">{t("title")}</span>
             <div className="flex gap-1">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/10"
+                className="h-8 w-8 text-white hover:bg-white/10"
                 onClick={() => setIsMinimized(!isMinimized)}
                 aria-label={isMinimized ? t("expand") : t("minimize")}
               >
@@ -149,7 +150,7 @@ export function SupportChatWidget() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/10"
+                className="h-8 w-8 text-white hover:bg-white/10"
                 onClick={() => setIsOpen(false)}
                 aria-label={t("close")}
               >
@@ -188,14 +189,20 @@ export function SupportChatWidget() {
                           >
                             <div
                               className={cn(
-                                "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
+                                "h-8 w-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden",
                                 msg.sender_type === "admin"
-                                  ? "bg-primary text-primary-foreground"
+                                  ? "bg-pink-muted"
                                   : "bg-muted"
                               )}
                             >
                               {msg.sender_type === "admin" ? (
-                                <Shield className="h-4 w-4" />
+                                <Image
+                                  src="/logo_transparent_bg_tiny.png"
+                                  alt="Oumamie"
+                                  width={24}
+                                  height={24}
+                                  className="object-contain"
+                                />
                               ) : (
                                 <User className="h-4 w-4" />
                               )}
@@ -205,7 +212,7 @@ export function SupportChatWidget() {
                                 "max-w-[75%] rounded-lg p-3",
                                 msg.sender_type === "admin"
                                   ? "bg-muted"
-                                  : "bg-primary text-primary-foreground"
+                                  : "bg-pink text-white"
                               )}
                             >
                               <p className="whitespace-pre-wrap text-sm break-words">
@@ -216,7 +223,7 @@ export function SupportChatWidget() {
                                   "text-xs mt-1",
                                   msg.sender_type === "admin"
                                     ? "text-muted-foreground"
-                                    : "text-primary-foreground/70"
+                                    : "text-white/70"
                                 )}
                               >
                                 {formatTime(msg.created_at)}
@@ -262,7 +269,7 @@ export function SupportChatWidget() {
                         onClick={handleSendMessage}
                         disabled={isSending || !messageInput.trim()}
                         size="icon"
-                        className="shrink-0 self-end"
+                        className="shrink-0 self-end bg-pink hover:bg-pink/90 text-white"
                       >
                         {isSending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

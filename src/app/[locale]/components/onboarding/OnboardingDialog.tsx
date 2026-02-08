@@ -7,7 +7,6 @@ import {
   Dialog,
   DialogContent,
 } from "@/app/[locale]/components/ui/dialog";
-import { Progress } from "@/app/[locale]/components/ui/progress";
 import { useConfetti } from "@/app/[locale]/components/ui/confetti";
 import { OnboardingWelcome } from "./OnboardingWelcome";
 import { OnboardingFeature } from "./OnboardingFeature";
@@ -40,8 +39,6 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
   const { fire: fireConfetti } = useConfetti();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-
-  const progressValue = ((currentStep + 1) / TOTAL_STEPS) * 100;
 
   const handleNext = () => {
     if (currentStep < TOTAL_STEPS - 1) {
@@ -100,12 +97,10 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
           />
         );
       case 1:
-        // Feature: Formula Formulas
         return (
           <OnboardingFeature
             icon={FlaskConical}
-            iconColor="text-purple-600 dark:text-purple-400"
-            iconBgColor="bg-purple-100 dark:bg-purple-900/30"
+            accentHue={330}
             titleKey="featureFormulasTitle"
             descriptionKey="featureFormulasDesc"
             highlights={[
@@ -120,12 +115,10 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
           />
         );
       case 2:
-        // Feature: Substance Learning
         return (
           <OnboardingFeature
             icon={Brain}
-            iconColor="text-blue-600 dark:text-blue-400"
-            iconBgColor="bg-blue-100 dark:bg-blue-900/30"
+            accentHue={340}
             titleKey="featureLearningTitle"
             descriptionKey="featureLearningDesc"
             highlights={[
@@ -140,12 +133,10 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
           />
         );
       case 3:
-        // Feature: Workspaces
         return (
           <OnboardingFeature
             icon={Users}
-            iconColor="text-green-600 dark:text-green-400"
-            iconBgColor="bg-green-100 dark:bg-green-900/30"
+            accentHue={320}
             titleKey="featureWorkspacesTitle"
             descriptionKey="featureWorkspacesDesc"
             highlights={[
@@ -168,14 +159,43 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md pt-10">
-        <div className="mb-4">
-          <Progress value={progressValue} className="h-2" />
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            {t("progressStep", { current: currentStep + 1, total: TOTAL_STEPS })}
-          </p>
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden border-0 shadow-2xl shadow-pink/20 dark:shadow-pink/10">
+        {/* Decorative gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-muted via-background to-background dark:from-pink-muted/20 dark:via-background" />
+
+        {/* Animated gradient orbs */}
+        <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-gradient-to-br from-pink/30 to-pink/5 blur-3xl animate-pulse-glow" />
+        <div className="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-gradient-to-tr from-pink/20 to-transparent blur-2xl animate-pulse-glow delay-500" />
+
+        {/* Content */}
+        <div className="relative z-10 p-6 pt-8">
+          {/* Progress indicator */}
+          <div className="mb-6">
+            <div className="flex justify-center gap-2 mb-3">
+              {Array.from({ length: TOTAL_STEPS }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => index < currentStep && setCurrentStep(index)}
+                  disabled={index >= currentStep}
+                  className={`
+                    h-1.5 rounded-full transition-all duration-500 ease-out
+                    ${index === currentStep
+                      ? "w-8 bg-gradient-to-r from-pink to-pink/80 shadow-lg shadow-pink/30"
+                      : index < currentStep
+                        ? "w-1.5 bg-pink/60 hover:bg-pink/80 cursor-pointer"
+                        : "w-1.5 bg-muted-foreground/20"
+                    }
+                  `}
+                  aria-label={`Step ${index + 1}`}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground/70 text-center font-medium tracking-wide">
+              {t("progressStep", { current: currentStep + 1, total: TOTAL_STEPS })}
+            </p>
+          </div>
+          {renderStep()}
         </div>
-        {renderStep()}
       </DialogContent>
     </Dialog>
   );
