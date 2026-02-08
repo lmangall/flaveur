@@ -249,31 +249,28 @@ export function useSupportChat() {
     [conversationId, session?.user, guestSessionId, initUserConversation]
   );
 
-  // Poll for new messages and typing status
+  // Poll for new messages and typing status (combined in one API call)
   const poll = useCallback(async () => {
     if (!conversationId) return;
 
     try {
-      // Poll messages and typing status in parallel
-      const [messagesResult, typingResult] = await Promise.all([
-        lastMessageId > 0
-          ? pollMessages(conversationId, lastMessageId, guestSessionId || undefined)
-          : Promise.resolve({ success: true, messages: [] }),
-        getTypingStatus(conversationId, guestSessionId || undefined),
-      ]);
+      const result = await pollMessagesAndTyping(
+        conversationId,
+        lastMessageId,
+        guestSessionId || undefined
+      );
 
-      if (messagesResult.success && messagesResult.messages && messagesResult.messages.length > 0) {
-        setMessages((prev) => {
-          // Prevent duplicates by filtering out messages that already exist
-          const existingIds = new Set(prev.map((m) => m.message_id));
-          const newMessages = messagesResult.messages!.filter((m) => !existingIds.has(m.message_id));
-          if (newMessages.length === 0) return prev;
-          return [...prev, ...newMessages];
-        });
-      }
-
-      if (typingResult.success) {
-        setAdminIsTyping(typingResult.isTyping || false);
+      if (result.success) {
+        if (result.messages && result.messages.length > 0) {
+          setMessages((prev) => {
+            // Prevent duplicates by filtering out messages that already exist
+            const existingIds = new Set(prev.map((m) => m.message_id));
+            const newMessages = result.messages!.filter((m) => !existingIds.has(m.message_id));
+            if (newMessages.length === 0) return prev;
+            return [...prev, ...newMessages];
+          });
+        }
+        setAdminIsTyping(result.isTyping || false);
       }
     } catch (err) {
       console.error("[useSupportChat] Error polling:", err);
