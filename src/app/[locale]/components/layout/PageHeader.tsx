@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
   title: string;

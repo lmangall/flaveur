@@ -296,28 +296,28 @@ function getUnsubscribeEmailEn(): string {
 }
 
 // ============================================
-// FLAVOUR SHARING EMAILS
+// FORMULA SHARING EMAILS
 // ============================================
 
 /**
  * Send invitation email to non-users
  */
-export async function sendFlavourInviteEmail(
+export async function sendFormulaInviteEmail(
   email: string,
   inviterName: string,
-  flavourName: string,
+  formulaName: string,
   inviteToken: string,
   locale: string
 ) {
   const inviteUrl = `${BASE_URL}/${locale}/invite?token=${inviteToken}`;
 
   const subject = locale === 'en'
-    ? `${inviterName} invited you to view a flavor on Oumamie`
-    : `${inviterName} vous invite à découvrir un arôme sur Oumamie`;
+    ? `${inviterName} invited you to view a formula on Oumamie`
+    : `${inviterName} vous invite à découvrir une formule sur Oumamie`;
 
   const html = locale === 'en'
-    ? getFlavourInviteEmailEn(inviterName, flavourName, inviteUrl)
-    : getFlavourInviteEmailFr(inviterName, flavourName, inviteUrl);
+    ? getFormulaInviteEmailEn(inviterName, formulaName, inviteUrl)
+    : getFormulaInviteEmailFr(inviterName, formulaName, inviteUrl);
 
   await resend.emails.send({
     from: 'Oumamie <hello@oumamie.xyz>',
@@ -328,24 +328,24 @@ export async function sendFlavourInviteEmail(
 }
 
 /**
- * Send notification email to existing users when a flavor is shared with them
+ * Send notification email to existing users when a formula is shared with them
  */
-export async function sendFlavourShareNotification(
+export async function sendFormulaShareNotification(
   email: string,
   inviterName: string,
-  flavourName: string,
-  flavourId: number,
+  formulaName: string,
+  formulaId: number,
   locale: string
 ) {
-  const flavourUrl = `${BASE_URL}/${locale}/flavours/${flavourId}`;
+  const formulaUrl = `${BASE_URL}/${locale}/formulas/${formulaId}`;
 
   const subject = locale === 'en'
-    ? `${inviterName} shared a flavor with you`
-    : `${inviterName} a partagé un arôme avec vous`;
+    ? `${inviterName} shared a formula with you`
+    : `${inviterName} a partagé une formule avec vous`;
 
   const html = locale === 'en'
-    ? getFlavourShareNotificationEn(inviterName, flavourName, flavourUrl)
-    : getFlavourShareNotificationFr(inviterName, flavourName, flavourUrl);
+    ? getFormulaShareNotificationEn(inviterName, formulaName, formulaUrl)
+    : getFormulaShareNotificationFr(inviterName, formulaName, formulaUrl);
 
   await resend.emails.send({
     from: 'Oumamie <hello@oumamie.xyz>',
@@ -355,7 +355,7 @@ export async function sendFlavourShareNotification(
   });
 }
 
-function getFlavourInviteEmailFr(inviterName: string, flavourName: string, inviteUrl: string): string {
+function getFormulaInviteEmailFr(inviterName: string, formulaName: string, inviteUrl: string): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -372,7 +372,7 @@ function getFlavourInviteEmailFr(inviterName: string, flavourName: string, invit
 
   <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
     <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">Vous êtes invité(e) !</h2>
-    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> vous invite à découvrir l'arôme <strong>"${flavourName}"</strong> sur Oumamie.</p>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> vous invite à découvrir la formule <strong>"${formulaName}"</strong> sur Oumamie.</p>
 
     <p style="margin-bottom: 20px;">Vous pourrez consulter la composition complète de cet arôme et le dupliquer dans votre espace personnel si vous souhaitez le modifier.</p>
 
@@ -392,14 +392,14 @@ function getFlavourInviteEmailFr(inviterName: string, flavourName: string, invit
   `;
 }
 
-function getFlavourInviteEmailEn(inviterName: string, flavourName: string, inviteUrl: string): string {
+function getFormulaInviteEmailEn(inviterName: string, formulaName: string, inviteUrl: string): string {
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation to view a flavor</title>
+  <title>Invitation to view a formula</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
@@ -409,15 +409,15 @@ function getFlavourInviteEmailEn(inviterName: string, flavourName: string, invit
 
   <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
     <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">You're invited!</h2>
-    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> invited you to view the flavor <strong>"${flavourName}"</strong> on Oumamie.</p>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> invited you to view the formula <strong>"${formulaName}"</strong> on Oumamie.</p>
 
     <p style="margin-bottom: 20px;">You'll be able to view the full composition and duplicate it to your personal space if you want to modify it.</p>
 
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${inviteUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Flavor</a>
+      <a href="${inviteUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Formula</a>
     </div>
 
-    <p style="color: #666; font-size: 13px;">By clicking the button, you'll be prompted to create a free account to access the shared flavor.</p>
+    <p style="color: #666; font-size: 13px;">By clicking the button, you'll be prompted to create a free account to access the shared formula.</p>
   </div>
 
   <div style="text-align: center; color: #999; font-size: 12px;">
@@ -429,14 +429,14 @@ function getFlavourInviteEmailEn(inviterName: string, flavourName: string, invit
   `;
 }
 
-function getFlavourShareNotificationFr(inviterName: string, flavourName: string, flavourUrl: string): string {
+function getFormulaShareNotificationFr(inviterName: string, formulaName: string, formulaUrl: string): string {
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arôme partagé avec vous</title>
+  <title>Formule partagée avec vous</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
@@ -445,12 +445,12 @@ function getFlavourShareNotificationFr(inviterName: string, flavourName: string,
   </div>
 
   <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
-    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">Nouvel arôme partagé</h2>
-    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> a partagé l'arôme <strong>"${flavourName}"</strong> avec vous.</p>
-    <p style="margin-bottom: 20px; color: #666; font-size: 14px;">Vous pouvez consulter sa composition et le dupliquer dans votre espace si vous souhaitez le modifier.</p>
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">Nouvelle formule partagée</h2>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> a partagé la formule <strong>"${formulaName}"</strong> avec vous.</p>
+    <p style="margin-bottom: 20px; color: #666; font-size: 14px;">Vous pouvez consulter sa composition et la dupliquer dans votre espace si vous souhaitez la modifier.</p>
 
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${flavourUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Voir l'arôme</a>
+      <a href="${formulaUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Voir la formule</a>
     </div>
   </div>
 
@@ -462,14 +462,14 @@ function getFlavourShareNotificationFr(inviterName: string, flavourName: string,
   `;
 }
 
-function getFlavourShareNotificationEn(inviterName: string, flavourName: string, flavourUrl: string): string {
+function getFormulaShareNotificationEn(inviterName: string, formulaName: string, formulaUrl: string): string {
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flavor shared with you</title>
+  <title>Formula shared with you</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
@@ -478,12 +478,12 @@ function getFlavourShareNotificationEn(inviterName: string, flavourName: string,
   </div>
 
   <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
-    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">New flavor shared</h2>
-    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> shared the flavor <strong>"${flavourName}"</strong> with you.</p>
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">New formula shared</h2>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> shared the formula <strong>"${formulaName}"</strong> with you.</p>
     <p style="margin-bottom: 20px; color: #666; font-size: 14px;">You can view its composition and duplicate it to your space if you want to modify it.</p>
 
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${flavourUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Flavor</a>
+      <a href="${formulaUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">View Formula</a>
     </div>
   </div>
 
@@ -570,22 +570,22 @@ function getJobAlertEmailFr(jobs: JobAlertJob[], unsubscribeUrl: string): string
 // ============================================
 
 /**
- * Notify admin when a flavor is shared (for user acquisition tracking)
+ * Notify admin when a formula is shared (for user acquisition tracking)
  */
 export async function sendShareAdminNotification(data: {
   sharerEmail: string;
   sharerName: string;
   recipientEmail: string;
-  flavourName: string;
+  formulaName: string;
   isNewUser: boolean; // true = invite sent, false = shared with existing user
 }) {
-  const { sharerEmail, sharerName, recipientEmail, flavourName, isNewUser } = data;
+  const { sharerEmail, sharerName, recipientEmail, formulaName, isNewUser } = data;
   const type = isNewUser ? 'INVITE (new user)' : 'SHARE (existing user)';
 
   await resend.emails.send({
     from: 'Oumamie <hello@oumamie.xyz>',
     to: DEV_EMAIL,
-    subject: `[Oumamie] Flavor shared: ${flavourName}`,
+    subject: `[Oumamie] Formula shared: ${formulaName}`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -593,11 +593,11 @@ export async function sendShareAdminNotification(data: {
   <meta charset="utf-8">
 </head>
 <body style="font-family: sans-serif; padding: 20px;">
-  <h2>Flavor Sharing Activity</h2>
+  <h2>Formula Sharing Activity</h2>
   <p><strong>Type:</strong> ${type}</p>
   <p><strong>Sharer:</strong> ${sharerName} (${sharerEmail})</p>
   <p><strong>Recipient:</strong> ${recipientEmail}</p>
-  <p><strong>Flavor:</strong> ${flavourName}</p>
+  <p><strong>Formula:</strong> ${formulaName}</p>
   <p><strong>Time:</strong> ${new Date().toISOString()}</p>
   ${isNewUser ? '<p style="color: green; font-weight: bold;">🎯 Potential new user acquisition!</p>' : ''}
 </body>
@@ -959,6 +959,117 @@ export async function sendSupportNotification(data: {
 </html>
     `,
   });
+}
+
+// ============================================
+// WORKSPACE INVITE EMAILS
+// ============================================
+
+/**
+ * Send workspace invite email to non-users
+ */
+export async function sendWorkspaceInviteEmail(
+  email: string,
+  inviterName: string,
+  workspaceName: string,
+  role: string,
+  inviteToken: string,
+  locale: string
+) {
+  const inviteUrl = `${BASE_URL}/${locale}/invite/workspace?token=${inviteToken}`;
+
+  const roleLabel = locale === 'fr'
+    ? (role === 'editor' ? 'éditeur' : 'observateur')
+    : role;
+
+  const subject = locale === 'en'
+    ? `${inviterName} invited you to join a workspace on Oumamie`
+    : `${inviterName} vous invite à rejoindre un espace de travail sur Oumamie`;
+
+  const html = locale === 'en'
+    ? getWorkspaceInviteEmailEn(inviterName, workspaceName, roleLabel, inviteUrl)
+    : getWorkspaceInviteEmailFr(inviterName, workspaceName, roleLabel, inviteUrl);
+
+  await resend.emails.send({
+    from: 'Oumamie <hello@oumamie.xyz>',
+    to: email,
+    subject,
+    html,
+  });
+}
+
+function getWorkspaceInviteEmailFr(inviterName: string, workspaceName: string, role: string, inviteUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation à rejoindre un espace de travail</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
+    <p style="color: #666; font-size: 14px;">La plateforme des futurs aromaticiens</p>
+  </div>
+
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">Vous êtes invité(e) !</h2>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> vous invite à rejoindre l'espace de travail <strong>"${workspaceName}"</strong> en tant que <strong>${role}</strong>.</p>
+
+    <p style="margin-bottom: 20px;">Dans cet espace, vous pourrez collaborer sur des formules et partager des documents avec les autres membres de l'équipe.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${inviteUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Rejoindre l'espace</a>
+    </div>
+
+    <p style="color: #666; font-size: 13px;">En cliquant sur le bouton, vous serez invité(e) à créer un compte gratuit si vous n'en avez pas encore.</p>
+  </div>
+
+  <div style="text-align: center; color: #999; font-size: 12px;">
+    <p>Oumamie - La plateforme des aromaticiens</p>
+    <p>Si le bouton ne fonctionne pas, copiez ce lien: ${inviteUrl}</p>
+  </div>
+</body>
+</html>
+  `;
+}
+
+function getWorkspaceInviteEmailEn(inviterName: string, workspaceName: string, role: string, inviteUrl: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation to join a workspace</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <img src="${LOGO_URL}" alt="Oumamie" style="height: 50px; width: auto; margin-bottom: 10px;" />
+    <p style="color: #666; font-size: 14px;">The platform for aspiring flavorists</p>
+  </div>
+
+  <div style="background: #f9f9f9; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+    <h2 style="color: #111; font-size: 20px; margin-bottom: 15px;">You're invited!</h2>
+    <p style="margin-bottom: 20px;"><strong>${inviterName}</strong> invited you to join the workspace <strong>"${workspaceName}"</strong> as a <strong>${role}</strong>.</p>
+
+    <p style="margin-bottom: 20px;">In this workspace, you can collaborate on formulas and share documents with other team members.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${inviteUrl}" style="display: inline-block; background: #111; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 500;">Join Workspace</a>
+    </div>
+
+    <p style="color: #666; font-size: 13px;">By clicking the button, you'll be prompted to create a free account if you don't have one yet.</p>
+  </div>
+
+  <div style="text-align: center; color: #999; font-size: 12px;">
+    <p>Oumamie - The flavorist platform</p>
+    <p>If the button doesn't work, copy this link: ${inviteUrl}</p>
+  </div>
+</body>
+</html>
+  `;
 }
 
 // Cron job failure notification to admin

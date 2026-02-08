@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Skeleton } from "@/app/[locale]/components/ui/skeleton";
 import { getUserReferralStats, getUserReferrals, type ReferralInfo, type ReferralStats } from "@/actions/referrals";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface ReferralStatsCardProps {
   compact?: boolean;

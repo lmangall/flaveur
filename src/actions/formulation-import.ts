@@ -21,8 +21,8 @@ export type SubstanceMatchResult = {
 
 export type FormulationImportResult = {
   success: boolean;
-  flavour_id?: number;
-  flavour_name?: string;
+  formula_id?: number;
+  formula_name?: string;
   substance_matches: SubstanceMatchResult[];
   errors: string[];
 };
@@ -91,13 +91,13 @@ async function findSubstanceByFuzzyMatch(
 // ===========================================
 
 /**
- * Process a formulation and create a flavour
+ * Process a formulation and create a formula
  *
  * Pipeline:
  * 1. For each ingredient, search in DB by name
  * 2. If not found exactly, use fuzzy search
  * 3. If still not found, create a minimal substance (user_entry)
- * 4. Create the flavour with all found/created substances
+ * 4. Create the formula with all found/created substances
  */
 export async function importFormulation(
   data: FormulationData,
@@ -259,7 +259,7 @@ export async function importFormulation(
     }
   }
 
-  // If we have no substances to add, don't create the flavour
+  // If we have no substances to add, don't create the formula
   if (substancesToAdd.length === 0) {
     return {
       success: false,
@@ -268,12 +268,12 @@ export async function importFormulation(
     };
   }
 
-  // Create the flavour
+  // Create the formula
   try {
-    const flavourName = data.formula_name || `Imported Formulation ${new Date().toISOString().split('T')[0]}`;
+    const formulaName = data.formula_name || `Imported Formulation ${new Date().toISOString().split('T')[0]}`;
 
-    const flavourResult = await sql`
-      INSERT INTO flavour (
+    const formulaResult = await sql`
+      INSERT INTO formula (
         name,
         description,
         is_public,
@@ -282,7 +282,7 @@ export async function importFormulation(
         user_id
       )
       VALUES (
-        ${flavourName},
+        ${formulaName},
         ${`Imported from formulation sheet. Version: ${options.version_to_import}${data.student_name ? `. Student: ${data.student_name}` : ""}${data.formulation_date ? `. Date: ${data.formulation_date}` : ""}`},
         false,
         'draft',
@@ -292,13 +292,13 @@ export async function importFormulation(
       RETURNING *
     `;
 
-    const newFlavour = flavourResult[0] as { flavour_id: number; name: string };
+    const newFormula = formulaResult[0] as { formula_id: number; name: string };
 
-    // Add all substances to the flavour
+    // Add all substances to the formula
     for (const sub of substancesToAdd) {
       await sql`
-        INSERT INTO substance_flavour (substance_id, flavour_id, concentration, unit, order_index)
-        VALUES (${sub.substance_id}, ${newFlavour.flavour_id}, ${sub.concentration}, '%(v/v)', ${sub.order_index})
+        INSERT INTO substance_formula (substance_id, formula_id, concentration, unit, order_index)
+        VALUES (${sub.substance_id}, ${newFormula.formula_id}, ${sub.concentration}, '%(v/v)', ${sub.order_index})
       `;
     }
 
@@ -308,8 +308,8 @@ export async function importFormulation(
       distinctId: userId,
       event: "formulation_imported",
       properties: {
-        flavour_id: newFlavour.flavour_id,
-        flavour_name: newFlavour.name,
+        formula_id: newFormula.formula_id,
+        formula_name: newFormula.name,
         version_imported: options.version_to_import,
         substance_count: substancesToAdd.length,
         auto_created_substances: substanceMatches.filter((m) => m.status === "created").length,
@@ -320,8 +320,8 @@ export async function importFormulation(
 
     return {
       success: true,
-      flavour_id: newFlavour.flavour_id,
-      flavour_name: newFlavour.name,
+      formula_id: newFormula.formula_id,
+      formula_name: newFormula.name,
       substance_matches: substanceMatches,
       errors,
     };
@@ -330,7 +330,7 @@ export async function importFormulation(
     return {
       success: false,
       substance_matches: substanceMatches,
-      errors: [...errors, `Failed to create flavour: ${errorMessage}`],
+      errors: [...errors, `Failed to create formula: ${errorMessage}`],
     };
   }
 }
@@ -499,7 +499,7 @@ export async function createSubstanceFromImport(data: {
   };
 }
 
-// Default zeroed flavor profile for new flavours
+// Default zeroed flavor profile for new formulas
 const DEFAULT_FLAVOR_PROFILE = [
   { attribute: "Sweetness", value: 0 },
   { attribute: "Sourness", value: 0 },
@@ -509,10 +509,10 @@ const DEFAULT_FLAVOR_PROFILE = [
 ];
 
 /**
- * Create a flavour with substances by substance_id (not FEMA number)
+ * Create a formula with substances by substance_id (not FEMA number)
  * Used by the manual formulation import flow
  */
-export async function createFlavourWithSubstancesById(data: {
+export async function createFormulaWithSubstancesById(data: {
   name: string;
   description?: string;
   substances: Array<{
@@ -523,20 +523,20 @@ export async function createFlavourWithSubstancesById(data: {
     dilution?: string | null;
     price_per_kg?: number | null;
   }>;
-}): Promise<{ flavour_id: number; name: string }> {
+}): Promise<{ formula_id: number; name: string }> {
   const userId = await getUserId();
 
   if (!data.name || data.name.trim().length < 1) {
-    throw new Error("Flavour name is required");
+    throw new Error("Formula name is required");
   }
 
   if (!data.substances || data.substances.length === 0) {
     throw new Error("At least one substance is required");
   }
 
-  // Create the flavour
-  const flavourResult = await sql`
-    INSERT INTO flavour (
+  // Create the formula
+  const formulaResult = await sql`
+    INSERT INTO formula (
       name,
       description,
       is_public,
@@ -554,11 +554,11 @@ export async function createFlavourWithSubstancesById(data: {
       ${userId},
       ${JSON.stringify(DEFAULT_FLAVOR_PROFILE)}::jsonb
     )
-    RETURNING flavour_id, name
+    RETURNING formula_id, name
   `;
 
-  const newFlavour = flavourResult[0];
-  const flavourId = Number(newFlavour.flavour_id);
+  const newFormula = formulaResult[0];
+  const formulaId = Number(newFormula.formula_id);
 
   // Add all substances by their substance_id
   for (const sub of data.substances) {
@@ -573,9 +573,9 @@ export async function createFlavourWithSubstancesById(data: {
     }
 
     await sql`
-      INSERT INTO substance_flavour (
+      INSERT INTO substance_formula (
         substance_id,
-        flavour_id,
+        formula_id,
         concentration,
         unit,
         order_index,
@@ -585,7 +585,7 @@ export async function createFlavourWithSubstancesById(data: {
       )
       VALUES (
         ${sub.substance_id},
-        ${flavourId},
+        ${formulaId},
         ${sub.concentration},
         '%(v/v)',
         ${sub.order_index},
@@ -597,8 +597,8 @@ export async function createFlavourWithSubstancesById(data: {
   }
 
   return {
-    flavour_id: flavourId,
-    name: String(newFlavour.name),
+    formula_id: formulaId,
+    name: String(newFormula.name),
   };
 }
 

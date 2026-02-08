@@ -14,8 +14,8 @@ export type VariationGroup = {
   updated_at: string;
 };
 
-export type FlavourVariation = {
-  flavour_id: number;
+export type FormulaVariation = {
+  formula_id: number;
   name: string;
   description: string | null;
   variation_group_id: number | null;
@@ -31,7 +31,7 @@ export type FlavorProfileAttribute = {
   value: number;
 };
 
-export type VariationWithSubstances = FlavourVariation & {
+export type VariationWithSubstances = FormulaVariation & {
   flavor_profile: FlavorProfileAttribute[] | null;
   substances: Array<{
     substance_id: number;
@@ -81,30 +81,30 @@ export async function createVariationGroup(data: {
 }
 
 /**
- * Create a variation by cloning an existing flavour
- * If the source flavour doesn't have a group, creates one automatically
+ * Create a variation by cloning an existing formula
+ * If the source formula doesn't have a group, creates one automatically
  */
 export async function createVariation(
-  sourceFlavourId: number,
+  sourceFormulaId: number,
   label: string
-): Promise<{ flavour: FlavourVariation; group: VariationGroup }> {
+): Promise<{ formula: FormulaVariation; group: VariationGroup }> {
   const userId = await getUserId();
 
-  // Get the source flavour and check access
+  // Get the source formula and check access
   const sourceResult = await sql`
     SELECT f.*
-    FROM flavour f
-    LEFT JOIN flavour_shares fs ON f.flavour_id = fs.flavour_id
+    FROM formula f
+    LEFT JOIN formula_shares fs ON f.formula_id = fs.formula_id
       AND fs.shared_with_user_id = ${userId}
-    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    LEFT JOIN workspace_formula wf ON f.formula_id = wf.formula_id
     LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
       AND wm.user_id = ${userId}
-    WHERE f.flavour_id = ${sourceFlavourId}
+    WHERE f.formula_id = ${sourceFormulaId}
       AND (f.user_id = ${userId} OR fs.share_id IS NOT NULL OR wm.member_id IS NOT NULL)
   `;
 
   if (sourceResult.length === 0) {
-    throw new Error("Source flavour not found or access denied");
+    throw new Error("Source formula not found or access denied");
   }
 
   const source = sourceResult[0];
@@ -119,14 +119,14 @@ export async function createVariation(
     });
     groupId = group.group_id;
 
-    // Update source flavour to be part of the group and mark as main
+    // Update source formula to be part of the group and mark as main
     await sql`
-      UPDATE flavour
+      UPDATE formula
       SET variation_group_id = ${groupId},
           variation_label = 'Original',
           is_main_variation = true,
           updated_at = CURRENT_TIMESTAMP
-      WHERE flavour_id = ${sourceFlavourId}
+      WHERE formula_id = ${sourceFormulaId}
     `;
   } else {
     // Get existing group
@@ -145,9 +145,9 @@ export async function createVariation(
     };
   }
 
-  // Create new flavour as variation
-  const newFlavourResult = await sql`
-    INSERT INTO flavour (
+  // Create new formula as variation
+  const newFormulaResult = await sql`
+    INSERT INTO formula (
       name, description, is_public, category_id, status, base_unit,
       user_id, flavor_profile, variation_group_id, variation_label, is_main_variation
     )
@@ -167,20 +167,20 @@ export async function createVariation(
     RETURNING *
   `;
 
-  const newFlavour = newFlavourResult[0];
+  const newFormula = newFormulaResult[0];
 
   // Copy substances from source
   const substances = await sql`
-    SELECT * FROM substance_flavour WHERE flavour_id = ${sourceFlavourId}
+    SELECT * FROM substance_formula WHERE formula_id = ${sourceFormulaId}
   `;
 
   for (const sub of substances) {
     await sql`
-      INSERT INTO substance_flavour (
-        substance_id, flavour_id, concentration, unit, order_index, supplier, dilution, price_per_kg
+      INSERT INTO substance_formula (
+        substance_id, formula_id, concentration, unit, order_index, supplier, dilution, price_per_kg
       )
       VALUES (
-        ${sub.substance_id}, ${newFlavour.flavour_id}, ${sub.concentration},
+        ${sub.substance_id}, ${newFormula.formula_id}, ${sub.concentration},
         ${sub.unit}, ${sub.order_index}, ${sub.supplier}, ${sub.dilution}, ${sub.price_per_kg}
       )
     `;
@@ -192,8 +192,8 @@ export async function createVariation(
     distinctId: userId,
     event: "variation_created",
     properties: {
-      source_flavour_id: sourceFlavourId,
-      new_flavour_id: newFlavour.flavour_id,
+      source_formula_id: sourceFormulaId,
+      new_formula_id: newFormula.formula_id,
       variation_label: label,
       group_id: groupId,
       substance_count: substances.length,
@@ -201,20 +201,20 @@ export async function createVariation(
   });
 
   return {
-    flavour: {
-      flavour_id: Number(newFlavour.flavour_id),
-      name: String(newFlavour.name),
-      description: newFlavour.description
-        ? String(newFlavour.description)
+    formula: {
+      formula_id: Number(newFormula.formula_id),
+      name: String(newFormula.name),
+      description: newFormula.description
+        ? String(newFormula.description)
         : null,
-      variation_group_id: Number(newFlavour.variation_group_id),
-      variation_label: newFlavour.variation_label
-        ? String(newFlavour.variation_label)
+      variation_group_id: Number(newFormula.variation_group_id),
+      variation_label: newFormula.variation_label
+        ? String(newFormula.variation_label)
         : null,
-      is_main_variation: Boolean(newFlavour.is_main_variation),
-      base_unit: String(newFlavour.base_unit),
-      created_at: String(newFlavour.created_at),
-      updated_at: String(newFlavour.updated_at),
+      is_main_variation: Boolean(newFormula.is_main_variation),
+      base_unit: String(newFormula.base_unit),
+      created_at: String(newFormula.created_at),
+      updated_at: String(newFormula.updated_at),
     },
     group,
   };
@@ -249,9 +249,9 @@ export async function getVariationsForGroup(
     updated_at: String(groupResult[0].updated_at),
   };
 
-  // Get all flavours in this group
-  const flavoursResult = await sql`
-    SELECT * FROM flavour
+  // Get all formulas in this group
+  const formulasResult = await sql`
+    SELECT * FROM formula
     WHERE variation_group_id = ${groupId}
     ORDER BY is_main_variation DESC, created_at ASC
   `;
@@ -260,8 +260,8 @@ export async function getVariationsForGroup(
   const allSubstancesResult = await sql`
     SELECT DISTINCT s.substance_id, s.common_name, s.fema_number
     FROM substance s
-    JOIN substance_flavour sf ON s.substance_id = sf.substance_id
-    JOIN flavour f ON sf.flavour_id = f.flavour_id
+    JOIN substance_formula sf ON s.substance_id = sf.substance_id
+    JOIN formula f ON sf.formula_id = f.formula_id
     WHERE f.variation_group_id = ${groupId}
     ORDER BY s.common_name
   `;
@@ -275,13 +275,13 @@ export async function getVariationsForGroup(
   // Build variations with substances
   const variations: VariationWithSubstances[] = [];
 
-  for (const f of flavoursResult) {
+  for (const f of formulasResult) {
     const substancesResult = await sql`
       SELECT s.substance_id, s.common_name, s.fema_number,
              sf.concentration, sf.unit, sf.order_index
-      FROM substance_flavour sf
+      FROM substance_formula sf
       JOIN substance s ON sf.substance_id = s.substance_id
-      WHERE sf.flavour_id = ${f.flavour_id}
+      WHERE sf.formula_id = ${f.formula_id}
       ORDER BY sf.order_index
     `;
 
@@ -298,7 +298,7 @@ export async function getVariationsForGroup(
     }
 
     variations.push({
-      flavour_id: Number(f.flavour_id),
+      formula_id: Number(f.formula_id),
       name: String(f.name),
       description: f.description ? String(f.description) : null,
       variation_group_id: Number(f.variation_group_id),
@@ -323,32 +323,32 @@ export async function getVariationsForGroup(
 }
 
 /**
- * Get variations for a flavour (if it belongs to a group)
+ * Get variations for a formula (if it belongs to a group)
  */
-export async function getVariationsForFlavour(
-  flavourId: number
+export async function getVariationsForFormula(
+  formulaId: number
 ): Promise<ComparisonData | null> {
   const userId = await getUserId();
 
-  // Get flavour and its group
-  const flavourResult = await sql`
-    SELECT variation_group_id FROM flavour
-    WHERE flavour_id = ${flavourId}
+  // Get formula and its group
+  const formulaResult = await sql`
+    SELECT variation_group_id FROM formula
+    WHERE formula_id = ${formulaId}
       AND (user_id = ${userId} OR EXISTS (
-        SELECT 1 FROM flavour_shares fs
-        WHERE fs.flavour_id = ${flavourId} AND fs.shared_with_user_id = ${userId}
+        SELECT 1 FROM formula_shares fs
+        WHERE fs.formula_id = ${formulaId} AND fs.shared_with_user_id = ${userId}
       ) OR EXISTS (
-        SELECT 1 FROM workspace_flavour wf
+        SELECT 1 FROM workspace_formula wf
         JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
-        WHERE wf.flavour_id = ${flavourId} AND wm.user_id = ${userId}
+        WHERE wf.formula_id = ${formulaId} AND wm.user_id = ${userId}
       ))
   `;
 
-  if (flavourResult.length === 0) {
-    throw new Error("Flavour not found or access denied");
+  if (formulaResult.length === 0) {
+    throw new Error("Formula not found or access denied");
   }
 
-  const groupId = flavourResult[0].variation_group_id;
+  const groupId = formulaResult[0].variation_group_id;
   if (!groupId) {
     return null; // No variations
   }
@@ -360,46 +360,46 @@ export async function getVariationsForFlavour(
  * Set a variation as the main variation
  */
 export async function setMainVariation(
-  flavourId: number
-): Promise<FlavourVariation> {
+  formulaId: number
+): Promise<FormulaVariation> {
   const userId = await getUserId();
 
-  // Get the flavour and its group
-  const flavourResult = await sql`
+  // Get the formula and its group
+  const formulaResult = await sql`
     SELECT f.*, vg.user_id as group_user_id
-    FROM flavour f
+    FROM formula f
     JOIN variation_group vg ON f.variation_group_id = vg.group_id
-    WHERE f.flavour_id = ${flavourId}
+    WHERE f.formula_id = ${formulaId}
   `;
 
-  if (flavourResult.length === 0) {
-    throw new Error("Flavour not found or not part of a variation group");
+  if (formulaResult.length === 0) {
+    throw new Error("Formula not found or not part of a variation group");
   }
 
-  const flavour = flavourResult[0];
+  const formula = formulaResult[0];
 
   // Check user owns the group
-  if (flavour.group_user_id !== userId) {
+  if (formula.group_user_id !== userId) {
     throw new Error("Access denied");
   }
 
   // Unset current main variation
   await sql`
-    UPDATE flavour
+    UPDATE formula
     SET is_main_variation = false, updated_at = CURRENT_TIMESTAMP
-    WHERE variation_group_id = ${flavour.variation_group_id}
+    WHERE variation_group_id = ${formula.variation_group_id}
   `;
 
   // Set new main variation
   const result = await sql`
-    UPDATE flavour
+    UPDATE formula
     SET is_main_variation = true, updated_at = CURRENT_TIMESTAMP
-    WHERE flavour_id = ${flavourId}
+    WHERE formula_id = ${formulaId}
     RETURNING *
   `;
 
   return {
-    flavour_id: Number(result[0].flavour_id),
+    formula_id: Number(result[0].formula_id),
     name: String(result[0].name),
     description: result[0].description ? String(result[0].description) : null,
     variation_group_id: Number(result[0].variation_group_id),
@@ -417,7 +417,7 @@ export async function setMainVariation(
  * Update concentration for a substance in a variation
  */
 export async function updateVariationConcentration(
-  flavourId: number,
+  formulaId: number,
   substanceId: number,
   concentration: number
 ): Promise<void> {
@@ -426,27 +426,27 @@ export async function updateVariationConcentration(
   // Check access
   const accessCheck = await sql`
     SELECT f.*
-    FROM flavour f
-    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    FROM formula f
+    LEFT JOIN workspace_formula wf ON f.formula_id = wf.formula_id
     LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
       AND wm.user_id = ${userId}
-    WHERE f.flavour_id = ${flavourId}
+    WHERE f.formula_id = ${formulaId}
       AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
   `;
 
   if (accessCheck.length === 0) {
-    throw new Error("Flavour not found or access denied");
+    throw new Error("Formula not found or access denied");
   }
 
   await sql`
-    UPDATE substance_flavour
+    UPDATE substance_formula
     SET concentration = ${concentration}
-    WHERE flavour_id = ${flavourId} AND substance_id = ${substanceId}
+    WHERE formula_id = ${formulaId} AND substance_id = ${substanceId}
   `;
 
-  // Update flavour timestamp
+  // Update formula timestamp
   await sql`
-    UPDATE flavour SET updated_at = CURRENT_TIMESTAMP WHERE flavour_id = ${flavourId}
+    UPDATE formula SET updated_at = CURRENT_TIMESTAMP WHERE formula_id = ${formulaId}
   `;
 }
 
@@ -455,7 +455,7 @@ export async function updateVariationConcentration(
  */
 export async function bulkUpdateVariations(
   updates: Array<{
-    flavourId: number;
+    formulaId: number;
     substanceId: number;
     concentration: number;
   }>
@@ -464,39 +464,39 @@ export async function bulkUpdateVariations(
 
   if (updates.length === 0) return;
 
-  // Get unique flavour IDs
-  const flavourIds = [...new Set(updates.map((u) => u.flavourId))];
+  // Get unique formula IDs
+  const formulaIds = [...new Set(updates.map((u) => u.formulaId))];
 
-  // Check access to all flavours
-  for (const flavourId of flavourIds) {
+  // Check access to all formulas
+  for (const formulaId of formulaIds) {
     const accessCheck = await sql`
       SELECT f.*
-      FROM flavour f
-      LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+      FROM formula f
+      LEFT JOIN workspace_formula wf ON f.formula_id = wf.formula_id
       LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
         AND wm.user_id = ${userId}
-      WHERE f.flavour_id = ${flavourId}
+      WHERE f.formula_id = ${formulaId}
         AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
     `;
 
     if (accessCheck.length === 0) {
-      throw new Error(`Access denied to flavour ${flavourId}`);
+      throw new Error(`Access denied to formula ${formulaId}`);
     }
   }
 
   // Apply updates
   for (const update of updates) {
     await sql`
-      UPDATE substance_flavour
+      UPDATE substance_formula
       SET concentration = ${update.concentration}
-      WHERE flavour_id = ${update.flavourId} AND substance_id = ${update.substanceId}
+      WHERE formula_id = ${update.formulaId} AND substance_id = ${update.substanceId}
     `;
   }
 
-  // Update timestamps for all modified flavours
-  for (const flavourId of flavourIds) {
+  // Update timestamps for all modified formulas
+  for (const formulaId of formulaIds) {
     await sql`
-      UPDATE flavour SET updated_at = CURRENT_TIMESTAMP WHERE flavour_id = ${flavourId}
+      UPDATE formula SET updated_at = CURRENT_TIMESTAMP WHERE formula_id = ${formulaId}
     `;
   }
 }
@@ -505,7 +505,7 @@ export async function bulkUpdateVariations(
  * Add a substance to a variation
  */
 export async function addSubstanceToVariation(
-  flavourId: number,
+  formulaId: number,
   substanceId: number,
   concentration: number,
   unit: string
@@ -515,34 +515,34 @@ export async function addSubstanceToVariation(
   // Check access
   const accessCheck = await sql`
     SELECT f.*
-    FROM flavour f
-    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    FROM formula f
+    LEFT JOIN workspace_formula wf ON f.formula_id = wf.formula_id
     LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
       AND wm.user_id = ${userId}
-    WHERE f.flavour_id = ${flavourId}
+    WHERE f.formula_id = ${formulaId}
       AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
   `;
 
   if (accessCheck.length === 0) {
-    throw new Error("Flavour not found or access denied");
+    throw new Error("Formula not found or access denied");
   }
 
   // Get max order index
   const maxOrderResult = await sql`
     SELECT COALESCE(MAX(order_index), 0) as max_order
-    FROM substance_flavour WHERE flavour_id = ${flavourId}
+    FROM substance_formula WHERE formula_id = ${formulaId}
   `;
   const nextOrder = Number(maxOrderResult[0].max_order) + 1;
 
   await sql`
-    INSERT INTO substance_flavour (substance_id, flavour_id, concentration, unit, order_index)
-    VALUES (${substanceId}, ${flavourId}, ${concentration}, ${unit}, ${nextOrder})
-    ON CONFLICT (substance_id, flavour_id) DO UPDATE
+    INSERT INTO substance_formula (substance_id, formula_id, concentration, unit, order_index)
+    VALUES (${substanceId}, ${formulaId}, ${concentration}, ${unit}, ${nextOrder})
+    ON CONFLICT (substance_id, formula_id) DO UPDATE
     SET concentration = ${concentration}, unit = ${unit}
   `;
 
   await sql`
-    UPDATE flavour SET updated_at = CURRENT_TIMESTAMP WHERE flavour_id = ${flavourId}
+    UPDATE formula SET updated_at = CURRENT_TIMESTAMP WHERE formula_id = ${formulaId}
   `;
 }
 
@@ -550,7 +550,7 @@ export async function addSubstanceToVariation(
  * Remove a substance from a variation
  */
 export async function removeSubstanceFromVariation(
-  flavourId: number,
+  formulaId: number,
   substanceId: number
 ): Promise<void> {
   const userId = await getUserId();
@@ -558,57 +558,57 @@ export async function removeSubstanceFromVariation(
   // Check access
   const accessCheck = await sql`
     SELECT f.*
-    FROM flavour f
-    LEFT JOIN workspace_flavour wf ON f.flavour_id = wf.flavour_id
+    FROM formula f
+    LEFT JOIN workspace_formula wf ON f.formula_id = wf.formula_id
     LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id
       AND wm.user_id = ${userId}
-    WHERE f.flavour_id = ${flavourId}
+    WHERE f.formula_id = ${formulaId}
       AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
   `;
 
   if (accessCheck.length === 0) {
-    throw new Error("Flavour not found or access denied");
+    throw new Error("Formula not found or access denied");
   }
 
   await sql`
-    DELETE FROM substance_flavour
-    WHERE flavour_id = ${flavourId} AND substance_id = ${substanceId}
+    DELETE FROM substance_formula
+    WHERE formula_id = ${formulaId} AND substance_id = ${substanceId}
   `;
 
   await sql`
-    UPDATE flavour SET updated_at = CURRENT_TIMESTAMP WHERE flavour_id = ${flavourId}
+    UPDATE formula SET updated_at = CURRENT_TIMESTAMP WHERE formula_id = ${formulaId}
   `;
 }
 
 /**
  * Delete a variation (but not the main variation)
  */
-export async function deleteVariation(flavourId: number): Promise<void> {
+export async function deleteVariation(formulaId: number): Promise<void> {
   const userId = await getUserId();
 
-  // Check flavour exists, is owned by user, and is not the main variation
-  const flavourResult = await sql`
-    SELECT * FROM flavour
-    WHERE flavour_id = ${flavourId}
+  // Check formula exists, is owned by user, and is not the main variation
+  const formulaResult = await sql`
+    SELECT * FROM formula
+    WHERE formula_id = ${formulaId}
       AND user_id = ${userId}
       AND variation_group_id IS NOT NULL
   `;
 
-  if (flavourResult.length === 0) {
+  if (formulaResult.length === 0) {
     throw new Error("Variation not found or access denied");
   }
 
-  const flavour = flavourResult[0];
+  const formula = formulaResult[0];
 
-  if (flavour.is_main_variation) {
+  if (formula.is_main_variation) {
     throw new Error("Cannot delete the main variation");
   }
 
   // Delete substance links
-  await sql`DELETE FROM substance_flavour WHERE flavour_id = ${flavourId}`;
+  await sql`DELETE FROM substance_formula WHERE formula_id = ${formulaId}`;
 
-  // Delete flavour
-  await sql`DELETE FROM flavour WHERE flavour_id = ${flavourId}`;
+  // Delete formula
+  await sql`DELETE FROM formula WHERE formula_id = ${formulaId}`;
 
   // Track variation deletion in PostHog
   const posthog = getPostHogClient();
@@ -616,9 +616,9 @@ export async function deleteVariation(flavourId: number): Promise<void> {
     distinctId: userId,
     event: "variation_deleted",
     properties: {
-      flavour_id: flavourId,
-      variation_label: flavour.variation_label,
-      group_id: flavour.variation_group_id,
+      formula_id: formulaId,
+      variation_label: formula.variation_label,
+      group_id: formula.variation_group_id,
     },
   });
 }
@@ -627,14 +627,14 @@ export async function deleteVariation(flavourId: number): Promise<void> {
  * Update variation label
  */
 export async function updateVariationLabel(
-  flavourId: number,
+  formulaId: number,
   label: string
 ): Promise<void> {
   const userId = await getUserId();
 
   const accessCheck = await sql`
-    SELECT * FROM flavour
-    WHERE flavour_id = ${flavourId}
+    SELECT * FROM formula
+    WHERE formula_id = ${formulaId}
       AND user_id = ${userId}
       AND variation_group_id IS NOT NULL
   `;
@@ -644,9 +644,9 @@ export async function updateVariationLabel(
   }
 
   await sql`
-    UPDATE flavour
+    UPDATE formula
     SET variation_label = ${label}, updated_at = CURRENT_TIMESTAMP
-    WHERE flavour_id = ${flavourId}
+    WHERE formula_id = ${formulaId}
   `;
 }
 
@@ -654,17 +654,17 @@ export async function updateVariationLabel(
  * Update variation details (label and description)
  */
 export async function updateVariationDetails(
-  flavourId: number,
+  formulaId: number,
   data: {
     label?: string;
     description?: string | null;
   }
-): Promise<FlavourVariation> {
+): Promise<FormulaVariation> {
   const userId = await getUserId();
 
   const accessCheck = await sql`
-    SELECT * FROM flavour
-    WHERE flavour_id = ${flavourId}
+    SELECT * FROM formula
+    WHERE formula_id = ${formulaId}
       AND user_id = ${userId}
       AND variation_group_id IS NOT NULL
   `;
@@ -679,16 +679,16 @@ export async function updateVariationDetails(
   const newDescription = data.description !== undefined ? data.description : current.description;
 
   const result = await sql`
-    UPDATE flavour
+    UPDATE formula
     SET variation_label = ${newLabel},
         description = ${newDescription},
         updated_at = CURRENT_TIMESTAMP
-    WHERE flavour_id = ${flavourId}
+    WHERE formula_id = ${formulaId}
     RETURNING *
   `;
 
   return {
-    flavour_id: Number(result[0].flavour_id),
+    formula_id: Number(result[0].formula_id),
     name: String(result[0].name),
     description: result[0].description ? String(result[0].description) : null,
     variation_group_id: Number(result[0].variation_group_id),
@@ -706,14 +706,14 @@ export async function updateVariationDetails(
  * Sync description from one variation to all others in the group
  */
 export async function syncVariationDescriptions(
-  sourceFlavourId: number
+  sourceFormulaId: number
 ): Promise<void> {
   const userId = await getUserId();
 
-  // Get source flavour and its group
+  // Get source formula and its group
   const sourceResult = await sql`
-    SELECT description, variation_group_id FROM flavour
-    WHERE flavour_id = ${sourceFlavourId}
+    SELECT description, variation_group_id FROM formula
+    WHERE formula_id = ${sourceFormulaId}
       AND user_id = ${userId}
       AND variation_group_id IS NOT NULL
   `;
@@ -726,9 +726,9 @@ export async function syncVariationDescriptions(
 
   // Update all other variations in the group
   await sql`
-    UPDATE flavour
+    UPDATE formula
     SET description = ${description}, updated_at = CURRENT_TIMESTAMP
     WHERE variation_group_id = ${variation_group_id}
-      AND flavour_id != ${sourceFlavourId}
+      AND formula_id != ${sourceFormulaId}
   `;
 }

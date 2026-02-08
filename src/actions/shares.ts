@@ -2,9 +2,9 @@
 
 import { getUserId } from "@/lib/auth-server";
 import { db } from "@/lib/db";
-import { flavour, flavour_shares, flavour_invites, users, substance_flavour } from "@/db/schema";
+import { formula, formula_shares, formula_invites, users, substance_formula } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
-import { sendFlavourInviteEmail, sendFlavourShareNotification, sendShareAdminNotification } from "@/lib/email/resend";
+import { sendFormulaInviteEmail, sendFormulaShareNotification, sendShareAdminNotification } from "@/lib/email/resend";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 // Types
@@ -25,8 +25,8 @@ export interface InviteInfo {
   created_at: string;
 }
 
-export interface SharedFlavour {
-  flavour_id: number;
+export interface SharedFormula {
+  formula_id: number;
   name: string;
   description: string | null;
   status: string;
@@ -40,31 +40,31 @@ export interface SharedFlavour {
   };
 }
 
-export async function shareFlavour(data: {
-  flavourId: number;
+export async function shareFormula(data: {
+  formulaId: number;
   email: string;
   locale?: string;
 }) {
   const userId = await getUserId();
 
-  const { flavourId, email, locale = "en" } = data;
+  const { formulaId, email, locale = "en" } = data;
   const normalizedEmail = email.toLowerCase().trim();
 
-  const flavourCheck = await db.execute(sql`
-    SELECT f.flavour_id, f.name, f.user_id, u.username, u.email as owner_email
-    FROM flavour f
+  const formulaCheck = await db.execute(sql`
+    SELECT f.formula_id, f.name, f.user_id, u.username, u.email as owner_email
+    FROM formula f
     JOIN users u ON f.user_id = u.user_id
-    WHERE f.flavour_id = ${flavourId} AND f.user_id = ${userId}
+    WHERE f.formula_id = ${formulaId} AND f.user_id = ${userId}
   `);
 
-  if (flavourCheck.rows.length === 0) {
-    throw new Error("Flavour not found or you don't own it");
+  if (formulaCheck.rows.length === 0) {
+    throw new Error("Formula not found or you don't own it");
   }
 
-  const flavourData = flavourCheck.rows[0] as Record<string, unknown>;
-  const inviterName = String(flavourData.username || flavourData.owner_email || "Someone");
+  const formulaData = formulaCheck.rows[0] as Record<string, unknown>;
+  const inviterName = String(formulaData.username || formulaData.owner_email || "Someone");
 
-  if (normalizedEmail === String(flavourData.owner_email).toLowerCase()) {
+  if (normalizedEmail === String(formulaData.owner_email).toLowerCase()) {
     throw new Error("You cannot share with yourself");
   }
 
@@ -77,12 +77,12 @@ export async function shareFlavour(data: {
     const targetUser = existingUser[0];
 
     const existingShare = await db
-      .select({ share_id: flavour_shares.share_id })
-      .from(flavour_shares)
+      .select({ share_id: formula_shares.share_id })
+      .from(formula_shares)
       .where(
         and(
-          eq(flavour_shares.flavour_id, flavourId),
-          eq(flavour_shares.shared_with_user_id, targetUser.id)
+          eq(formula_shares.formula_id, formulaId),
+          eq(formula_shares.shared_with_user_id, targetUser.id)
         )
       );
 
@@ -91,46 +91,46 @@ export async function shareFlavour(data: {
     }
 
     const result = await db
-      .insert(flavour_shares)
+      .insert(formula_shares)
       .values({
-        flavour_id: flavourId,
+        formula_id: formulaId,
         shared_with_user_id: targetUser.id,
         shared_by_user_id: userId,
       })
       .returning();
 
     try {
-      await sendFlavourShareNotification(
+      await sendFormulaShareNotification(
         targetUser.email!,
         inviterName,
-        String(flavourData.name),
-        flavourId,
+        String(formulaData.name),
+        formulaId,
         locale
       );
     } catch (emailError) {
-      console.error("[shareFlavour] Failed to send notification email:", emailError);
+      console.error("[shareFormula] Failed to send notification email:", emailError);
     }
 
     try {
       await sendShareAdminNotification({
-        sharerEmail: String(flavourData.owner_email),
+        sharerEmail: String(formulaData.owner_email),
         sharerName: inviterName,
         recipientEmail: targetUser.email!,
-        flavourName: String(flavourData.name),
+        formulaName: String(formulaData.name),
         isNewUser: false,
       });
     } catch (adminEmailError) {
-      console.error("[shareFlavour] Failed to send admin notification:", adminEmailError);
+      console.error("[shareFormula] Failed to send admin notification:", adminEmailError);
     }
 
-    // Track flavour share in PostHog
+    // Track formula share in PostHog
     const posthog = getPostHogClient();
     posthog.capture({
       distinctId: userId,
-      event: "flavour_shared",
+      event: "formula_shared",
       properties: {
-        flavour_id: flavourId,
-        flavour_name: String(flavourData.name),
+        formula_id: formulaId,
+        formula_name: String(formulaData.name),
         recipient_type: "existing_user",
       },
     });
@@ -146,12 +146,12 @@ export async function shareFlavour(data: {
     };
   } else {
     const existingInvite = await db
-      .select({ invite_id: flavour_invites.invite_id, status: flavour_invites.status })
-      .from(flavour_invites)
+      .select({ invite_id: formula_invites.invite_id, status: formula_invites.status })
+      .from(formula_invites)
       .where(
         and(
-          eq(flavour_invites.flavour_id, flavourId),
-          eq(flavour_invites.invited_email, normalizedEmail)
+          eq(formula_invites.formula_id, formulaId),
+          eq(formula_invites.invited_email, normalizedEmail)
         )
       );
 
@@ -160,19 +160,19 @@ export async function shareFlavour(data: {
         throw new Error("Already invited this email");
       }
       await db
-        .delete(flavour_invites)
+        .delete(formula_invites)
         .where(
           and(
-            eq(flavour_invites.flavour_id, flavourId),
-            eq(flavour_invites.invited_email, normalizedEmail)
+            eq(formula_invites.formula_id, formulaId),
+            eq(formula_invites.invited_email, normalizedEmail)
           )
         );
     }
 
     const result = await db
-      .insert(flavour_invites)
+      .insert(formula_invites)
       .values({
-        flavour_id: flavourId,
+        formula_id: formulaId,
         invited_email: normalizedEmail,
         invited_by_user_id: userId,
       })
@@ -181,37 +181,37 @@ export async function shareFlavour(data: {
     const invite = result[0];
 
     try {
-      await sendFlavourInviteEmail(
+      await sendFormulaInviteEmail(
         normalizedEmail,
         inviterName,
-        String(flavourData.name),
+        String(formulaData.name),
         invite.invite_token!,
         locale
       );
     } catch (emailError) {
-      console.error("[shareFlavour] Failed to send invite email:", emailError);
+      console.error("[shareFormula] Failed to send invite email:", emailError);
     }
 
     try {
       await sendShareAdminNotification({
-        sharerEmail: String(flavourData.owner_email),
+        sharerEmail: String(formulaData.owner_email),
         sharerName: inviterName,
         recipientEmail: normalizedEmail,
-        flavourName: String(flavourData.name),
+        formulaName: String(formulaData.name),
         isNewUser: true,
       });
     } catch (adminEmailError) {
-      console.error("[shareFlavour] Failed to send admin notification:", adminEmailError);
+      console.error("[shareFormula] Failed to send admin notification:", adminEmailError);
     }
 
-    // Track flavour invite in PostHog
+    // Track formula invite in PostHog
     const posthog = getPostHogClient();
     posthog.capture({
       distinctId: userId,
-      event: "flavour_shared",
+      event: "formula_shared",
       properties: {
-        flavour_id: flavourId,
-        flavour_name: String(flavourData.name),
+        formula_id: formulaId,
+        formula_name: String(formulaData.name),
         recipient_type: "new_user_invite",
       },
     });
@@ -227,34 +227,34 @@ export async function shareFlavour(data: {
   }
 }
 
-export async function getFlavourShares(flavourId: number): Promise<(ShareInfo | InviteInfo)[]> {
+export async function getFormulaShares(formulaId: number): Promise<(ShareInfo | InviteInfo)[]> {
   const userId = await getUserId();
 
-  const flavourCheck = await db
-    .select({ flavour_id: flavour.flavour_id })
-    .from(flavour)
-    .where(and(eq(flavour.flavour_id, flavourId), eq(flavour.user_id, userId)));
+  const formulaCheck = await db
+    .select({ formula_id: formula.formula_id })
+    .from(formula)
+    .where(and(eq(formula.formula_id, formulaId), eq(formula.user_id, userId)));
 
-  if (flavourCheck.length === 0) {
-    throw new Error("Flavour not found or you don't own it");
+  if (formulaCheck.length === 0) {
+    throw new Error("Formula not found or you don't own it");
   }
 
   const shares = await db.execute(sql`
     SELECT fs.share_id, fs.shared_with_user_id, fs.created_at,
            u.email, u.username
-    FROM flavour_shares fs
+    FROM formula_shares fs
     JOIN users u ON fs.shared_with_user_id = u.user_id
-    WHERE fs.flavour_id = ${flavourId}
+    WHERE fs.formula_id = ${formulaId}
     ORDER BY fs.created_at DESC
   `);
 
   const invites = await db
     .select()
-    .from(flavour_invites)
+    .from(formula_invites)
     .where(
       and(
-        eq(flavour_invites.flavour_id, flavourId),
-        eq(flavour_invites.status, "pending")
+        eq(formula_invites.formula_id, formulaId),
+        eq(formula_invites.status, "pending")
       )
     );
 
@@ -279,39 +279,39 @@ export async function getFlavourShares(flavourId: number): Promise<(ShareInfo | 
 }
 
 export async function revokeShare(data: {
-  flavourId: number;
+  formulaId: number;
   shareId?: number;
   inviteId?: number;
 }) {
   const userId = await getUserId();
 
-  const { flavourId, shareId, inviteId } = data;
+  const { formulaId, shareId, inviteId } = data;
 
-  const flavourCheck = await db
-    .select({ flavour_id: flavour.flavour_id })
-    .from(flavour)
-    .where(and(eq(flavour.flavour_id, flavourId), eq(flavour.user_id, userId)));
+  const formulaCheck = await db
+    .select({ formula_id: formula.formula_id })
+    .from(formula)
+    .where(and(eq(formula.formula_id, formulaId), eq(formula.user_id, userId)));
 
-  if (flavourCheck.length === 0) {
-    throw new Error("Flavour not found or you don't own it");
+  if (formulaCheck.length === 0) {
+    throw new Error("Formula not found or you don't own it");
   }
 
   if (shareId) {
     await db
-      .delete(flavour_shares)
+      .delete(formula_shares)
       .where(
         and(
-          eq(flavour_shares.share_id, shareId),
-          eq(flavour_shares.flavour_id, flavourId)
+          eq(formula_shares.share_id, shareId),
+          eq(formula_shares.formula_id, formulaId)
         )
       );
   } else if (inviteId) {
     await db
-      .delete(flavour_invites)
+      .delete(formula_invites)
       .where(
         and(
-          eq(flavour_invites.invite_id, inviteId),
-          eq(flavour_invites.flavour_id, flavourId)
+          eq(formula_invites.invite_id, inviteId),
+          eq(formula_invites.formula_id, formulaId)
         )
       );
   } else {
@@ -321,12 +321,12 @@ export async function revokeShare(data: {
   return { success: true };
 }
 
-export async function getFlavoursSharedWithMe(): Promise<SharedFlavour[]> {
+export async function getFormulasSharedWithMe(): Promise<SharedFormula[]> {
   const userId = await getUserId();
 
   const result = await db.execute(sql`
     SELECT
-      f.flavour_id,
+      f.formula_id,
       f.name,
       f.description,
       f.status,
@@ -336,20 +336,20 @@ export async function getFlavoursSharedWithMe(): Promise<SharedFlavour[]> {
       u.username as shared_by_username,
       u.email as shared_by_email,
       COALESCE(sf.substance_count, 0) as substance_count
-    FROM flavour_shares fs
-    JOIN flavour f ON fs.flavour_id = f.flavour_id
+    FROM formula_shares fs
+    JOIN formula f ON fs.formula_id = f.formula_id
     JOIN users u ON fs.shared_by_user_id = u.user_id
     LEFT JOIN (
-      SELECT flavour_id, COUNT(*) as substance_count
-      FROM substance_flavour
-      GROUP BY flavour_id
-    ) sf ON f.flavour_id = sf.flavour_id
+      SELECT formula_id, COUNT(*) as substance_count
+      FROM substance_formula
+      GROUP BY formula_id
+    ) sf ON f.formula_id = sf.formula_id
     WHERE fs.shared_with_user_id = ${userId}
     ORDER BY fs.created_at DESC
   `);
 
   return (result.rows as Record<string, unknown>[]).map((f) => ({
-    flavour_id: Number(f.flavour_id),
+    formula_id: Number(f.formula_id),
     name: String(f.name),
     description: f.description ? String(f.description) : null,
     status: String(f.status),
@@ -364,7 +364,7 @@ export async function getFlavoursSharedWithMe(): Promise<SharedFlavour[]> {
   }));
 }
 
-export async function acceptInvite(token: string): Promise<{ flavourId: number }> {
+export async function acceptInvite(token: string): Promise<{ formulaId: number }> {
   const userId = await getUserId();
 
   const userResult = await db
@@ -380,8 +380,8 @@ export async function acceptInvite(token: string): Promise<{ flavourId: number }
 
   const inviteResult = await db
     .select()
-    .from(flavour_invites)
-    .where(eq(flavour_invites.invite_token, token));
+    .from(formula_invites)
+    .where(eq(formula_invites.invite_token, token));
 
   if (inviteResult.length === 0) {
     throw new Error("Invite not found or expired");
@@ -397,28 +397,28 @@ export async function acceptInvite(token: string): Promise<{ flavourId: number }
     throw new Error("This invite was sent to a different email address");
   }
 
-  const flavourOwner = await db
-    .select({ user_id: flavour.user_id })
-    .from(flavour)
-    .where(eq(flavour.flavour_id, invite.flavour_id));
+  const formulaOwner = await db
+    .select({ user_id: formula.user_id })
+    .from(formula)
+    .where(eq(formula.formula_id, invite.formula_id));
 
-  if (flavourOwner.length > 0 && flavourOwner[0].user_id === userId) {
-    throw new Error("You cannot accept an invite to your own flavour");
+  if (formulaOwner.length > 0 && formulaOwner[0].user_id === userId) {
+    throw new Error("You cannot accept an invite to your own formula");
   }
 
   await db.execute(sql`
-    INSERT INTO flavour_shares (flavour_id, shared_with_user_id, shared_by_user_id)
-    VALUES (${invite.flavour_id}, ${userId}, ${invite.invited_by_user_id})
-    ON CONFLICT (flavour_id, shared_with_user_id) DO NOTHING
+    INSERT INTO formula_shares (formula_id, shared_with_user_id, shared_by_user_id)
+    VALUES (${invite.formula_id}, ${userId}, ${invite.invited_by_user_id})
+    ON CONFLICT (formula_id, shared_with_user_id) DO NOTHING
   `);
 
   await db
-    .update(flavour_invites)
+    .update(formula_invites)
     .set({
       status: "accepted",
       accepted_at: new Date().toISOString(),
     })
-    .where(eq(flavour_invites.invite_id, invite.invite_id));
+    .where(eq(formula_invites.invite_id, invite.invite_id));
 
   // Track invite acceptance in PostHog
   const posthog = getPostHogClient();
@@ -426,26 +426,26 @@ export async function acceptInvite(token: string): Promise<{ flavourId: number }
     distinctId: userId,
     event: "share_invite_accepted",
     properties: {
-      flavour_id: invite.flavour_id,
+      formula_id: invite.formula_id,
       invited_by_user_id: invite.invited_by_user_id,
     },
   });
 
-  return { flavourId: invite.flavour_id };
+  return { formulaId: invite.formula_id };
 }
 
 export async function getInviteByToken(token: string) {
   const result = await db.execute(sql`
     SELECT
       fi.invite_id,
-      fi.flavour_id,
+      fi.formula_id,
       fi.invited_email,
       fi.status,
-      f.name as flavour_name,
+      f.name as formula_name,
       u.username as inviter_username,
       u.email as inviter_email
-    FROM flavour_invites fi
-    JOIN flavour f ON fi.flavour_id = f.flavour_id
+    FROM formula_invites fi
+    JOIN formula f ON fi.formula_id = f.formula_id
     JOIN users u ON fi.invited_by_user_id = u.user_id
     WHERE fi.invite_token = ${token}
   `);
@@ -457,10 +457,10 @@ export async function getInviteByToken(token: string) {
   const invite = result.rows[0] as Record<string, unknown>;
   return {
     invite_id: Number(invite.invite_id),
-    flavour_id: Number(invite.flavour_id),
+    formula_id: Number(invite.formula_id),
     invited_email: String(invite.invited_email),
     status: String(invite.status),
-    flavour_name: String(invite.flavour_name),
+    formula_name: String(invite.formula_name),
     inviter_name: String(invite.inviter_username || invite.inviter_email || "Unknown"),
   };
 }
@@ -470,11 +470,11 @@ export async function convertPendingInvites(userEmail: string, newUserId: string
 
   const pendingInvites = await db
     .select()
-    .from(flavour_invites)
+    .from(formula_invites)
     .where(
       and(
-        eq(flavour_invites.invited_email, normalizedEmail),
-        eq(flavour_invites.status, "pending")
+        eq(formula_invites.invited_email, normalizedEmail),
+        eq(formula_invites.status, "pending")
       )
     );
 
@@ -487,18 +487,18 @@ export async function convertPendingInvites(userEmail: string, newUserId: string
   for (const invite of pendingInvites) {
     try {
       await db.execute(sql`
-        INSERT INTO flavour_shares (flavour_id, shared_with_user_id, shared_by_user_id)
-        VALUES (${invite.flavour_id}, ${newUserId}, ${invite.invited_by_user_id})
-        ON CONFLICT (flavour_id, shared_with_user_id) DO NOTHING
+        INSERT INTO formula_shares (formula_id, shared_with_user_id, shared_by_user_id)
+        VALUES (${invite.formula_id}, ${newUserId}, ${invite.invited_by_user_id})
+        ON CONFLICT (formula_id, shared_with_user_id) DO NOTHING
       `);
 
       await db
-        .update(flavour_invites)
+        .update(formula_invites)
         .set({
           status: "accepted",
           accepted_at: new Date().toISOString(),
         })
-        .where(eq(flavour_invites.invite_id, invite.invite_id));
+        .where(eq(formula_invites.invite_id, invite.invite_id));
 
       converted++;
     } catch (error) {

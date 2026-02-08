@@ -1,11 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import {
-  ArrowRight,
-  FlaskConical,
-  Users,
-  Sparkles,
-} from "lucide-react";
+import { FlaskConical, Users, Sparkles, Zap } from "lucide-react";
 import { Metadata } from "next";
 
 import { useTranslations } from "next-intl";
@@ -14,12 +9,14 @@ import { ScrollReveal } from "@/app/[locale]/components/ui/scroll-reveal";
 import { FeatureShowcase } from "@/app/[locale]/components/ui/feature-showcase";
 import { GradientText } from "@/app/[locale]/components/ui/gradient-text";
 import { WavesBackground } from "@/app/[locale]/components/WavesBackground";
+import { HeroHeadline } from "@/app/[locale]/components/HeroHeadline";
+import { SecuritySection } from "@/app/[locale]/components/SecuritySection";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Home",
+    title: "Oumamie - Your Formulation Lab",
     description:
-      "Master the art of flavor creation. Learn, create, and showcase your flavor compositions.",
+      "Create flavors, perfumes, and cosmetic formulas. Professional tools for students, hobbyists, and young professionals.",
   };
 }
 
@@ -43,9 +40,7 @@ export default function Home() {
               <div className="flex flex-col justify-center space-y-8">
                 {/* Headline */}
                 <div className="space-y-4">
-                  <h1 className="hero-title text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl text-foreground/70">
-                    {t("headline")}
-                  </h1>
+                  <HeroHeadline />
                   <p className="max-w-[600px] text-foreground/80 text-lg md:text-xl leading-relaxed">
                     <span className="hero-desc delay-300 inline-block">{t("heroDescription")}</span>
                     <br />
@@ -78,17 +73,22 @@ export default function Home() {
                 </div>
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col gap-4 sm:flex-row reveal-up delay-1000">
-                  <Link
-                    href="/dashboard"
-                    className="group relative inline-flex h-14 items-center justify-center overflow-hidden rounded-xl bg-linear-to-r from-pink to-pink/80 px-10 text-base font-semibold text-white shadow-lg shadow-pink/25 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-pink/40"
-                  >
-                    <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-                    <span className="relative flex items-center gap-2">
-                      {t("startCreating")}
-                      <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                <div className="flex flex-col gap-3 reveal-up delay-1000">
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      href="/dashboard"
+                      className="group relative inline-flex h-11 w-fit items-center justify-center overflow-hidden rounded-lg bg-linear-to-r from-pink to-pink/80 px-8 text-sm font-semibold text-white shadow-lg shadow-pink/25 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-pink/40"
+                    >
+                      <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                      <span className="relative">
+                        {t("startCreating")}
+                      </span>
+                    </Link>
+                    <span className="inline-flex items-center gap-1.5 text-sm text-foreground/60">
+                      <Zap className="h-3.5 w-3.5" />
+                      {t("freeToUse")}
                     </span>
-                  </Link>
+                  </div>
                 </div>
               </div>
 
@@ -115,6 +115,9 @@ export default function Home() {
 
         {/* Feature Showcase Section - Scroll-snap immersive layouts */}
         <FeatureShowcase />
+
+        {/* Security Section */}
+        <SecuritySection />
 
         {/* Newsletter CTA Section */}
         <section

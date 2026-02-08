@@ -124,7 +124,7 @@ export default async function DataQualityPage() {
           <CardContent className="pt-4">
             <p className="text-sm text-muted-foreground">
               <strong>FLAVIS</strong> (FLAVouring Information System) is the
-              EU&apos;s database of approved food flavouring substances under
+              EU&apos;s database of approved food formulaing substances under
               Regulation (EC) No 1334/2008. FL numbers (format XX.XXX) are
               unique identifiers assigned by EFSA. The EU Policy Code links to
               the Food and Feed Information Portal.

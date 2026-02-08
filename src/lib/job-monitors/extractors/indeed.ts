@@ -39,11 +39,16 @@ function parseIndeedSearchUrl(searchUrl: string): {
   const hostname = url.hostname; // e.g. "fr.indeed.com"
   const locality = hostname.split(".")[0]; // "fr"
 
+  // Handle fromage parameter
+  // Indeed web uses "last" but the API wants a number of days
+  const fromageParam = url.searchParams.get("fromage") || "1";
+  const fromage = fromageParam === "last" ? "1" : fromageParam;
+
   return {
     query: url.searchParams.get("q") || "",
     location: url.searchParams.get("l") || "",
     locality: locality === "www" ? "us" : locality,
-    fromage: url.searchParams.get("fromage") || "1",
+    fromage,
   };
 }
 
@@ -96,7 +101,17 @@ export async function extractIndeedListings(
   });
 
   if (!response.ok) {
-    throw new Error(`Indeed API error: ${response.status} ${response.statusText}`);
+    // Try to get error details from response body
+    let errorDetails = "";
+    try {
+      const errorBody = await response.text();
+      errorDetails = errorBody ? ` - ${errorBody}` : "";
+    } catch {
+      // Ignore if we can't read the body
+    }
+    throw new Error(
+      `Indeed API error: ${response.status} ${response.statusText}${errorDetails}`
+    );
   }
 
   const data: IndeedApiResponse = await response.json();

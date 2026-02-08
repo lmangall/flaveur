@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { AppSidebar, MobileSidebar } from "@/components/layout/app-sidebar";
 import { BreadcrumbProvider, ConnectedBreadcrumbs } from "@/components/layout/Breadcrumbs";
 import { SupportChatWidget } from "@/app/[locale]/components/support/SupportChatWidget";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth-client";
 import posthog from "posthog-js";
 

@@ -14,7 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./user";
-import { flavour } from "./flavour";
+import { formula } from "./formula";
 
 export const workspace = pgTable(
   "workspace",
@@ -155,37 +155,37 @@ export const workspace_document = pgTable(
   ]
 );
 
-export const workspace_flavour = pgTable(
-  "workspace_flavour",
+export const workspace_formula = pgTable(
+  "workspace_formula",
   {
     workspace_id: integer().notNull(),
-    flavour_id: integer().notNull(),
+    formula_id: integer().notNull(),
     added_by: text(),
     added_at: timestamp({ mode: "string" }).default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => [
-    index("idx_workspace_flavour_flavour_id")
-      .using("btree", table.flavour_id.asc().nullsLast().op("int4_ops")),
-    index("idx_workspace_flavour_workspace_id")
+    index("idx_workspace_formula_formula_id")
+      .using("btree", table.formula_id.asc().nullsLast().op("int4_ops")),
+    index("idx_workspace_formula_workspace_id")
       .using("btree", table.workspace_id.asc().nullsLast().op("int4_ops")),
     foreignKey({
       columns: [table.workspace_id],
       foreignColumns: [workspace.workspace_id],
-      name: "workspace_flavour_workspace_id_fkey",
+      name: "workspace_formula_workspace_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.flavour_id],
-      foreignColumns: [flavour.flavour_id],
-      name: "workspace_flavour_flavour_id_fkey",
+      columns: [table.formula_id],
+      foreignColumns: [formula.formula_id],
+      name: "workspace_formula_formula_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.added_by],
       foreignColumns: [users.id],
-      name: "workspace_flavour_added_by_fkey",
+      name: "workspace_formula_added_by_fkey",
     }).onDelete("set null"),
     primaryKey({
-      columns: [table.workspace_id, table.flavour_id],
-      name: "workspace_flavour_pkey",
+      columns: [table.workspace_id, table.formula_id],
+      name: "workspace_formula_pkey",
     }),
   ]
 );

@@ -17,15 +17,15 @@ import { Input } from "@/app/[locale]/components/ui/input";
 import { Label } from "@/app/[locale]/components/ui/label";
 import { toast } from "sonner";
 import { createVariation } from "@/actions/variations";
-import { DEFAULT_VARIATION_LABELS } from "@/constants/flavour";
+import { DEFAULT_VARIATION_LABELS } from "@/constants/formula";
 
 interface CreateVariationDialogProps {
-  sourceFlavourId: number;
+  sourceFormulaId: number;
   onVariationCreated?: () => void;
 }
 
 export function CreateVariationDialog({
-  sourceFlavourId,
+  sourceFormulaId,
   onVariationCreated,
 }: CreateVariationDialogProps) {
   const t = useTranslations("Variations");
@@ -41,7 +41,7 @@ export function CreateVariationDialog({
 
     setIsCreating(true);
     try {
-      await createVariation(sourceFlavourId, label.trim());
+      await createVariation(sourceFormulaId, label.trim());
       toast.success(`Variation "${label}" created`);
       setOpen(false);
       setLabel("");

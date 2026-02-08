@@ -48,13 +48,13 @@ function SampleFlavorCard({ flavor }: { flavor: SampleFlavor }) {
       <CardFooter className="border-t bg-muted/30 pt-3">
         <div className="flex gap-2 w-full">
           <Button variant="outline" size="sm" asChild className="flex-1">
-            <Link href={`/flavours/${flavor.flavour_id}`}>
+            <Link href={`/formulas/${flavor.formula_id}`}>
               View Formula
             </Link>
           </Button>
           {hasVariations && (
             <Button variant="default" size="sm" asChild className="flex-1">
-              <Link href={`/flavours/${flavor.flavour_id}/compare`}>
+              <Link href={`/formulas/${flavor.formula_id}/compare`}>
                 Compare Variations
                 <ArrowRight className="ml-1 h-3 w-3" />
               </Link>
@@ -109,7 +109,7 @@ export default async function SamplesPage() {
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {samplesWithVariations.map((flavor) => (
-                  <SampleFlavorCard key={flavor.flavour_id} flavor={flavor} />
+                  <SampleFlavorCard key={flavor.formula_id} flavor={flavor} />
                 ))}
               </div>
             </section>
@@ -128,7 +128,7 @@ export default async function SamplesPage() {
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {samplesWithoutVariations.map((flavor) => (
-                  <SampleFlavorCard key={flavor.flavour_id} flavor={flavor} />
+                  <SampleFlavorCard key={flavor.formula_id} flavor={flavor} />
                 ))}
               </div>
             </section>

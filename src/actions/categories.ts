@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { category, flavour } from "@/db/schema";
+import { category, formula } from "@/db/schema";
 import { eq, isNull, sql, count } from "drizzle-orm";
 import { getUserId } from "@/lib/auth-server";
 import { createCategorySchema, updateCategorySchema } from "@/lib/validations/category";
@@ -241,8 +241,8 @@ export async function deleteCategory(categoryId: number): Promise<{ success: boo
 
   const flavorsUsingCategory = await db
     .select({ count: count() })
-    .from(flavour)
-    .where(eq(flavour.category_id, categoryId));
+    .from(formula)
+    .where(eq(formula.category_id, categoryId));
   if (Number(flavorsUsingCategory[0].count) > 0) {
     throw new Error("Cannot delete category that is assigned to flavors. Reassign flavors first.");
   }

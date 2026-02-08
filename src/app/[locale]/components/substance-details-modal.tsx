@@ -34,8 +34,10 @@ import {
   Building2,
   Flag,
   BookOpen,
+  Flower2,
 } from "lucide-react";
 import { MoleculeImage } from "@/app/[locale]/components/ui/molecule-image";
+import { OlfactiveFamilyBadge, VolatilityBadge, DomainBadge, PriceRangeBadge } from "@/app/[locale]/components/olfactive-family-badge";
 import { getSubstanceEUFullData } from "@/actions/regulatory";
 import { addToLearningQueue } from "@/actions/learning";
 import type { EUAdditiveFullData } from "@/lib/eu-api/client";
@@ -71,6 +73,32 @@ export type SubstanceForModal = {
   solubility?: Record<string, unknown>;
   food_additive_classes?: string[];
   alternative_names?: string[];
+  // Perfumery fields
+  volatility_class?: string | null;
+  olfactive_family?: string | null;
+  odor_profile_tags?: string[] | null;
+  substantivity?: string | null;
+  performance_notes?: string | null;
+  uses_in_perfumery?: string | null;
+  use_level?: string | null;
+  stability_notes?: string | null;
+  price_range?: string | null;
+  is_blend?: boolean | null;
+  botanical_name?: string | null;
+  extraction_process?: string | null;
+  major_components?: string | null;
+  vegan?: boolean | null;
+  appearance?: string | null;
+  density?: string | null;
+  refractive_index?: string | null;
+  flash_point?: string | null;
+  vapor_pressure?: string | null;
+  domain?: string | null;
+  // Additional perfumery/chemistry fields
+  source_datasets?: string | null;
+  log_p?: string | null;
+  inchikey?: string | null;
+  pubchem_enriched?: boolean | null;
 };
 
 interface SubstanceDetailsModalProps {
@@ -95,6 +123,11 @@ export function SubstanceDetailsModal({
   const [euError, setEuError] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [addingToQueueId, setAddingToQueueId] = useState<number | null>(null);
+
+  // Determine if this is a fragrance-domain substance
+  const isFragrance = substance?.domain === "fragrance" || substance?.domain === "both";
+  const hasPerfumeryData = !!(substance?.olfactive_family || substance?.volatility_class || substance?.performance_notes || substance?.substantivity || substance?.botanical_name || substance?.appearance || substance?.density);
+  const defaultTab = (isFragrance && hasPerfumeryData) ? "perfumery" : "overview";
 
   // Fetch EU data when modal opens
   useEffect(() => {
@@ -178,17 +211,30 @@ export function SubstanceDetailsModal({
                     <span>Exact: {substance.exact_mass.toFixed(4)}</span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex flex-wrap items-center gap-2 mt-2">
                   {substance.is_natural && <Badge variant="success">Natural</Badge>}
                   {substance.synthetic && <Badge variant="secondary">Synthetic</Badge>}
                   {substance.type && <Badge variant="info">{substance.type}</Badge>}
+                  {substance.pubchem_enriched && <Badge variant="outline" className="text-xs">PubChem Verified</Badge>}
+                  {substance.olfactive_family && (
+                    <OlfactiveFamilyBadge family={substance.olfactive_family} size="sm" />
+                  )}
+                  {substance.volatility_class && (
+                    <VolatilityBadge volatilityClass={substance.volatility_class} size="sm" />
+                  )}
+                  {substance.domain && substance.domain !== "flavor" && (
+                    <DomainBadge domain={substance.domain} size="sm" />
+                  )}
+                  {substance.price_range && (
+                    <PriceRangeBadge priceRange={substance.price_range} size="sm" />
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Main tabbed content */}
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+            <Tabs defaultValue={defaultTab} key={substance.substance_id} className="w-full">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview" className="gap-1 text-xs">
                   <Info className="h-3 w-3" />
                   <span className="hidden sm:inline">Overview</span>
@@ -196,6 +242,10 @@ export function SubstanceDetailsModal({
                 <TabsTrigger value="sensory" className="gap-1 text-xs">
                   <Sparkles className="h-3 w-3" />
                   <span className="hidden sm:inline">Sensory</span>
+                </TabsTrigger>
+                <TabsTrigger value="perfumery" className="gap-1 text-xs">
+                  <Flower2 className="h-3 w-3" />
+                  <span className="hidden sm:inline">Perfumery</span>
                 </TabsTrigger>
                 <TabsTrigger value="chemistry" className="gap-1 text-xs">
                   <FlaskConical className="h-3 w-3" />
@@ -213,40 +263,103 @@ export function SubstanceDetailsModal({
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="mt-4 space-y-4">
-                {/* Identifiers */}
-                <div>
-                  <h4 className="font-medium text-sm mb-3 text-muted-foreground">
-                    Identifiers
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="p-3 rounded-lg bg-muted/50">
-                      <p className="text-xs text-muted-foreground">FEMA Number</p>
-                      <p className="font-medium">{substance.fema_number || "-"}</p>
+                {/* Odor Profile Tags — shown prominently for all substances that have them */}
+                {substance.odor_profile_tags && substance.odor_profile_tags.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">
+                      Odor Profile
+                    </h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {substance.odor_profile_tags.map((tag, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
                     </div>
-                    <div className="p-3 rounded-lg bg-muted/50">
-                      <p className="text-xs text-muted-foreground">CAS ID</p>
-                      <p className="font-medium">{substance.cas_id || "-"}</p>
-                    </div>
-                    {substance.ec_number && (
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">EC Number</p>
-                        <p className="font-medium">{substance.ec_number}</p>
-                      </div>
-                    )}
-                    {substance.pubchem_cid && (
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">PubChem CID</p>
-                        <p className="font-medium">{substance.pubchem_cid}</p>
-                      </div>
-                    )}
-                    {substance.pubchem_sid && (
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-xs text-muted-foreground">PubChem SID</p>
-                        <p className="font-medium">{substance.pubchem_sid}</p>
-                      </div>
-                    )}
                   </div>
-                </div>
+                )}
+
+                {/* Quick Info Grid — shows olfactive family, volatility, appearance for fragrance */}
+                {(substance.olfactive_family || substance.volatility_class || substance.appearance || substance.odor) && (
+                  <div>
+                    <h4 className="font-medium text-sm mb-3 text-muted-foreground">
+                      Quick Info
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {substance.olfactive_family && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground mb-1">Olfactive Family</p>
+                          <OlfactiveFamilyBadge family={substance.olfactive_family} />
+                        </div>
+                      )}
+                      {substance.volatility_class && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground mb-1">Volatility</p>
+                          <VolatilityBadge volatilityClass={substance.volatility_class} />
+                        </div>
+                      )}
+                      {substance.appearance && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground mb-1">Appearance</p>
+                          <p className="font-medium">{substance.appearance}</p>
+                        </div>
+                      )}
+                      {substance.price_range && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground mb-1">Price Range</p>
+                          <PriceRangeBadge priceRange={substance.price_range} />
+                        </div>
+                      )}
+                      {substance.odor && !substance.odor_profile_tags?.length && (
+                        <div className="p-3 rounded-lg bg-muted/50 col-span-2">
+                          <p className="text-xs text-muted-foreground mb-1">Odor Description</p>
+                          <p className="font-medium text-sm">{substance.odor}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Identifiers — only show fields that have data */}
+                {(substance.fema_number > 0 || substance.cas_id || substance.ec_number || substance.pubchem_cid || substance.pubchem_sid) && (
+                  <div>
+                    <h4 className="font-medium text-sm mb-3 text-muted-foreground">
+                      Identifiers
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {substance.fema_number > 0 && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground">FEMA Number</p>
+                          <p className="font-medium">{substance.fema_number}</p>
+                        </div>
+                      )}
+                      {substance.cas_id && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground">CAS ID</p>
+                          <p className="font-medium">{substance.cas_id}</p>
+                        </div>
+                      )}
+                      {substance.ec_number && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground">EC Number</p>
+                          <p className="font-medium">{substance.ec_number}</p>
+                        </div>
+                      )}
+                      {substance.pubchem_cid && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground">PubChem CID</p>
+                          <p className="font-medium">{substance.pubchem_cid}</p>
+                        </div>
+                      )}
+                      {substance.pubchem_sid && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-xs text-muted-foreground">PubChem SID</p>
+                          <p className="font-medium">{substance.pubchem_sid}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Alternative Names */}
                 {substance.alternative_names && substance.alternative_names.length > 0 && (
@@ -261,6 +374,39 @@ export function SubstanceDetailsModal({
                         </Badge>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Data Sources */}
+                {substance.source_datasets && (
+                  <div>
+                    <h4 className="font-medium text-sm mb-2 text-muted-foreground">
+                      Data Sources
+                    </h4>
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-sm">{substance.source_datasets}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Source & metadata — shown when there's limited data */}
+                {(substance.is_blend || substance.domain) && (
+                  <div className="flex flex-wrap gap-2">
+                    {substance.domain && (
+                      <DomainBadge domain={substance.domain} size="sm" />
+                    )}
+                    {substance.is_blend && <Badge variant="secondary">Blend / Complex</Badge>}
+                    {substance.is_natural && <Badge variant="success">Natural</Badge>}
+                    {substance.vegan && <Badge variant="success">Vegan</Badge>}
+                  </div>
+                )}
+
+                {/* Empty state for substances with no data at all */}
+                {!substance.odor_profile_tags?.length && !substance.olfactive_family && !substance.volatility_class && !substance.appearance && !substance.odor && !(substance.fema_number > 0) && !substance.cas_id && !substance.alternative_names?.length && (
+                  <div className="flex flex-col items-center py-8 text-muted-foreground">
+                    <Info className="h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm">Limited data available</p>
+                    <p className="text-xs mt-1">This molecule has minimal information in our database</p>
                   </div>
                 )}
               </TabsContent>
@@ -312,19 +458,188 @@ export function SubstanceDetailsModal({
                 )}
               </TabsContent>
 
+              {/* Perfumery Tab */}
+              <TabsContent value="perfumery" className="mt-4 space-y-4">
+                {substance.olfactive_family ||
+                substance.volatility_class ||
+                substance.performance_notes ||
+                substance.substantivity ||
+                substance.botanical_name ||
+                substance.appearance ||
+                substance.density ? (
+                  <>
+                    {/* Classification */}
+                    {(substance.olfactive_family || substance.volatility_class || substance.odor_profile_tags) && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-3 text-muted-foreground">
+                          Classification
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          {substance.olfactive_family && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Olfactive Family</p>
+                              <OlfactiveFamilyBadge family={substance.olfactive_family} />
+                            </div>
+                          )}
+                          {substance.volatility_class && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Volatility</p>
+                              <VolatilityBadge volatilityClass={substance.volatility_class} />
+                            </div>
+                          )}
+                        </div>
+                        {substance.odor_profile_tags && substance.odor_profile_tags.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-xs text-muted-foreground mb-2">Odor Profile</p>
+                            <div className="flex flex-wrap gap-1">
+                              {substance.odor_profile_tags.map((tag, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Performance */}
+                    {(substance.substantivity || substance.performance_notes || substance.use_level || substance.stability_notes) && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-3 text-muted-foreground">
+                          Performance
+                        </h4>
+                        <div className="space-y-3">
+                          {substance.substantivity && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Substantivity</p>
+                              <p className="text-sm">{substance.substantivity}</p>
+                            </div>
+                          )}
+                          {substance.use_level && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Typical Use Level</p>
+                              <p className="text-sm">{substance.use_level}</p>
+                            </div>
+                          )}
+                          {substance.performance_notes && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Performance Notes</p>
+                              <p className="text-sm">{substance.performance_notes}</p>
+                            </div>
+                          )}
+                          {substance.stability_notes && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Stability</p>
+                              <p className="text-sm">{substance.stability_notes}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Natural Origin (only for naturals) */}
+                    {(substance.botanical_name || substance.extraction_process || substance.major_components) && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-3 text-muted-foreground">
+                          Natural Origin
+                        </h4>
+                        <div className="space-y-3">
+                          {substance.botanical_name && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Botanical Name</p>
+                              <p className="text-sm italic">{substance.botanical_name}</p>
+                            </div>
+                          )}
+                          {substance.extraction_process && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Extraction Process</p>
+                              <p className="text-sm">{substance.extraction_process}</p>
+                            </div>
+                          )}
+                          {substance.major_components && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Major Components</p>
+                              <p className="text-sm">{substance.major_components}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Physical Properties */}
+                    {(substance.appearance || substance.density || substance.refractive_index || substance.flash_point || substance.vapor_pressure) && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-3 text-muted-foreground">
+                          Physical Properties
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          {substance.appearance && (
+                            <div className="p-3 rounded-lg bg-muted/50 col-span-2">
+                              <p className="text-xs text-muted-foreground mb-1">Appearance</p>
+                              <p className="text-sm">{substance.appearance}</p>
+                            </div>
+                          )}
+                          {substance.density && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Density</p>
+                              <p className="text-sm">{substance.density}</p>
+                            </div>
+                          )}
+                          {substance.refractive_index && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Refractive Index</p>
+                              <p className="text-sm">{substance.refractive_index}</p>
+                            </div>
+                          )}
+                          {substance.flash_point && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Flash Point</p>
+                              <p className="text-sm">{substance.flash_point}</p>
+                            </div>
+                          )}
+                          {substance.vapor_pressure && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">Vapor Pressure</p>
+                              <p className="text-sm">{substance.vapor_pressure}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sustainability */}
+                    {(substance.vegan !== undefined && substance.vegan !== null) || substance.is_blend ? (
+                      <div className="flex flex-wrap gap-2">
+                        {substance.vegan && <Badge variant="success">Vegan</Badge>}
+                        {substance.is_blend && <Badge variant="secondary">Blend / Complex</Badge>}
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center py-8 text-muted-foreground">
+                    <Flower2 className="h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm">No perfumery data available</p>
+                  </div>
+                )}
+              </TabsContent>
+
               {/* Chemistry Tab */}
               <TabsContent value="chemistry" className="mt-4 space-y-4">
                 {substance.functional_groups ||
                 substance.xlogp !== undefined ||
+                substance.log_p ||
                 substance.smile ||
                 substance.inchi ||
+                substance.inchikey ||
                 substance.melting_point_c ||
                 substance.boiling_point_c ||
                 substance.solubility ? (
                   <>
                     {/* Chemical Properties */}
                     {(substance.functional_groups ||
-                      (substance.xlogp !== undefined && substance.xlogp !== null)) && (
+                      (substance.xlogp !== undefined && substance.xlogp !== null) ||
+                      substance.log_p) && (
                       <div>
                         <h4 className="font-medium text-sm mb-3 text-muted-foreground">
                           Chemical Properties
@@ -342,6 +657,12 @@ export function SubstanceDetailsModal({
                             <div className="p-3 rounded-lg bg-muted/50">
                               <p className="text-xs text-muted-foreground mb-1">XLogP</p>
                               <p className="text-sm font-medium">{substance.xlogp}</p>
+                            </div>
+                          )}
+                          {substance.log_p && (
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground mb-1">LogP</p>
+                              <p className="text-sm font-medium">{substance.log_p}</p>
                             </div>
                           )}
                         </div>
@@ -389,7 +710,7 @@ export function SubstanceDetailsModal({
                       )}
 
                     {/* Structural Notations */}
-                    {(substance.smile || substance.inchi) && (
+                    {(substance.smile || substance.inchi || substance.inchikey) && (
                       <div>
                         <h4 className="font-medium text-sm mb-3 text-muted-foreground">
                           Structural Notations
@@ -408,6 +729,14 @@ export function SubstanceDetailsModal({
                               <p className="text-xs text-muted-foreground mb-1">InChI</p>
                               <code className="block p-3 bg-muted/50 rounded-lg text-xs break-all font-mono">
                                 {substance.inchi}
+                              </code>
+                            </div>
+                          )}
+                          {substance.inchikey && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">InChIKey</p>
+                              <code className="block p-3 bg-muted/50 rounded-lg text-xs break-all font-mono">
+                                {substance.inchikey}
                               </code>
                             </div>
                           )}

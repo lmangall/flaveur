@@ -10,6 +10,7 @@ import {
   FlaskConical,
   FolderKanban,
   Beaker,
+  BookMarked,
   BookOpen,
   Atom,
   Calculator,
@@ -37,7 +38,7 @@ import {
 } from "@/app/[locale]/components/ui/tooltip";
 import { Sheet, SheetContent, SheetTrigger } from "@/app/[locale]/components/ui/sheet";
 import { Separator } from "@/app/[locale]/components/ui/separator";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { InviteFriendDialog } from "@/app/[locale]/components/invite-friend-dialog";
 
@@ -46,36 +47,38 @@ const ADMIN_EMAILS = ["l.mangallon@gmail.com"];
 
 const navItems = [
   { href: "/dashboard", label: "dashboard", icon: LayoutDashboard },
-  { href: "/flavours", label: "myFlavours", icon: FlaskConical },
+  { href: "/formulas", label: "myFormulas", icon: FlaskConical },
+  { href: "/community", label: "community", icon: User },
   { href: "/workspaces", label: "workspaces", icon: FolderKanban },
   { href: "/substances", label: "substances", icon: Beaker },
   { href: "/learn", label: "learn", icon: BookOpen },
   { href: "/molecules", label: "molecules", icon: Atom },
   { href: "/calculator", label: "calculator", icon: Calculator },
+  { href: "/ingredients", label: "ingredients", icon: BookMarked },
 ];
 
 const adminNavItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin", label: "dashboard", icon: LayoutDashboard },
   {
-    section: "Jobs",
+    section: "jobs",
     items: [
-      { href: "/admin/jobs", label: "Jobs", icon: Briefcase },
-      { href: "/admin/job-monitors", label: "Monitors", icon: Radar },
+      { href: "/admin/jobs", label: "jobs", icon: Briefcase },
+      { href: "/admin/job-monitors", label: "monitors", icon: Radar },
     ]
   },
   {
-    section: "Content",
+    section: "content",
     items: [
-      { href: "/admin/jobs-social", label: "Jobs Social", icon: Share2 },
-      { href: "/admin/snippets", label: "Snippets", icon: ImageIcon },
-      { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+      { href: "/admin/jobs-social", label: "jobsSocial", icon: Share2 },
+      { href: "/admin/snippets", label: "snippets", icon: ImageIcon },
+      { href: "/admin/newsletter", label: "newsletter", icon: Mail },
     ]
   },
   {
-    section: "System",
+    section: "system",
     items: [
-      { href: "/admin/data-quality", label: "Data Quality", icon: Database },
-      { href: "/admin/support", label: "Support", icon: MessageCircle },
+      { href: "/admin/data-quality", label: "dataQuality", icon: Database },
+      { href: "/admin/support", label: "support", icon: MessageCircle },
     ]
   }
 ];
@@ -204,7 +207,7 @@ export function AppSidebar({ collapsed = false, onCollapsedChange }: AppSidebarP
                     <div key={item.section}>
                       {!collapsed && (
                         <p className="px-3 pt-4 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {item.section}
+                          {t(`sections.${item.section}`)}
                         </p>
                       )}
                       {item.items?.map((subItem) => (
@@ -375,7 +378,7 @@ export function MobileSidebar() {
                       return (
                         <div key={item.section}>
                           <p className="px-3 pt-4 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            {item.section}
+                            {t(`sections.${item.section}`)}
                           </p>
                           {item.items?.map((subItem) => {
                             const isActive = isActiveRoute(subItem.href);
@@ -393,7 +396,7 @@ export function MobileSidebar() {
                                 )}
                               >
                                 <subItem.icon className="h-5 w-5" />
-                                <span>{subItem.label}</span>
+                                <span>{t(subItem.label)}</span>
                               </Link>
                             );
                           })}
@@ -415,7 +418,7 @@ export function MobileSidebar() {
                         )}
                       >
                         <item.icon className="h-5 w-5" />
-                        <span>{item.label}</span>
+                        <span>{t(item.label)}</span>
                       </Link>
                     );
                   })}

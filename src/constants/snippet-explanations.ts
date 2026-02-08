@@ -441,4 +441,270 @@ export const FACT_EXPLANATIONS: Record<string, string> = {
     "Les \"Big Four\" (Givaudan, dsm-firmenich, IFF, Symrise) controlent ensemble plus de 50% du marche mondial, mais la concurrence s'intensifie : des acteurs asiatiques comme Huabao International et des technologies disruptives (fermentation de precision, IA de formulation) remettent en question la domination des geants traditionnels.",
   "ind-010":
     "Les tendances 2025 de l'industrie aromatique sont claires : naturalite et clean label, fermentation de precision pour produire des molecules complexes sans extraction vegetale, et intelligence artificielle pour accelerer la formulation. Des entreprises comme Symrise utilisent deja l'IA pour surmonter les defis gustatifs des proteines vegetales et predire les tendances de saveurs futures.",
+
+  // ============================================
+  // FRAGRANCE - OLFACTIVE FAMILIES
+  // ============================================
+  "olf-001":
+    "Le parfum Chypre de Francois Coty (1917) a donne son nom a toute une famille olfactive. Construit sur un accord bergamote-mousse de chene-labdanum, ce parfum etait inspire de l'ile de Chypre et de ses senteurs mediterraneennes. Aujourd'hui, les chypres modernes doivent composer avec les restrictions sur la mousse de chene, utilisant des substituts synthetiques pour recreer cet accord mythique.",
+  "olf-002":
+    "Fougere Royale de Houbigant (1882) est considere comme le premier parfum moderne. Son createur Paul Parquet a utilise la coumarine synthetique — decouverte 14 ans plus tot — pour creer un accord lavande-coumarine-mousse de chene qui n'existe pas dans la nature. Le terme \"fougere\" est trompeur : ce n'est pas l'odeur reelle de la fougere, mais une creation abstraite devenue un pilier de la parfumerie masculine.",
+  "olf-003":
+    "Les orientaux tirent leur nom de l'imaginaire occidental de l'Orient : epices, resines, ambre et vanille evoquent les routes commerciales historiques. Shalimar de Guerlain (1925) a codifie cette famille avec son accord vanille-iris-bergamote. Les orientaux modernes explorent des facettes plus extremes : oud, safran, encens, ou des combinations inattendues comme l'oriental-gourmand.",
+  "olf-004":
+    "Les hesperides (du grec Hesperides, les nymphes gardiennes du jardin aux pommes d'or) sont la plus ancienne famille olfactive. L'Eau de Cologne originale (1709) etait une hesperide pure. Ces parfums frais et volatils utilisent les huiles essentielles d'agrumes : bergamote, citron, orange, pamplemousse. Leur defi : la tenue limitee des molecules citronnees, compensee par des bases musquees ou boisees.",
+  "olf-005":
+    "Les floraux representent pres de 40% de la parfumerie feminine. Du soliflore (centree sur une seule fleur comme N°5 avec le jasmin et la rose) au bouquet floral complexe, cette famille offre une infinite de variations. Les avancees en chimie ont permis de creer des fleurs qui n'existent pas dans la nature, comme les accords \"muguet\" construits avec hydroxycitronellal et lilial.",
+  "olf-006":
+    "Les bois forment la colonne vertebrale de nombreux parfums, particulierement masculins. Le cedre de Virginie ou de l'Atlas, le vetiver d'Haiti ou de Java, le santal de Mysore ou d'Australie — chaque origine apporte sa signature unique. Avec la rarefaction du santal naturel, les synthetiques comme le Javanol et le Polysantol sont devenus essentiels a cette famille.",
+
+  // ============================================
+  // FRAGRANCE - PYRAMID
+  // ============================================
+  "pyr-f-001":
+    "Les notes de tete sont les ambassadeurs d'un parfum : elles creent la premiere impression et determinent souvent si on achete ou non. Principalement des molecules legeres (moins de 150 g/mol), elles s'evaporent rapidement : limonene, bergaptene, aldehydes legers. Les parfumeurs parlent de \"l'effet splash\" — cette explosion aromatique des premieres secondes.",
+  "pyr-f-002":
+    "Le coeur est le veritable caractere d'un parfum, celui qu'on porte pendant des heures. Les notes de coeur sont des molecules de taille moyenne : alcools terpeniques (linalol, geraniol), esters (acetate de benzyle), lactones. C'est la que se situe l'identite du parfum — rose, jasmin, epices — et c'est pourquoi il faut toujours attendre 15-20 minutes avant de juger un parfum.",
+  "pyr-f-003":
+    "Les notes de fond sont les molecules les plus lourdes et les moins volatiles : muscs, bois, resines, vanilline. Elles peuvent persister plusieurs jours sur la peau et les vetements. Ces molecules servent aussi de \"fixateurs\" : elles ralentissent l'evaporation des notes plus legeres et donnent de la profondeur au parfum.",
+  "pyr-f-004":
+    "Le sillage (du francais \"wake\" d'un bateau) est l'empreinte olfactive que vous laissez dans un espace. Un parfum peut avoir une excellente tenue sans sillage (il reste proche de la peau) ou un sillage puissant mais ephemere. Les muscs et les ambres synthetiques modernes (ambroxan, galaxolide) sont particulierement efficaces pour creer du sillage.",
+  "pyr-f-005":
+    "La concentration d'un parfum influence sa tenue, son sillage et son prix. L'eau de cologne (3-5%) est fraiche et ephemere. L'eau de toilette (5-15%) est la forme la plus repandue. L'eau de parfum (15-20%) offre une meilleure tenue. L'extrait ou parfum (20-40%) est le plus concentre et le plus couteux. Certaines maisons de niche proposent des \"Parfum Cologne\" a 15-18% pour combiner fraicheur et tenue.",
+
+  // ============================================
+  // FRAGRANCE - ICONIC PERFUMES
+  // ============================================
+  "ico-001":
+    "Ernest Beaux, parfumeur chez Rallet (rachetee par Chanel), a presente 10 essais a Coco Chanel. Elle a choisi le numero 5 — peut-etre parce que 5 etait son chiffre porte-bonheur, peut-etre parce que ce parfum contenait une dose alors inouie d'aldehydes C10, C11 et C12, creant un effet \"poudre\" abstrait et moderne qui revolutionna la parfumerie.",
+  "ico-002":
+    "Jacques Guerlain crea Shalimar en 1925, s'inspirant de la legende du jardin de l'empereur moghol Shah Jahan. Le coup de genie fut d'ajouter de l'ethylvanilline synthetique (plus puissante que la vanilline naturelle) a une base de Jicky (1889), creant le premier \"oriental-vanille\" de l'histoire. Ce parfum est reste bestseller pendant pres d'un siecle.",
+  "ico-003":
+    "L'hedione (methyl dihydrojasmonate), synthetisee par Firmenich en 1962, fut utilisee pour la premiere fois dans Eau Sauvage (1966) par Edmond Roudnitska. Cette molecule jasminee-fraiche avait un effet \"radiant\" unique : elle projette le parfum sans l'alourdir. Aujourd'hui, l'hedione est presente dans plus de 50% de la parfumerie mondiale.",
+  "ico-004":
+    "Angel de Thierry Mugler, cree par Olivier Cresp en 1992, a divise le monde : on l'adore ou on le deteste. Son accord ethylmaltol-patchouli-chocolat a invente la famille \"gourmande\", inspirant des centaines de clones. Angel contient aussi du cassis bourgeon et de l'helional, creant un effet \"alien\" voulu par Mugler pour son univers science-fiction.",
+  "ico-005":
+    "CK One (1994) de Calvin Klein, cree par Alberto Morillas et Harry Fremont, a democratise l'idee du parfum unisexe. Sa fraicheur minerale (the vert, hedione) et sa presentation sobre correspondaient parfaitement a l'esthetique minimaliste des annees 90. Il a ouvert la voie a toute une generation de parfums \"clean\" et transparents.",
+  "ico-006":
+    "L'Iso E Super, synthetise par IFF en 1973, a longtemps ete une molecule de fond discrete. Molecule 01 de Geza Schoen (2006) l'a mise au premier plan comme parfum a part entiere. Cette molecule boisee-ambree a la particularite d'etre perceptible par intermittence (phenomene de \"blanching\" olfactif), creant un effet mysterieux et addictif.",
+
+  // ============================================
+  // FRAGRANCE - ACCORDS
+  // ============================================
+  "acc-001":
+    "L'accord fougere, ne avec Fougere Royale (1882), est construit sur trois piliers : la lavande (fraicheur aromatique), le geranium (facette rosee) et la coumarine (foin coupe, douceur amandee). Cette combinaison n'existe pas dans la nature — c'est une creation abstraite qui evoque une \"fougere imaginaire\". Les fougeres modernes ajoutent souvent des notes vertes ou aromatiques (armoise, sauge).",
+  "acc-002":
+    "L'accord chypre est l'un des plus complexes de la parfumerie : bergamote en tete, rose-jasmin au coeur, mousse de chene-patchouli-labdanum en fond. Le resultat est elegant, sophistique, avec une facette terreuse-animale apportee par la mousse de chene (aujourd'hui largement remplacee par des synthetiques comme l'Evernyl pour des raisons d'allergenicite).",
+  "acc-003":
+    "L'ambre gris naturel, secretion du cachalot, est aujourd'hui interdit au commerce. L'accord \"ambre\" moderne est une recreation synthetique combinant labdanum (resine de ciste), vanilline, muscs et benzoine. L'ambroxan (derive du sclareol de sauge sclaree) reproduit les facettes marines et chaudes de l'ambre naturel a moindre cout.",
+  "acc-004":
+    "L'accord cuir est particulierement complexe a reproduire car le cuir tanne naturel doit son odeur a des centaines de composes. Les parfumeurs utilisent le bouleau (goudron de bouleau russe), le styrax, le castoreum synthetique, et des molecules comme l'Isobutyl quinoline (cuir fumé) ou le Suederal (daim propre). Cada maison a sa \"signature cuir\" proprietaire.",
+  "acc-005":
+    "Les muscs blancs synthetiques ont revolutionne la parfumerie en remplacant les muscs animaux (glande du chevrotain porte-musc). Le Galaxolide (Galaxolide) et l'Habanolide sont des muscs polycycliques propres et confortables. Les muscs nitres, plus anciens, sont aujourd'hui restreints pour des raisons environnementales et de photosensibilisation.",
+
+  // ============================================
+  // FRAGRANCE - NATURAL VS SYNTHETIC
+  // ============================================
+  "nat-001":
+    "L'huile essentielle de rose de Damas coute environ 5 000-10 000 EUR/kg selon la recolte, car il faut 3-5 tonnes de petales pour produire 1 kg d'huile. Le geraniol synthetique, molecule principale de la rose, coute moins de 20 EUR/kg. Mais la rose naturelle contient des centaines de molecules mineures (nerol, citronellol, phenylethanol) qui lui donnent sa complexite irreproductible.",
+  "nat-002":
+    "Le santal de Mysore (Santalum album) est considere comme le plus fin au monde, mais la surexploitation l'a rendu quasi-extinct. L'Inde a interdit son exportation. Les alternatives incluent le santal d'Australie (S. spicatum), de Nouvelle-Caledonie (S. austrocaledonicum), et des synthetiques comme le Javanol, Polysantol et Bacdanol qui reproduisent differentes facettes du bois precieux.",
+  "nat-003":
+    "Le musc naturel etait extrait de la glande abdominale du chevrotain porte-musc male, au prix de la vie de l'animal. Le castoreum provenait du castor, la civette du chat musque. Ces pratiques sont aujourd'hui interdites ou fortement reglementees. Les muscs synthetiques (macrocycliques, polycycliques) ont permis de sauver ces especes tout en offrant de nouvelles palettes olfactives.",
+  "nat-004":
+    "La Calone, synthetisee par Pfizer en 1966, est une molecule marine-melonee qui n'a aucun equivalent naturel. Elle a cree une nouvelle famille olfactive : les \"ozones\" ou \"aquatiques\". New West de Aramis (1988) et L'Eau d'Issey (1992) l'ont popularisee. A forte dose, elle evoque la pasteque et le melon ; a faible dose, l'air marin.",
+  "nat-005":
+    "L'ambroxan (ou ambrox) est un derive du sclareol, extrait de la sauge sclaree. Il reproduit les facettes chaudes, animales et marines de l'ambre gris naturel (secretion de cachalot). Cette molecule est devenue star avec Molecule 02 de Escentric Molecules et constitue la base de nombreux parfums \"peau\" modernes.",
+
+  // ============================================
+  // FRAGRANCE - EXTRACTION
+  // ============================================
+  "ext-001":
+    "L'enfleurage a froid etait la technique traditionnelle de Grasse pour capturer le parfum des fleurs fragiles (jasmin, tubereuse) qui ne supportent pas la chaleur. Les petales etaient deposes sur des chassis de graisse animale qui absorbaient les huiles essentielles. Apres saturation, la graisse etait lavee a l'ethanol pour obtenir l'absolue. Cette methode artisanale a quasiment disparu, remplacee par l'extraction aux solvants.",
+  "ext-002":
+    "L'extraction au CO2 supercritique utilise le dioxyde de carbone a haute pression (au-dessus de 73 bars et 31 °C) comme solvant. Dans cet etat \"supercritique\", le CO2 a les proprietes d'un liquide et d'un gaz. Il dissout les molecules aromatiques sans chaleur, preservant les notes fragiles. A la decompression, le CO2 s'evapore sans laisser de residus — contrairement aux solvants chimiques.",
+  "ext-003":
+    "Le rendement des fleurs a parfum varie enormement. La rose : 1 kg d'huile essentielle pour 3-5 tonnes de petales. Le jasmin : 1 kg d'absolue pour 7-8 millions de fleurs (environ 1 tonne). La tubereuse : jusqu'a 3 500 kg de fleurs pour 1 kg d'absolue. Ces rendements expliquent les prix astronomiques des matieres premieres naturelles de qualite.",
+  "ext-004":
+    "L'expression a froid des agrumes (citron, orange, bergamote) consiste a presser mecaniquement les zestes pour en extraire l'huile essentielle. Cette methode preserve les aldehydes delicats (citral, octanal) qui seraient detruits par la distillation a la vapeur. Les huiles essentielles d'agrumes sont photosensibilisantes (bergaptene) et doivent etre rectifiees pour l'usage cosmetique.",
+  "ext-005":
+    "La distillation fractionnee permet d'isoler des fractions specifiques d'une huile essentielle selon leur point d'ebullition. Le vetiver est souvent fractionne pour obtenir le \"coeur de vetiver\" plus raffine. Les menthes sont fractionnees pour isoler le menthol cristallisable. Cette technique permet aussi d'eliminer des molecules indesirables (allergenes, notes vertes trop fortes).",
+
+  // ============================================
+  // FRAGRANCE - RAW MATERIALS
+  // ============================================
+  "raw-001":
+    "Le vetiver d'Haiti (Chrysopogon zizanioides) est considere comme le plus fin au monde pour ses notes boisees, terreuses et legerement fumees. Les racines sont distillees a la vapeur apres avoir ete sechees 24-48 heures. Le vetiver de Java est plus vert et camphre, celui de La Reunion plus floral. L'huile vieillit et s'ameliore pendant plusieurs annees.",
+  "raw-002":
+    "Le jasmin sambac (Jasminum sambac), ou fleur de the, pousse principalement en Inde et en Chine. Son absolue est plus fruitee et plus indolee que celle du jasmin grandiflorum de Grasse. L'indole, molecule paradoxale qui sent le jasmin a faible dose et les matieres fecales a forte dose, est responsable du caractere \"narcotique\" des absolues de jasmin et tubereuse.",
+  "raw-003":
+    "L'oud (bois d'agar) est la resine produite par l'Aquilaria lorsqu'il est infecte par un champignon. Ce processus naturel est rare et aleatoire, rendant l'oud veritable extremement precieux — jusqu'a 30 000 EUR/kg. L'oud cultive (inoculation artificielle) et les synthetiques (Givaudan Oud, Firmenich Oudwood) ont demystifie cette note tout en preservant les arbres sauvages.",
+  "raw-004":
+    "Le bigaradier (Citrus aurantium) est un arbre aux multiples tresors : l'huile de neroli est distillee des fleurs (5 000-10 000 EUR/kg), l'huile de petit grain des feuilles et rameaux (beaucoup moins chere), et l'eau de fleur d'oranger (hydrolat) est utilisee en patisserie. Un seul arbre peut fournir trois matieres premieres distinctes avec des profils olfactifs differents.",
+  "raw-005":
+    "Le patchouli (Pogostemon cablin) s'ameliore avec le vieillissement : les huiles conservees plusieurs annees developpent une note plus douce, plus boisee et moins camphoree. Les feuilles sont sechees, fermentees puis distillees. L'Indonesia (Sumatra, Java) produit 80% du patchouli mondial. Le patchoulol, son compose principal, est aussi utilise comme fixateur.",
+
+  // ============================================
+  // FRAGRANCE - HISTORY
+  // ============================================
+  "his-001":
+    "Grasse est devenue capitale du parfum grace aux gantiers du XVIe siecle. Les gants en cuir de l'epoque sentaient mauvais (tannage a l'urine). Les artisans grassois ont commence a les parfumer aux huiles essentielles locales (lavande, jasmin, rose). Catherine de Medicis, en recevant des gants parfumes de Galimard, a lance cette mode a la cour de France, faisant de Grasse un centre incontournable.",
+  "his-002":
+    "L'Eau de Cologne de Jean-Marie Farina (1709), creee a Cologne en Allemagne par un Italien emigre, etait une hesperide simple mais revolutionnaire : bergamote, citron, neroli, romarin. Elle a defini un nouveau genre de parfum : frais, leger, unisexe. Napoleon en commandait 60 flacons par mois. Son successeur (4711, Kolnisch Wasser) existe toujours.",
+  "his-003":
+    "La coumarine, premiere molecule aromatique synthetique utilisee en parfumerie, a ete creee par William Perkin en 1868 a partir du coaltar (sous-produit du charbon). Son odeur de foin coupe et d'amande a revolutionne la parfumerie en permettant des creations impossibles avec les seuls naturels. Elle reste un pilier de la famille fougere.",
+  "his-004":
+    "La legende raconte qu'Ernest Beaux a cree Chanel N°5 par \"erreur\" — en utilisant une dose massive d'aldehydes normalement reservee aux diluants. En realite, il experimentait methodiquement avec ces molecules nouvelles. Le resultat : un parfum abstrait, moderne, qui ne ressemble a aucune fleur precise. Coco Chanel a choisi ce numero parce que c'etait le cinquieme echantillon presente.",
+  "his-005":
+    "Le kyphi etait un parfum sacre egyptien brule au coucher du soleil dans les temples. La recette, mentionnee dans le papyrus Ebers (1550 av. J.-C.), comptait jusqu'a 16 ingredients : styrax, myrrhe, encens, calamus, cannelle, genievrier, vin et miel. C'etait a la fois un parfum, un medicament et une offrande aux dieux — illustrant l'origine sacree de la parfumerie.",
+
+  // ============================================
+  // COSMETICS - ACTIVES
+  // ============================================
+  "act-001":
+    "Le retinol (vitamine A) accelere le renouvellement cellulaire et stimule la production de collagene. Ses derives (retinaldehyde, acide retinoique) sont encore plus puissants mais plus irritants. L'utilisation doit etre progressive, avec protection solaire obligatoire. Les retinoides sont les seuls actifs anti-age dont l'efficacite est scientifiquement prouvee depuis les annees 1980.",
+  "act-002":
+    "L'acide hyaluronique est naturellement present dans notre peau, nos articulations et nos yeux. Cette molecule peut retenir jusqu'a 1000 fois son poids en eau grace a sa structure en chaines de polysaccharides. En cosmetique, on utilise differents poids moleculaires : haut PM (hydratation de surface), bas PM (penetration plus profonde). Les injections esthetiques utilisent des HA reticules.",
+  "act-003":
+    "L'acide L-ascorbique (vitamine C pure) est un antioxydant puissant qui neutralise les radicaux libres, stimule la synthese de collagene et inhibe la melanogenese. Son defi : il s'oxyde rapidement (brunissement) au contact de l'air et de la lumiere. Les derives stabilises (ascorbyl glucoside, ascorbyl phosphate) sont moins efficaces mais plus stables en formulation.",
+  "act-004":
+    "Le niacinamide (vitamine B3) est un actif polyvalent : il renforce la barriere lipidique, reduit l'hyperpigmentation, diminue la production de sebum et a des proprietes anti-inflammatoires. Compatible avec la plupart des autres actifs, il est stable en formulation et bien tolere. Des concentrations de 2-5% sont efficaces.",
+  "act-005":
+    "Les peptides biomimetiques sont des chaines courtes d'acides amines qui imitent les signaux cellulaires naturels. L'Argireline (acetyl hexapeptide-3) relaxe les muscles faciaux a la maniere du botox. Le Matrixyl (palmitoyl pentapeptide-4) stimule la production de collagene. Chaque peptide a une fonction specifique et ciblee.",
+  "act-006":
+    "L'acide salicylique (BHA) est liposoluble, ce qui lui permet de penetrer dans les pores et de dissoudre le sebum qui les obstrue. Derive de l'ecorce de saule, il a aussi des proprietes anti-inflammatoires. A 2% max en cosmetique, il est ideal pour les peaux grasses et acneiques. Contrairement aux AHA, il ne photosensibilise pas.",
+  "act-007":
+    "Les ceramides representent 50% des lipides du stratum corneum (couche cornee), avec les cholesterols et les acides gras libres. Cette structure \"brique et mortier\" forme la barriere cutanee. Les ceramides synthetiques en cosmetique (ceramide NP, AP, EOP) renforcent cette barriere et sont particulierement utiles pour les peaux seches et atopiques.",
+  "act-008":
+    "Le bakuchiol, extrait des graines de Psoralea corylifolia (babchi), est presente comme le \"retinol vegetal\". Des etudes cliniques montrent des effets similaires au retinol sur les rides et la pigmentation, avec moins d'irritation. Cependant, son mecanisme d'action est different : il n'active pas les recepteurs retinoiques mais stimule la production de collagene par d'autres voies.",
+
+  // ============================================
+  // COSMETICS - FORMULATION
+  // ============================================
+  "cos-001":
+    "Dans une emulsion H/E (huile dans eau), les gouttelettes d'huile sont dispersees dans l'eau : le toucher est leger, frais, absorbant. Dans une emulsion E/H (eau dans huile), c'est l'inverse : le toucher est plus riche, occlusif, protecteur. Les emulsions E/H sont preferees pour les soins tres nourrissants et les cremes solaires waterproof.",
+  "cos-002":
+    "Le HLB (Hydrophilic-Lipophilic Balance) est une echelle de 0 a 20 qui caracterise les tensioactifs. HLB 1-3 : antimoussant. HLB 3-6 : emulsifiant E/H. HLB 8-16 : emulsifiant H/E. HLB 13-16 : solubilisant. Pour formuler une emulsion stable, il faut faire correspondre le HLB de l'emulsifiant au HLB requis de la phase huileuse.",
+  "cos-003":
+    "Les silicones volatiles (cyclopentasiloxane D5, cyclomethicone) s'evaporent en laissant un fini soyeux non gras. Le dimethicone (non volatil) forme un film protecteur. Le dimethiconol apporte de la brillance aux cheveux. Malgre leur reputation controversee, les silicones sont inertes et bien tolerees — le debat porte sur leur biodegradabilite et leur accumulation dans l'environnement.",
+  "cos-004":
+    "La gomme xanthane, produite par fermentation bacterienne, est un epaississant pseudoplastique : elle fluidifie sous contrainte (cisaillement) et re-epaissit au repos. C'est pourquoi un gel au xanthane s'etale facilement puis \"prend\" sur la peau. Cette propriete rheologique est essentielle pour la texture et la stabilite des emulsions.",
+  "cos-005":
+    "Le SLS (sodium lauryl sulfate) est un tensioactif anionique tres efficace pour la mousse et le degraissage, mais potentiellement irritant pour les peaux sensibles. Les alternatives plus douces : SLES (sodium laureth sulfate), cocamidopropyl betaine, sodium cocoyl isethionate (SCI), decyl glucoside. Le choix depend de l'application et du profil de tolerance vise.",
+  "cos-006":
+    "Le squalane etait historiquement extrait du foie de requin (squalene, insature). Aujourd'hui, il est produit par hydrogenation du squalene vegetal (olive, canne a sucre, amarante). Cette molecule biomimetique ressemble au sebum humain et penetre parfaitement la peau. Elle est stable (sature, ne s'oxyde pas) et non comedogene.",
+
+  // ============================================
+  // COSMETICS - SKIN SCIENCE
+  // ============================================
+  "ski-001":
+    "Le manteau acide de la peau (pH 4,5-5,5) est maintenu par les acides gras libres du sebum et les produits de degradation de la filaggrine (acide urocanique, acide pyrrolidone carboxylique). Ce pH acide inhibe la croissance de nombreuses bacteries pathogenes tout en favorisant le microbiome commensal. Les nettoyants alcalins perturbent ce manteau et peuvent favoriser les dermatoses.",
+  "ski-002":
+    "Le cycle de renouvellement epidermique (transit des keratinocytes de la couche basale a la desquamation) dure environ 28 jours chez l'adulte jeune, mais s'allonge avec l'age : 40-50 jours apres 50 ans. Ce ralentissement explique en partie le teint terne et les taches de vieillesse. Les exfoliants (AHA, BHA, retinoides) accelerent ce renouvellement.",
+  "ski-003":
+    "Le collagene de type I et III, synthetise par les fibroblastes du derme, forme un reseau de fibres qui donne a la peau sa resistance et son elasticite. Apres 25 ans, la production de collagene diminue d'environ 1% par an, tandis que la degradation par les MMPs (matrix metalloproteinases) augmente avec les UV et le stress oxydatif. Le resultat : rides et relachement.",
+  "ski-004":
+    "La melanine est synthetisee par les melanocytes de la couche basale a partir de la tyrosine, via l'enzyme tyrosinase. Les UV stimulent ce processus (bronzage). L'eumelanine (brune-noire) protege mieux de l'ADN que la pheomelanine (rouge-jaune). Les depigmentants comme l'arbutine, l'acide kojique et la vitamine C inhibent la tyrosinase.",
+  "ski-005":
+    "Le microbiome cutane compte environ 1 million de bacteries par cm2, majoritairement Cutibacterium acnes, Staphylococcus epidermidis et Corynebacterium. Cet ecosysteme participe a l'immunite innee, maintient le pH acide et concurrence les pathogenes. Les prebiotiques (inuline, oligosaccharides) et postbiotiques (lysats bacteriens) sont une nouvelle frontiere cosmetique.",
+  "ski-006":
+    "La TEWL (Trans-Epidermal Water Loss) mesure la quantite d'eau qui s'evapore a travers la peau, indicateur de la fonction barriere. Une peau saine a une TEWL de 5-10 g/m2/h. Au-dessus de 15-20 g/m2/h, la barriere est alteree. Les emollients (huiles, silicones) et humectants (glycerine, HA) reduisent la TEWL par des mecanismes differents.",
+
+  // ============================================
+  // COSMETICS - HAIR SCIENCE
+  // ============================================
+  "hai-001":
+    "La keratine du cheveu est une proteine fibreuse constituee de 18 acides amines, particulierement riche en cysteine (15-17%). Les residus cysteine forment des ponts disulfures entre les chaines polypeptidiques, donnant au cheveu sa resistance mecanique. C'est pourquoi les cheveux brules sentent le soufre : les ponts S-S se brisent.",
+  "hai-002":
+    "La permanente (ondulation) et le defrisage chimique exploitent les ponts disulfures. Un agent reducteur (thioglycolate d'ammonium) brise les ponts S-S, permettant de reformer le cheveu sur bigoudis. Un oxydant (peroxyde d'hydrogene) reforme de nouveaux ponts dans la nouvelle configuration. Ce processus est irreversible et fragilise le cheveu.",
+  "hai-003":
+    "La cuticule du cheveu est composee de 5-10 couches d'ecailles de keratine, comme les tuiles d'un toit (orientees de la racine vers la pointe). Quand ces ecailles sont lisses et serrees, elles reflechissent la lumiere : le cheveu parait brillant. Les dommages (chaleur, chimie, friction) soulevent et detruisent ces ecailles, rendant le cheveu terne et poreux.",
+  "hai-004":
+    "Le dimethicone, silicone non volatile, forme un film lissant sur la cuticule qui augmente la brillance et reduit les frisottis. Cependant, ce film peut s'accumuler au fil des lavages (\"build-up\"), alourdissant le cheveu. Les silicones hydrosolubles (dimethicone copolyol) ou les huiles vegetales sont des alternatives pour les adeptes du \"no-poo\".",
+  "hai-005":
+    "Le cheveu passe par trois phases : anagene (croissance active, 2-7 ans, 85-90% des cheveux), catagene (transition, 2-3 semaines) et telogene (repos et chute, 3 mois, 10-15% des cheveux). Perdre 50-100 cheveux par jour est normal. Un stress intense peut synchroniser les follicules en telogene, provoquant une chute massive (effluvium telogene) 3 mois plus tard.",
+
+  // ============================================
+  // COSMETICS - PRESERVATION
+  // ============================================
+  "pre-001":
+    "Les parabenes (methylparabene, propylparabene) sont des conservateurs efficaces a large spectre, utilises depuis les annees 1920. La controverse est nee d'une etude de 2004 trouvant des parabenes dans des tumeurs mammaires — sans prouver de lien causal. Les agences sanitaires (SCCS, FDA) les considerent comme surs aux doses autorisees, mais la perception consommateur a force l'industrie a chercher des alternatives.",
+  "pre-002":
+    "Le phenoxyethanol est aujourd'hui le conservateur le plus utilise dans les formules \"sans parabenes\". Efficace contre les bacteries Gram-negatif (Pseudomonas), il l'est moins contre les Gram-positif et les levures. On le combine donc souvent avec de l'ethylhexylglycerin (potentialisateur) ou des acides organiques (levures). Sa limite : 1% en Europe.",
+  "pre-003":
+    "Le challenge test (test d'efficacite du systeme conservateur) selon la pharmacopee europeenne consiste a inoculer un produit avec des souches microbiennes standardisees (Pseudomonas, Staph, E. coli, Candida, Aspergillus) et a mesurer la reduction logarithmique sur 28 jours. Critere A : reduction de 2 log a J2, 3 log a J7 pour les bacteries.",
+  "pre-004":
+    "Les formules anhydres (beurres, baumes, huiles, poudres) n'ont pas besoin de conservateurs antimicrobiens car les micro-organismes ont besoin d'eau libre (Aw > 0,6) pour se multiplier. Elles necessitent cependant des antioxydants (vitamine E, romarin) pour eviter le rancissement des huiles. La contamination peut survenir par l'utilisateur s'il introduit de l'eau.",
+  "pre-005":
+    "L'activite de l'eau (Aw) mesure la fraction d'eau disponible pour les reactions chimiques et la croissance microbienne. L'eau pure a un Aw de 1,0. En dessous de 0,6, la plupart des bacteries ne peuvent plus se developper. Les humectants (glycerine, propylene glycol, sorbitol) abaissent l'Aw et peuvent contribuer a l'auto-conservation d'une formule.",
+
+  // ============================================
+  // COSMETICS - TEXTURE
+  // ============================================
+  "tex-001":
+    "Les gels aqueux sont stabilises par des gelifiants hydrophiles qui retiennent l'eau dans un reseau tridimensionnel. Les carbomeres (acide polyacrylique) creent des gels transparents a pH neutre. Les gommes naturelles (xanthane, guar) sont plus opaques. L'hydroxyethylcellulose donne un toucher coulant. Chaque gelifiant a sa rheologie et son toucher propres.",
+  "tex-002":
+    "Les serums ont une viscosité faible (15-100 cP) qui facilite leur penetration. Leur phase aqueuse elevee permet de concentrer les actifs hydrosolubles (vitamine C, niacinamide, acide hyaluronique). Les serums huileux (\"oils\") utilisent des huiles seches (jojoba, squalane) pour les actifs liposolubles (retinol, vitamine E). Le format \"ampoule\" pousse cette logique avec des formules ultra-concentrees.",
+  "tex-003":
+    "Les baumes sont des melanges anhydres de cires (abeille, candelilla, carnauba) et d'huiles (karite, coco, amande). Les cires apportent la consistance, les huiles la nutrition. La proportion cire/huile determine la texture : plus de cire = baume plus dur. Les baumes forment une barriere occlusive qui reduit la TEWL et protege la peau des agressions exterieures.",
+  "tex-004":
+    "Les mousses sont des dispersions de gaz (air, azote, propane-butane) dans un liquide. Les mousses en aerosol utilisent un gaz propulseur. Les \"moussants\" (savons, cleansers) generent une mousse par agitation mecanique grace a leurs tensioactifs. Les nouvelles \"cream-to-foam\" sont des emulsions qui moussent au contact de l'eau.",
+  "tex-005":
+    "L'evaluation sensorielle codifie le \"skin feel\" selon des descripteurs standardises : penetre facilement, collant, gras residuel, mat, satiné, velouté, effet tenseur, lissant... Les panels d'experts (minimum 15 personnes formees) classent les produits sur ces criteres. Ces donnees guident le developpement formulation et le marketing produit.",
+
+  // ============================================
+  // COSMETICS - CLAIMS
+  // ============================================
+  "cla-001":
+    "En Europe, la frontiere cosmetique/medicament est definie par le Reglement 1223/2009 : un cosmétique est destine a \"nettoyer, parfumer, modifier l'apparence, proteger, maintenir en bon etat\" ou \"corriger les odeurs corporelles\". Toute revendication d'action therapeutique (guerir, traiter, prevenir une maladie) fait basculer le produit dans le champ du medicament — avec les obligations reglementaires afferentes.",
+  "cla-002":
+    "\"Hypoallergenique\" signifie que le produit a ete formule pour minimiser le risque de reactions allergiques : exclusion des allergenes connus, tests de tolerance... Mais ce terme n'est pas reglemente et ne garantit pas l'absence de reaction. Les personnes tres sensibles doivent toujours verifier la liste INCI et faire un test cutane.",
+  "cla-003":
+    "\"Non comedogene\" indique que le produit n'obstruera pas les pores et ne favorisera pas les comedons (points noirs, boutons). Cette allegation repose sur des tests in vivo (application sur le dos de volontaires) ou in vitro (peau de lapin). Certains ingredients sont connus pour leur potentiel comedogene (huile de coco, lanoline), mais la formulation globale compte autant que les ingredients individuels.",
+  "cla-004":
+    "Le SPF (Sun Protection Factor) mesure uniquement la protection contre les UVB (coups de soleil). Un SPF 30 laisse passer 1/30 des UVB, soit 3,3%. Un SPF 50 laisse passer 2%. L'augmentation de protection au-dela de 30 est donc marginale. Pour les UVA (vieillissement), on cherche le logo UVA encercle (protection UVA >= 1/3 du SPF) ou la mention \"broad spectrum\" aux USA.",
+  "cla-005":
+    "Les labels bio (Cosmos, Ecocert, Natrue) imposent des criteres stricts : minimum d'ingredients d'origine naturelle (95-100%), interdiction de certains ingredients (silicones, PEG, parabenes), pourcentage minimum de bio. Attention : \"naturel\" et \"bio\" ne sont pas synonymes. Un ingredient naturel peut etre cultive sans certification bio. Le bio ne garantit pas l'efficacite ni la tolerance.",
+
+  // ============================================
+  // COSMETICS - NATURAL COSMETICS
+  // ============================================
+  "nat-cos-001":
+    "L'huile de jojoba (Simmondsia chinensis) n'est pas vraiment une huile mais une cire liquide, composee d'esters d'alcools gras et d'acides gras a longue chaine. Cette structure est tres proche du sebum humain, ce qui lui confere une excellente affinite avec la peau. Non comedogene, stable a l'oxydation, elle est un ingredient premium en cosmetique naturelle.",
+  "nat-cos-002":
+    "L'aloe vera (Aloe barbadensis) contient plus de 200 composes actifs : polysaccharides (acemannan, glucomannanes) aux proprietes hydratantes et cicatrisantes, vitamines (A, C, E, B12), enzymes, acides amines, mineraux. Le gel frais contient 99% d'eau ; les concentrations commerciales varient de 0,5% a 99%. L'IASC (International Aloe Science Council) certifie la qualite.",
+  "nat-cos-003":
+    "Le beurre de karite (Butyrospermum parkii) non raffine conserve ses insaponifiables (8-11%) : karitene, alcools triterpeniques, vitamines A, E et F. Ces composes lui conferent des proprietes anti-inflammatoires et regenerantes. Le raffinage (decoloration, desodorisation) elimine ces actifs pour obtenir un beurre blanc neutre, moins couteux mais moins efficace.",
+  "nat-cos-004":
+    "L'huile d'argan (Argania spinosa), or liquide du Maroc, est riche en acide oleique (45%), acide linoleique (35%), tocopherols (620 mg/kg) et squalene. Elle est obtenue par pression a froid des amendons des noix d'argan. L'huile cosmetique provient d'amendons non torrefies (contrairement a l'huile alimentaire). Une cooperative de femmes berberes en controle traditionnellement la production.",
+  "nat-cos-005":
+    "Les huiles essentielles sont des concentres tres puissants : il faut 100 kg de lavande pour 1 L d'HE. Certaines sont dermocaustiques (cannelle, origan), photosensibilisantes (agrumes), ou allergisantes (linalol oxyde). L'IFRA limite leur concentration en parfumerie. En cosmetique naturelle, les doses doivent rester faibles (1-2% max) et certaines sont deconseillees aux femmes enceintes et aux enfants.",
+
+  // ============================================
+  // COSMETICS - REGULATION
+  // ============================================
+  "cos-reg-001":
+    "Le Reglement (CE) 1223/2009 impose aux fabricants europeens : evaluation de la securite par un toxicologue qualifie, notification sur le portail CPNP avant mise sur le marche, respect des listes d'ingredients interdits (Annexe II), restreints (Annexe III), colorants (IV), conservateurs (V), filtres UV (VI). Le DIP (Dossier d'Information Produit) doit etre disponible pour les autorites.",
+  "cos-reg-002":
+    "La nomenclature INCI (International Nomenclature of Cosmetic Ingredients) standardise les noms d'ingredients au niveau mondial. Les noms latins designent les ingredients botaniques (Prunus amygdalus dulcis oil). Les noms anglais designent les ingredients chimiques (Glycerin). Les colorants sont codes CI (Colour Index). L'ordre INCI reflète la concentration décroissante (jusqu'a 1%).",
+  "cos-reg-003":
+    "L'interdiction des tests sur animaux en Europe (2009 pour les produits finis, 2013 pour les ingredients) a stimule le developpement de methodes alternatives : cultures cellulaires (irritation oculaire, sensibilisation), modeles de peau reconstruite (corrosion), tests in chemico (reactivite cutanee). Le SCCS (Scientific Committee on Consumer Safety) evalue ces methodes alternatives.",
+  "cos-reg-004":
+    "Le DIP (Dossier d'Information Produit) ou PIF (Product Information File) doit contenir : description du produit, rapport de securite signe par un toxicologue, preuves d'efficacite des allegations, bonnes pratiques de fabrication (ISO 22716), donnees sur les ingredients. Ce dossier doit etre conserve 10 ans apres la derniere mise sur le marche et etre accessible aux autorites de controle.",
+  "cos-reg-005":
+    "26 allergènes parfumants (linalol, limonene, citronellol, geraniol, eugenol, coumarine...) doivent etre declares sur l'etiquette s'ils depassent 0,001% dans les produits rinces et 0,01% dans les produits non rinces. Cette liste, basee sur des etudes de prevalence des allergies de contact, pourrait etre etendue par l'SCCS. Les parfums \"hypoallergeniques\" evitent ces 26 molecules.",
+
+  // ============================================
+  // COSMETICS - TRENDS
+  // ============================================
+  "tre-001":
+    "La \"clean beauty\" est un mouvement consommateur sans definition officielle. Chaque marque definit sa propre liste d'ingredients exclus : parabenes, sulfates, silicones, phtalates, fragrances synthetiques... Cette absence de standard cree de la confusion. Certains experts critiquent le \"greenwashing\" et rappellent que \"synthetique\" ne signifie pas \"dangereux\" ni \"naturel\" ne signifie \"sur\".",
+  "tre-002":
+    "La K-beauty (cosmétique coréenne) a popularise les routines en 10 etapes : double nettoyage (huile puis mousse), lotion, essence, serum, ampoule, masque, creme contour des yeux, creme hydratante, protection solaire. Cette approche \"layering\" maximise la penetration des actifs. Elle a aussi introduit des textures innovantes : cushion, sleeping mask, sheet mask, bulle de mousse.",
+  "tre-003":
+    "Le \"skinimalism\" est une reaction au layering excessif : privilegier quelques produits multifonctionnels plutot que 10 etapes. Cette tendance post-Covid valorise la peau naturelle (\"skin first, makeup second\"), les formules minimalistes et les routines simplifiees. Elle rejoint les preoccupations de durabilite (moins d'emballages) et de budget (moins de produits).",
+  "tre-004":
+    "La cosmétique \"waterless\" reduit ou elimine l'eau des formules (baumes, poudres, huiles, concentres). Les benefices : moins de conservateurs necessaires, format voyage-friendly, reduction de l'empreinte carbone (l'eau represente 50-95% d'une creme mais pese lourd au transport). Le defi : adapter les textures et l'experience d'utilisation aux attentes des consommateurs.",
+  "tre-005":
+    "Les \"adaptogenes\" (ashwagandha, rhodiola, reishi, ginseng) sont des plantes qui aideraient l'organisme a s'adapter au stress. En cosmétique, l'allegation est que ces ingredients aident la peau a resister aux agressions (pollution, stress, manque de sommeil). Les preuves cliniques restent limitees, mais le storytelling \"wellness\" seduit les consommateurs fatigues par la vie moderne.",
 };

@@ -90,7 +90,7 @@ export type CreateUserSubstanceInput = {
 
 /**
  * Create a new substance as a user contribution
- * Status will be 'user_entry' and usable immediately in user's flavours
+ * Status will be 'user_entry' and usable immediately in user's formulas
  */
 export async function createUserSubstance(
   data: CreateUserSubstanceInput

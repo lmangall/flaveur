@@ -1,5 +1,5 @@
 import type {
-  FlavourStatusValue,
+  FormulaStatusValue,
   ConcentrationUnitValue,
   JobInteractionValue,
   EmploymentTypeValue,
@@ -14,6 +14,9 @@ import type {
   LearningStatus,
   ReviewResult,
   BadgeKey,
+  ProjectTypeValue,
+  PerfumeConcentrationValue,
+  PyramidPositionValue,
 } from "@/constants";
 
 // ===========================================
@@ -68,6 +71,45 @@ export type Substance = {
   // Full-text search (added by migration 006)
   search_vector?: string;
 
+  // Perfumery-specific fields
+  volatility_class: string | null;
+  olfactive_family: string | null;
+  odor_profile_tags: string[] | null;
+  substantivity: string | null;
+  performance_notes: string | null;
+  uses_in_perfumery: string | null;
+  use_level: string | null;
+  stability_notes: string | null;
+  price_range: string | null;
+  is_blend: boolean | null;
+  botanical_name: string | null;
+  extraction_process: string | null;
+  major_components: string | null;
+  vegan: boolean | null;
+  biodegradability: string | null;
+  renewable_pct: string | null;
+  appearance: string | null;
+  density: string | null;
+  refractive_index: string | null;
+  optical_rotation: string | null;
+  flash_point: string | null;
+  vapor_pressure: string | null;
+  inchikey: string | null;
+  log_p: string | null;
+  source_datasets: string | null;
+  review_flags: string | null;
+  pubchem_enriched: boolean | null;
+  domain: "flavor" | "fragrance" | "cosmetic" | "both" | null;
+
+  // Cosmetics-specific fields (optional — not always SELECTed)
+  inci_name?: string | null;
+  cosmetic_role?: string[] | null;
+  hlb_value?: number | null;
+  hlb_required?: number | null;
+  ph_range_min?: number | null;
+  ph_range_max?: number | null;
+  water_solubility?: string | null;
+
   // User contribution fields (added by migration 018)
   verification_status: VerificationStatusValue;
   submitted_by_user_id: string | null;
@@ -77,7 +119,7 @@ export type Substance = {
   admin_notes: string | null;
   source_reference: string | null;
 
-  // Junction table fields (when joined with substance_flavour)
+  // Junction table fields (when joined with substance_formula)
   concentration?: number;
   unit?: ConcentrationUnitValue;
   order_index?: number;
@@ -88,34 +130,44 @@ export type Substance = {
 };
 
 // ===========================================
-// FLAVOUR
+// FORMULA
 // ===========================================
 export type FlavorProfileAttribute = {
   attribute: string;
   value: number;
 };
 
-export type Flavour = {
-  flavour_id: number;
+export type Formula = {
+  formula_id: number;
   name: string;
   description: string | null;
   notes: string | null;
   is_public: boolean;
   user_id: string | null;
   category_id: number | null;
-  status: FlavourStatusValue;
+  status: FormulaStatusValue;
   version: number;
   base_unit: ConcentrationUnitValue;
   flavor_profile: FlavorProfileAttribute[] | null;
   created_at: string;
   updated_at: string;
 
+  // Perfume integration
+  project_type: ProjectTypeValue;
+  concentration_type: PerfumeConcentrationValue | null;
+
+  // Cosmetics integration (optional — not always SELECTed)
+  cosmetic_product_type?: string | null;
+  target_ph?: number | null;
+  preservative_system?: string | null;
+  manufacturing_notes?: string | null;
+
   // Relations (when loaded)
-  substances?: SubstanceInFlavour[];
-  ingredients?: IngredientInFlavour[];
+  substances?: SubstanceInFormula[];
+  ingredients?: IngredientInFormula[];
 };
 
-export type SubstanceInFlavour = {
+export type SubstanceInFormula = {
   substance_id: number;
   concentration: number;
   unit: ConcentrationUnitValue;
@@ -123,15 +175,17 @@ export type SubstanceInFlavour = {
   supplier?: string | null;
   dilution?: string | null;
   price_per_kg?: number | null;
+  pyramid_position?: PyramidPositionValue | null;
+  phase?: string | null;
   substance?: Substance;
 };
 
-export type IngredientInFlavour = {
-  ingredient_flavour_id: number;
+export type IngredientInFormula = {
+  ingredient_formula_id: number;
   concentration: number;
   unit: ConcentrationUnitValue;
   order_index: number;
-  ingredient?: Flavour; // Ingredients are other flavours
+  ingredient?: Formula; // Ingredients are other formulas
 };
 
 // ===========================================
@@ -305,7 +359,7 @@ export type Workspace = {
   // Relations (when loaded)
   members?: WorkspaceMember[];
   documents?: WorkspaceDocument[];
-  flavours?: WorkspaceFlavour[];
+  formulas?: WorkspaceFormula[];
 };
 
 export type WorkspaceMember = {
@@ -352,14 +406,14 @@ export type WorkspaceDocument = {
   creator?: User;
 };
 
-export type WorkspaceFlavour = {
+export type WorkspaceFormula = {
   workspace_id: number;
-  flavour_id: number;
+  formula_id: number;
   added_by: string | null;
   added_at: string;
 
   // Relations (when loaded)
-  flavour?: Flavour;
+  formula?: Formula;
   added_by_user?: User;
 };
 

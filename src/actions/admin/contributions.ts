@@ -201,12 +201,12 @@ export async function updateAndVerifySubstance(
 }
 
 /**
- * Reject a substance - removes it from the system and from all flavours using it
+ * Reject a substance - removes it from the system and from all formulas using it
  */
 export async function rejectSubstance(
   substanceId: number,
   reason: string
-): Promise<{ success: boolean; removedFromFlavours: number }> {
+): Promise<{ success: boolean; removedFromFormulas: number }> {
   const { email } = await requireAdmin();
 
   if (!reason || reason.trim().length < 5) {
@@ -217,23 +217,23 @@ export async function rejectSubstance(
   const existing = await sql`SELECT * FROM substance WHERE substance_id = ${substanceId}`;
   if (existing.length === 0) throw new Error("Substance not found");
 
-  // Count flavours using this substance
-  const flavoursUsingIt = await sql`
-    SELECT COUNT(*)::int as count FROM substance_flavour WHERE substance_id = ${substanceId}
+  // Count formulas using this substance
+  const formulasUsingIt = await sql`
+    SELECT COUNT(*)::int as count FROM substance_formula WHERE substance_id = ${substanceId}
   `;
-  const removedFromFlavours = (flavoursUsingIt[0] as { count: number }).count;
+  const removedFromFormulas = (formulasUsingIt[0] as { count: number }).count;
 
-  // Remove from all flavours first (cascade would handle this, but let's be explicit)
-  await sql`DELETE FROM substance_flavour WHERE substance_id = ${substanceId}`;
+  // Remove from all formulas first (cascade would handle this, but let's be explicit)
+  await sql`DELETE FROM substance_formula WHERE substance_id = ${substanceId}`;
 
   // Delete the substance
   await sql`DELETE FROM substance WHERE substance_id = ${substanceId}`;
 
   console.log(
-    `[Admin] ${email} rejected substance ${substanceId}. Reason: ${reason}. Removed from ${removedFromFlavours} flavours.`
+    `[Admin] ${email} rejected substance ${substanceId}. Reason: ${reason}. Removed from ${removedFromFormulas} formulas.`
   );
 
-  return { success: true, removedFromFlavours };
+  return { success: true, removedFromFormulas };
 }
 
 // ===========================================

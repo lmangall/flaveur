@@ -3,7 +3,7 @@
 import { useState, useRef, useTransition, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/[locale]/components/ui/select";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   Check, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown,
   Copy, Download, Linkedin, Instagram,

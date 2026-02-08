@@ -1,29 +1,7 @@
 import { relations } from "drizzle-orm/relations";
-import { category, flavour, users, job_offers, job_offer_interactions, workspace, workspace_member, workspace_invite, flavour_shares, flavour_invites, workspace_document, user_learning_queue, substance, substance_learning_progress, learning_streak, learning_review, learning_quiz_attempt, learning_session, user_badge, substance_functional_group, functional_group, workspace_flavour, learning_session_substance, substance_flavour, ingredient_flavour } from "./schema";
-
-export const flavourRelations = relations(flavour, ({one, many}) => ({
-	category: one(category, {
-		fields: [flavour.category_id],
-		references: [category.category_id]
-	}),
-	user: one(users, {
-		fields: [flavour.user_id],
-		references: [users.user_id]
-	}),
-	flavour_shares: many(flavour_shares),
-	flavour_invites: many(flavour_invites),
-	workspace_flavours: many(workspace_flavour),
-	substance_flavours: many(substance_flavour),
-	ingredient_flavours_ingredient_flavour_id: many(ingredient_flavour, {
-		relationName: "ingredient_flavour_ingredient_flavour_id_flavour_flavour_id"
-	}),
-	ingredient_flavours_parent_flavour_id: many(ingredient_flavour, {
-		relationName: "ingredient_flavour_parent_flavour_id_flavour_flavour_id"
-	}),
-}));
+import { category, job_offers, job_offer_interactions, users, workspace, workspace_member, workspace_invite, flavour, flavour_shares, flavour_invites, workspace_document, user_learning_queue, substance, substance_learning_progress, learning_streak, learning_review, learning_quiz_attempt, learning_session, variation_group, user_social_link, support_conversation, support_message, user_profile, job_search_monitors, monitored_listings, referral, substance_functional_group, functional_group, workspace_flavour, learning_session_substance, ingredient_flavour, substance_flavour } from "./schema";
 
 export const categoryRelations = relations(category, ({one, many}) => ({
-	flavours: many(flavour),
 	category: one(category, {
 		fields: [category.parent_category_id],
 		references: [category.category_id],
@@ -32,10 +10,25 @@ export const categoryRelations = relations(category, ({one, many}) => ({
 	categories: many(category, {
 		relationName: "category_parent_category_id_category_category_id"
 	}),
+	flavours: many(flavour),
+}));
+
+export const job_offer_interactionsRelations = relations(job_offer_interactions, ({one}) => ({
+	job_offer: one(job_offers, {
+		fields: [job_offer_interactions.job_offer_id],
+		references: [job_offers.id]
+	}),
+	user: one(users, {
+		fields: [job_offer_interactions.user_id],
+		references: [users.user_id]
+	}),
+}));
+
+export const job_offersRelations = relations(job_offers, ({many}) => ({
+	job_offer_interactions: many(job_offer_interactions),
 }));
 
 export const usersRelations = relations(users, ({many}) => ({
-	flavours: many(flavour),
 	job_offer_interactions: many(job_offer_interactions),
 	workspaces: many(workspace),
 	workspace_members: many(workspace_member),
@@ -54,23 +47,19 @@ export const usersRelations = relations(users, ({many}) => ({
 	learning_reviews: many(learning_review),
 	learning_quiz_attempts: many(learning_quiz_attempt),
 	learning_sessions: many(learning_session),
-	user_badges: many(user_badge),
+	variation_groups: many(variation_group),
+	flavours: many(flavour),
+	user_social_links: many(user_social_link),
+	support_messages: many(support_message),
+	user_profiles: many(user_profile),
+	support_conversations: many(support_conversation),
+	referrals_referrer_id: many(referral, {
+		relationName: "referral_referrer_id_users_user_id"
+	}),
+	referrals_referred_user_id: many(referral, {
+		relationName: "referral_referred_user_id_users_user_id"
+	}),
 	workspace_flavours: many(workspace_flavour),
-}));
-
-export const job_offer_interactionsRelations = relations(job_offer_interactions, ({one}) => ({
-	job_offer: one(job_offers, {
-		fields: [job_offer_interactions.job_offer_id],
-		references: [job_offers.id]
-	}),
-	user: one(users, {
-		fields: [job_offer_interactions.user_id],
-		references: [users.user_id]
-	}),
-}));
-
-export const job_offersRelations = relations(job_offers, ({many}) => ({
-	job_offer_interactions: many(job_offer_interactions),
 }));
 
 export const workspaceRelations = relations(workspace, ({one, many}) => ({
@@ -121,6 +110,31 @@ export const flavour_sharesRelations = relations(flavour_shares, ({one}) => ({
 		references: [users.user_id],
 		relationName: "flavour_shares_shared_by_user_id_users_user_id"
 	}),
+}));
+
+export const flavourRelations = relations(flavour, ({one, many}) => ({
+	flavour_shares: many(flavour_shares),
+	flavour_invites: many(flavour_invites),
+	category: one(category, {
+		fields: [flavour.category_id],
+		references: [category.category_id]
+	}),
+	user: one(users, {
+		fields: [flavour.user_id],
+		references: [users.user_id]
+	}),
+	variation_group: one(variation_group, {
+		fields: [flavour.variation_group_id],
+		references: [variation_group.group_id]
+	}),
+	workspace_flavours: many(workspace_flavour),
+	ingredient_flavours_ingredient_flavour_id: many(ingredient_flavour, {
+		relationName: "ingredient_flavour_ingredient_flavour_id_flavour_flavour_id"
+	}),
+	ingredient_flavours_parent_flavour_id: many(ingredient_flavour, {
+		relationName: "ingredient_flavour_parent_flavour_id_flavour_flavour_id"
+	}),
+	substance_flavours: many(substance_flavour),
 }));
 
 export const flavour_invitesRelations = relations(flavour_invites, ({one}) => ({
@@ -214,10 +228,68 @@ export const learning_sessionRelations = relations(learning_session, ({one, many
 	learning_session_substances: many(learning_session_substance),
 }));
 
-export const user_badgeRelations = relations(user_badge, ({one}) => ({
+export const variation_groupRelations = relations(variation_group, ({one, many}) => ({
 	user: one(users, {
-		fields: [user_badge.user_id],
+		fields: [variation_group.user_id],
 		references: [users.user_id]
+	}),
+	flavours: many(flavour),
+}));
+
+export const user_social_linkRelations = relations(user_social_link, ({one}) => ({
+	user: one(users, {
+		fields: [user_social_link.user_id],
+		references: [users.user_id]
+	}),
+}));
+
+export const support_messageRelations = relations(support_message, ({one}) => ({
+	support_conversation: one(support_conversation, {
+		fields: [support_message.conversation_id],
+		references: [support_conversation.conversation_id]
+	}),
+	user: one(users, {
+		fields: [support_message.sender_user_id],
+		references: [users.user_id]
+	}),
+}));
+
+export const support_conversationRelations = relations(support_conversation, ({one, many}) => ({
+	support_messages: many(support_message),
+	user: one(users, {
+		fields: [support_conversation.user_id],
+		references: [users.user_id]
+	}),
+}));
+
+export const user_profileRelations = relations(user_profile, ({one}) => ({
+	user: one(users, {
+		fields: [user_profile.user_id],
+		references: [users.user_id]
+	}),
+}));
+
+export const monitored_listingsRelations = relations(monitored_listings, ({one}) => ({
+	job_search_monitor: one(job_search_monitors, {
+		fields: [monitored_listings.monitor_id],
+		references: [job_search_monitors.id]
+	}),
+}));
+
+export const job_search_monitorsRelations = relations(job_search_monitors, ({many}) => ({
+	monitored_listings: many(monitored_listings),
+}));
+
+export const referralRelations = relations(referral, ({one}) => ({
+	user_referrer_id: one(users, {
+		fields: [referral.referrer_id],
+		references: [users.user_id],
+		relationName: "referral_referrer_id_users_user_id"
+	}),
+	user_referred_user_id: one(users, {
+		fields: [referral.referred_user_id],
+		references: [users.user_id],
+		relationName: "referral_referred_user_id_users_user_id"
 	}),
 }));
 
@@ -262,17 +334,6 @@ export const learning_session_substanceRelations = relations(learning_session_su
 	}),
 }));
 
-export const substance_flavourRelations = relations(substance_flavour, ({one}) => ({
-	flavour: one(flavour, {
-		fields: [substance_flavour.flavour_id],
-		references: [flavour.flavour_id]
-	}),
-	substance: one(substance, {
-		fields: [substance_flavour.substance_id],
-		references: [substance.substance_id]
-	}),
-}));
-
 export const ingredient_flavourRelations = relations(ingredient_flavour, ({one}) => ({
 	flavour_ingredient_flavour_id: one(flavour, {
 		fields: [ingredient_flavour.ingredient_flavour_id],
@@ -283,5 +344,16 @@ export const ingredient_flavourRelations = relations(ingredient_flavour, ({one})
 		fields: [ingredient_flavour.parent_flavour_id],
 		references: [flavour.flavour_id],
 		relationName: "ingredient_flavour_parent_flavour_id_flavour_flavour_id"
+	}),
+}));
+
+export const substance_flavourRelations = relations(substance_flavour, ({one}) => ({
+	flavour: one(flavour, {
+		fields: [substance_flavour.flavour_id],
+		references: [flavour.flavour_id]
+	}),
+	substance: one(substance, {
+		fields: [substance_flavour.substance_id],
+		references: [substance.substance_id]
 	}),
 }));

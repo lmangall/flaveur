@@ -1,4 +1,4 @@
-import { pgTable, index, uniqueIndex, integer, varchar, boolean, doublePrecision, serial, text, jsonb, timestamp, check, uuid, foreignKey, unique, date, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, index, uniqueIndex, integer, varchar, boolean, doublePrecision, serial, text, jsonb, timestamp, check, uuid, unique, foreignKey, date, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -81,54 +81,8 @@ export const job_offers = pgTable("job_offers", {
 	index("idx_job_offers_industry").using("btree", table.industry.asc().nullsLast().op("text_ops")),
 	index("idx_job_offers_posted_at").using("btree", table.posted_at.desc().nullsFirst().op("timestamp_ops")),
 	index("idx_job_offers_status").using("btree", table.status.asc().nullsLast().op("bool_ops")),
-	check("job_offers_employment_type_check", sql`employment_type = ANY (ARRAY['Full-time'::text, 'Part-time'::text, 'Contract'::text, 'Internship'::text, 'Freelance'::text, 'CDI'::text, 'CDD'::text, 'Interim'::text])`),
-	check("job_offers_experience_level_check", sql`experience_level = ANY (ARRAY['Entry'::text, 'Mid'::text, 'Senior'::text, 'Executive'::text])`),
-]);
-
-export const flavour = pgTable("flavour", {
-	flavour_id: serial().primaryKey().notNull(),
-	name: varchar({ length: 255 }).notNull(),
-	description: text(),
-	created_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	updated_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	is_public: boolean().default(true),
-	user_id: varchar({ length: 255 }),
-	category_id: integer(),
-	status: varchar({ length: 20 }).default('draft'),
-	version: integer().default(1),
-	base_unit: varchar({ length: 20 }).default('g/kg'),
-	flavor_profile: jsonb().default([]),
-}, (table) => [
-	index("idx_flavour_category_id").using("btree", table.category_id.asc().nullsLast().op("int4_ops")),
-	index("idx_flavour_is_public").using("btree", table.is_public.asc().nullsLast().op("bool_ops")),
-	index("idx_flavour_status").using("btree", table.status.asc().nullsLast().op("text_ops")),
-	index("idx_flavour_user_id").using("btree", table.user_id.asc().nullsLast().op("text_ops")),
-	foreignKey({
-			columns: [table.category_id],
-			foreignColumns: [category.category_id],
-			name: "flavour_category_id_fkey"
-		}).onDelete("set null"),
-	foreignKey({
-			columns: [table.user_id],
-			foreignColumns: [users.user_id],
-			name: "flavour_user_id_fkey"
-		}).onDelete("cascade"),
-	check("flavour_base_unit_check", sql`(base_unit)::text = ANY (ARRAY[('g/kg'::character varying)::text, ('%(v/v)'::character varying)::text, ('g/L'::character varying)::text, ('mL/L'::character varying)::text, ('ppm'::character varying)::text])`),
-	check("flavour_status_check", sql`(status)::text = ANY (ARRAY[('draft'::character varying)::text, ('published'::character varying)::text, ('archived'::character varying)::text])`),
-]);
-
-export const category = pgTable("category", {
-	category_id: serial().primaryKey().notNull(),
-	name: varchar({ length: 255 }).notNull(),
-	description: text(),
-	parent_category_id: integer(),
-	updated_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [
-	foreignKey({
-			columns: [table.parent_category_id],
-			foreignColumns: [table.category_id],
-			name: "category_parent_category_id_fkey"
-		}).onDelete("set null"),
+	check("job_offers_employment_type_check", sql`employment_type = ANY (ARRAY['Full-time'::text, 'Part-time'::text, 'Contract'::text, 'Internship'::text, 'Alternance'::text, 'Freelance'::text, 'CDI'::text, 'CDD'::text, 'Interim'::text])`),
+	check("job_offers_experience_level_check", sql`experience_level = ANY (ARRAY['0-2'::text, '3-5'::text, '6-10'::text, '10+'::text])`),
 ]);
 
 export const users = pgTable("users", {
@@ -137,8 +91,24 @@ export const users = pgTable("users", {
 	username: varchar({ length: 255 }).notNull(),
 	created_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 	updated_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	email_verified: boolean().default(false),
+	image: text(),
 }, (table) => [
 	unique("users_email_key").on(table.email),
+]);
+
+export const category = pgTable("category", {
+	category_id: serial().primaryKey().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	parent_category_id: integer(),
+	updated_at: timestamp({ mode: 'string' }).default('2026-01-31 11:54:27.825'),
+}, (table) => [
+	foreignKey({
+			columns: [table.parent_category_id],
+			foreignColumns: [table.category_id],
+			name: "category_parent_category_id_fkey"
+		}).onDelete("set null"),
 ]);
 
 export const job_offer_interactions = pgTable("job_offer_interactions", {
@@ -512,12 +482,280 @@ export const user_badge = pgTable("user_badge", {
 	earned_at: timestamp({ mode: 'string' }).defaultNow(),
 }, (table) => [
 	index("idx_user_badge_user").using("btree", table.user_id.asc().nullsLast().op("text_ops")),
+	unique("user_badge_user_id_badge_key_key").on(table.user_id, table.badge_key),
+]);
+
+export const variation_group = pgTable("variation_group", {
+	group_id: serial().primaryKey().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	user_id: varchar({ length: 255 }),
+	created_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updated_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	index("idx_variation_group_user_id").using("btree", table.user_id.asc().nullsLast().op("text_ops")),
 	foreignKey({
 			columns: [table.user_id],
 			foreignColumns: [users.user_id],
-			name: "user_badge_user_id_fkey"
+			name: "variation_group_user_id_fkey"
 		}).onDelete("cascade"),
-	unique("user_badge_user_id_badge_key_key").on(table.user_id, table.badge_key),
+]);
+
+export const flavour = pgTable("flavour", {
+	flavour_id: serial().primaryKey().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	created_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updated_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	is_public: boolean().default(true),
+	user_id: varchar({ length: 255 }),
+	category_id: integer(),
+	status: varchar({ length: 20 }).default('draft'),
+	version: integer().default(1),
+	base_unit: varchar({ length: 20 }).default('g/kg'),
+	flavor_profile: jsonb().default([]),
+	variation_group_id: integer(),
+	variation_label: varchar({ length: 50 }),
+	is_main_variation: boolean().default(false),
+}, (table) => [
+	index("idx_flavour_category_id").using("btree", table.category_id.asc().nullsLast().op("int4_ops")),
+	index("idx_flavour_is_public").using("btree", table.is_public.asc().nullsLast().op("bool_ops")),
+	index("idx_flavour_status").using("btree", table.status.asc().nullsLast().op("text_ops")),
+	index("idx_flavour_user_id").using("btree", table.user_id.asc().nullsLast().op("text_ops")),
+	index("idx_flavour_variation_group_id").using("btree", table.variation_group_id.asc().nullsLast().op("int4_ops")),
+	foreignKey({
+			columns: [table.category_id],
+			foreignColumns: [category.category_id],
+			name: "flavour_category_id_fkey"
+		}).onDelete("set null"),
+	foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.user_id],
+			name: "flavour_user_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.variation_group_id],
+			foreignColumns: [variation_group.group_id],
+			name: "flavour_variation_group_id_fkey"
+		}).onDelete("set null"),
+	check("flavour_base_unit_check", sql`(base_unit)::text = ANY (ARRAY[('g/kg'::character varying)::text, ('%(v/v)'::character varying)::text, ('g/L'::character varying)::text, ('mL/L'::character varying)::text, ('ppm'::character varying)::text])`),
+	check("flavour_status_check", sql`(status)::text = ANY (ARRAY[('draft'::character varying)::text, ('published'::character varying)::text, ('archived'::character varying)::text])`),
+]);
+
+export const account = pgTable("account", {
+	id: text().primaryKey().notNull(),
+	user_id: text().notNull(),
+	account_id: text().notNull(),
+	provider_id: text().notNull(),
+	access_token: text(),
+	refresh_token: text(),
+	access_token_expires_at: timestamp({ mode: 'string' }),
+	refresh_token_expires_at: timestamp({ mode: 'string' }),
+	scope: text(),
+	id_token: text(),
+	password: text(),
+	created_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updated_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("idx_account_user_id").using("btree", table.user_id.asc().nullsLast().op("text_ops")),
+]);
+
+export const session = pgTable("session", {
+	id: text().primaryKey().notNull(),
+	user_id: text().notNull(),
+	token: text().notNull(),
+	expires_at: timestamp({ mode: 'string' }).notNull(),
+	ip_address: text(),
+	user_agent: text(),
+	created_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updated_at: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("idx_session_user_id").using("btree", table.user_id.asc().nullsLast().op("text_ops")),
+	unique("session_token_unique").on(table.token),
+]);
+
+export const verification = pgTable("verification", {
+	id: text().primaryKey().notNull(),
+	identifier: text().notNull(),
+	value: text().notNull(),
+	expires_at: timestamp({ mode: 'string' }).notNull(),
+	created_at: timestamp({ mode: 'string' }).defaultNow(),
+	updated_at: timestamp({ mode: 'string' }).defaultNow(),
+});
+
+export const user_social_link = pgTable("user_social_link", {
+	id: serial().primaryKey().notNull(),
+	user_id: varchar({ length: 255 }).notNull(),
+	platform: varchar({ length: 50 }).notNull(),
+	url: varchar({ length: 500 }).notNull(),
+	display_order: integer().default(0),
+}, (table) => [
+	index("idx_social_link_user").using("btree", table.user_id.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.user_id],
+			name: "user_social_link_user_id_users_user_id_fk"
+		}).onDelete("cascade"),
+]);
+
+export const support_message = pgTable("support_message", {
+	message_id: serial().primaryKey().notNull(),
+	conversation_id: integer().notNull(),
+	sender_type: varchar({ length: 20 }).notNull(),
+	sender_user_id: varchar({ length: 255 }),
+	content: text().notNull(),
+	created_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	index("idx_support_message_conversation_id").using("btree", table.conversation_id.asc().nullsLast().op("int4_ops")),
+	index("idx_support_message_created_at").using("btree", table.created_at.asc().nullsLast().op("timestamp_ops")),
+	foreignKey({
+			columns: [table.conversation_id],
+			foreignColumns: [support_conversation.conversation_id],
+			name: "support_message_conversation_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.sender_user_id],
+			foreignColumns: [users.user_id],
+			name: "support_message_sender_user_id_fkey"
+		}).onDelete("set null"),
+	check("support_message_sender_type_check", sql`(sender_type)::text = ANY (ARRAY['user'::text, 'guest'::text, 'admin'::text])`),
+]);
+
+export const user_profile = pgTable("user_profile", {
+	user_id: varchar({ length: 255 }).primaryKey().notNull(),
+	bio: text(),
+	profile_type: varchar({ length: 50 }),
+	organization: varchar({ length: 255 }),
+	job_title: varchar({ length: 255 }),
+	location: varchar({ length: 255 }),
+	years_of_experience: varchar({ length: 20 }),
+	specializations: text().array(),
+	certifications: text().array(),
+	field_of_study: varchar({ length: 255 }),
+	professional_memberships: text().array(),
+	is_profile_public: boolean().default(true),
+	open_to_opportunities: boolean().default(false),
+	onboarding_status: varchar({ length: 20 }).default('not_started'),
+	updated_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.user_id],
+			name: "user_profile_user_id_users_user_id_fk"
+		}).onDelete("cascade"),
+]);
+
+export const support_conversation = pgTable("support_conversation", {
+	conversation_id: serial().primaryKey().notNull(),
+	user_id: varchar({ length: 255 }),
+	guest_email: varchar({ length: 255 }),
+	guest_session_id: uuid().defaultRandom(),
+	subject: varchar({ length: 255 }),
+	status: varchar({ length: 20 }).default('open').notNull(),
+	created_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updated_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	closed_at: timestamp({ mode: 'string' }),
+	has_unread_admin: boolean().default(true).notNull(),
+	last_admin_read_at: timestamp({ mode: 'string' }),
+	user_typing_at: timestamp({ mode: 'string' }),
+	admin_typing_at: timestamp({ mode: 'string' }),
+}, (table) => [
+	index("idx_support_conversation_guest_email").using("btree", table.guest_email.asc().nullsLast().op("text_ops")),
+	index("idx_support_conversation_guest_session").using("btree", table.guest_session_id.asc().nullsLast().op("uuid_ops")),
+	index("idx_support_conversation_has_unread").using("btree", table.has_unread_admin.asc().nullsLast().op("bool_ops")),
+	index("idx_support_conversation_status").using("btree", table.status.asc().nullsLast().op("text_ops")),
+	index("idx_support_conversation_user_id").using("btree", table.user_id.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.user_id],
+			name: "support_conversation_user_id_fkey"
+		}).onDelete("set null"),
+	check("support_conversation_status_check", sql`(status)::text = ANY (ARRAY['open'::text, 'closed'::text, 'pending'::text])`),
+]);
+
+export const monitored_listings = pgTable("monitored_listings", {
+	id: serial().primaryKey().notNull(),
+	monitor_id: integer().notNull(),
+	external_id: text().notNull(),
+	title: text().notNull(),
+	company: text(),
+	location: text(),
+	employment_type: text(),
+	salary: text(),
+	listing_url: text().notNull(),
+	notified: boolean().default(false).notNull(),
+	imported_job_id: text(),
+	first_seen_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	last_seen_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	index("idx_monitored_listings_monitor_id").using("btree", table.monitor_id.asc().nullsLast().op("int4_ops")),
+	index("idx_monitored_listings_notified").using("btree", table.notified.asc().nullsLast().op("bool_ops")).where(sql`(notified = false)`),
+	foreignKey({
+			columns: [table.monitor_id],
+			foreignColumns: [job_search_monitors.id],
+			name: "monitored_listings_monitor_id_fkey"
+		}).onDelete("cascade"),
+	unique("unique_monitor_external_id").on(table.monitor_id, table.external_id),
+]);
+
+export const referral = pgTable("referral", {
+	id: serial().primaryKey().notNull(),
+	referrer_id: varchar({ length: 255 }).notNull(),
+	referral_code: varchar({ length: 32 }).notNull(),
+	referred_user_id: varchar({ length: 255 }),
+	platform: varchar({ length: 20 }).notNull(),
+	recipient_identifier: varchar({ length: 255 }),
+	created_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	converted_at: timestamp({ mode: 'string' }),
+}, (table) => [
+	index("idx_referral_code").using("btree", table.referral_code.asc().nullsLast().op("text_ops")),
+	index("idx_referral_referrer").using("btree", table.referrer_id.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.referrer_id],
+			foreignColumns: [users.user_id],
+			name: "referral_referrer_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.referred_user_id],
+			foreignColumns: [users.user_id],
+			name: "referral_referred_user_id_fkey"
+		}).onDelete("set null"),
+	unique("referral_referral_code_key").on(table.referral_code),
+]);
+
+export const snippet_post = pgTable("snippet_post", {
+	id: serial().primaryKey().notNull(),
+	fact_id: varchar({ length: 50 }).notNull(),
+	platform: varchar({ length: 20 }).notNull(),
+	posted_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	index("idx_snippet_post_fact_id").using("btree", table.fact_id.asc().nullsLast().op("text_ops")),
+	unique("snippet_post_fact_platform_key").on(table.fact_id, table.platform),
+]);
+
+export const job_search_monitors = pgTable("job_search_monitors", {
+	id: serial().primaryKey().notNull(),
+	label: text().notNull(),
+	search_url: text().notNull(),
+	site_key: text().notNull(),
+	is_active: boolean().default(true).notNull(),
+	last_checked_at: timestamp({ mode: 'string' }),
+	last_listing_count: integer().default(0),
+	last_error: text(),
+	created_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	updated_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	index("idx_job_search_monitors_active").using("btree", table.is_active.asc().nullsLast().op("bool_ops")),
+]);
+
+export const job_social_post = pgTable("job_social_post", {
+	id: serial().primaryKey().notNull(),
+	job_offer_id: uuid().notNull(),
+	platform: varchar({ length: 20 }).notNull(),
+	posted_at: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	index("idx_job_social_post_job_id").using("btree", table.job_offer_id.asc().nullsLast().op("uuid_ops")),
+	unique("job_social_post_job_platform_key").on(table.job_offer_id, table.platform),
 ]);
 
 export const substance_functional_group = pgTable("substance_functional_group", {
@@ -584,27 +822,6 @@ export const learning_session_substance = pgTable("learning_session_substance", 
 	primaryKey({ columns: [table.session_id, table.substance_id], name: "learning_session_substance_pkey"}),
 ]);
 
-export const substance_flavour = pgTable("substance_flavour", {
-	substance_id: integer().notNull(),
-	flavour_id: integer().notNull(),
-	concentration: doublePrecision(),
-	unit: varchar({ length: 20 }),
-	order_index: integer(),
-}, (table) => [
-	foreignKey({
-			columns: [table.flavour_id],
-			foreignColumns: [flavour.flavour_id],
-			name: "substance_flavour_flavour_id_fkey"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.substance_id],
-			foreignColumns: [substance.substance_id],
-			name: "substance_flavour_substance_id_fkey"
-		}).onDelete("cascade"),
-	primaryKey({ columns: [table.substance_id, table.flavour_id], name: "substance_flavour_pkey"}),
-	check("substance_flavour_unit_check", sql`(unit)::text = ANY (ARRAY[('g/kg'::character varying)::text, ('%(v/v)'::character varying)::text, ('g/L'::character varying)::text, ('mL/L'::character varying)::text, ('ppm'::character varying)::text])`),
-]);
-
 export const ingredient_flavour = pgTable("ingredient_flavour", {
 	parent_flavour_id: integer().notNull(),
 	ingredient_flavour_id: integer().notNull(),
@@ -624,4 +841,28 @@ export const ingredient_flavour = pgTable("ingredient_flavour", {
 		}).onDelete("cascade"),
 	primaryKey({ columns: [table.parent_flavour_id, table.ingredient_flavour_id], name: "ingredient_flavour_pkey"}),
 	check("ingredient_flavour_unit_check", sql`(unit)::text = ANY (ARRAY[('g/kg'::character varying)::text, ('%(v/v)'::character varying)::text, ('g/L'::character varying)::text, ('mL/L'::character varying)::text, ('ppm'::character varying)::text])`),
+]);
+
+export const substance_flavour = pgTable("substance_flavour", {
+	substance_id: integer().notNull(),
+	flavour_id: integer().notNull(),
+	concentration: doublePrecision(),
+	unit: varchar({ length: 20 }),
+	order_index: integer(),
+	supplier: varchar({ length: 100 }),
+	dilution: varchar({ length: 50 }),
+	price_per_kg: doublePrecision(),
+}, (table) => [
+	foreignKey({
+			columns: [table.flavour_id],
+			foreignColumns: [flavour.flavour_id],
+			name: "substance_flavour_flavour_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.substance_id],
+			foreignColumns: [substance.substance_id],
+			name: "substance_flavour_substance_id_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.substance_id, table.flavour_id], name: "substance_flavour_pkey"}),
+	check("substance_flavour_unit_check", sql`(unit)::text = ANY (ARRAY[('g/kg'::character varying)::text, ('%(v/v)'::character varying)::text, ('g/L'::character varying)::text, ('mL/L'::character varying)::text, ('ppm'::character varying)::text])`),
 ]);

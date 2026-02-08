@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
 import type { Substance } from "@/app/type";
 import { searchSubstances } from "@/actions/substances";
+import type { UserDomain } from "@/lib/domain-filter";
 
 interface PaginationInfo {
   total: number;
@@ -22,6 +23,7 @@ interface SubstanceSearchFieldProps {
   onSearch?: (response: SearchResponse) => void;
   placeholder?: string;
   className?: string;
+  domain?: UserDomain;
   renderResults?: (
     response: SearchResponse,
     onSelect: (substance: Substance) => void,
@@ -33,6 +35,7 @@ export function SubstanceSearchField({
   onSelect,
   onSearch,
   className = "",
+  domain = "flavor",
   renderResults,
 }: SubstanceSearchFieldProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,7 +79,7 @@ export function SubstanceSearchField({
 
       setIsSearching(true);
       try {
-        const data = await searchSubstances(query, type, page);
+        const data = await searchSubstances(query, type, page, 10, domain);
         const response = {
           results: data.results as Substance[],
           pagination: data.pagination,
@@ -97,7 +100,7 @@ export function SubstanceSearchField({
         setIsSearching(false);
       }
     },
-    [onSearch]
+    [onSearch, domain]
   );
 
   useEffect(() => {

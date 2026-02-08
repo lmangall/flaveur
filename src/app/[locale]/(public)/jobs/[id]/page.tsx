@@ -35,7 +35,7 @@ import {
 } from "@/app/[locale]/components/ui/card";
 import { Skeleton } from "@/app/[locale]/components/ui/skeleton";
 import { getJobById, addJobInteraction } from "@/actions/jobs";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface JobOffer {
   id: string;
@@ -145,7 +145,7 @@ export default function JobDetailPage() {
   };
 
   if (isLoading) {
-    return <JobDetailSkeleton onBack={() => router.back()} onBackToLab={() => router.push("/flavours")} t={t} />;
+    return <JobDetailSkeleton onBack={() => router.back()} onBackToLab={() => router.push("/formulas")} t={t} />;
   }
 
   if (error || !job) {
@@ -160,7 +160,7 @@ export default function JobDetailPage() {
             <Button
               variant="outline"
               className="gap-2"
-              onClick={() => router.push("/flavours")}
+              onClick={() => router.push("/formulas")}
             >
               <Beaker className="h-4 w-4" />
               {t("backToLab")}
@@ -219,7 +219,7 @@ export default function JobDetailPage() {
             <Button
               variant="outline"
               className="gap-2"
-              onClick={() => router.push("/flavours")}
+              onClick={() => router.push("/formulas")}
             >
               <Beaker className="h-4 w-4" />
               {t("backToLab")}

@@ -3,28 +3,28 @@
 import { useState, useEffect } from "react";
 import { Star, GitCompare, Pencil } from "lucide-react";
 import { Button } from "@/app/[locale]/components/ui/button";
-import { cn } from "@/app/lib/utils";
-import { getVariationsForFlavour } from "@/actions/variations";
-import type { FlavourVariation, VariationGroup } from "@/actions/variations";
+import { cn } from "@/lib/utils";
+import { getVariationsForFormula } from "@/actions/variations";
+import type { FormulaVariation, VariationGroup } from "@/actions/variations";
 import { CreateVariationDialog } from "./CreateVariationDialog";
 import { EditVariationDialog } from "./EditVariationDialog";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 
 interface VariationPillsProps {
-  flavourId: number;
+  formulaId: number;
 }
 
-export function VariationPills({ flavourId }: VariationPillsProps) {
+export function VariationPills({ formulaId }: VariationPillsProps) {
   const locale = useLocale();
-  const [variations, setVariations] = useState<FlavourVariation[]>([]);
+  const [variations, setVariations] = useState<FormulaVariation[]>([]);
   const [group, setGroup] = useState<VariationGroup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadVariations = async () => {
     setIsLoading(true);
     try {
-      const data = await getVariationsForFlavour(flavourId);
+      const data = await getVariationsForFormula(formulaId);
       if (data) {
         setVariations(data.variations);
         setGroup(data.group);
@@ -41,7 +41,7 @@ export function VariationPills({ flavourId }: VariationPillsProps) {
 
   useEffect(() => {
     loadVariations();
-  }, [flavourId]);
+  }, [formulaId]);
 
   if (isLoading) {
     return (
@@ -58,7 +58,7 @@ export function VariationPills({ flavourId }: VariationPillsProps) {
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">Variations:</span>
         <CreateVariationDialog
-          sourceFlavourId={flavourId}
+          sourceFormulaId={formulaId}
           onVariationCreated={loadVariations}
         />
       </div>
@@ -70,13 +70,13 @@ export function VariationPills({ flavourId }: VariationPillsProps) {
       <span className="text-sm text-muted-foreground">Variations:</span>
       {/* Variation pills as links with edit buttons */}
       {variations.map((variation) => (
-        <div key={variation.flavour_id} className="flex items-center gap-1 group">
+        <div key={variation.formula_id} className="flex items-center gap-1 group">
           <Link
-            href={`/${locale}/flavours/${variation.flavour_id}`}
+            href={`/${locale}/formulas/${variation.formula_id}`}
             className={cn(
               "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium transition-colors",
               "border hover:bg-accent",
-              variation.flavour_id === flavourId
+              variation.formula_id === formulaId
                 ? "bg-primary text-primary-foreground border-primary pointer-events-none"
                 : "bg-background border-border"
             )}
@@ -103,14 +103,14 @@ export function VariationPills({ flavourId }: VariationPillsProps) {
 
       {/* Add variation button */}
       <CreateVariationDialog
-        sourceFlavourId={flavourId}
+        sourceFormulaId={formulaId}
         onVariationCreated={loadVariations}
       />
 
       {/* Compare button - only show if there are multiple variations */}
       {variations.length > 1 && (
         <Button variant="outline" size="sm" asChild>
-          <Link href={`/${locale}/flavours/${flavourId}/compare`}>
+          <Link href={`/${locale}/formulas/${formulaId}/compare`}>
             <GitCompare className="h-4 w-4 mr-2" />
             Compare
           </Link>

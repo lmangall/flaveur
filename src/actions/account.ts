@@ -67,7 +67,7 @@ export async function deleteAccount(
     }
 
     // Phase 2: Delete the user - CASCADE handles the rest
-    // (flavours, workspaces, profiles, learning data, shares, etc.)
+    // (formulas, workspaces, profiles, learning data, shares, etc.)
     await db.delete(users).where(eq(users.id, userId));
 
     // Track account deletion in PostHog

@@ -21,8 +21,8 @@ export interface ComplianceIssue {
 }
 
 export interface ComplianceResult {
-  flavourId: number;
-  flavourName: string;
+  formulaId: number;
+  formulaName: string;
   isCompliant: boolean;
   checkedAt: string;
   totalSubstances: number;
@@ -36,21 +36,21 @@ export interface ComplianceResult {
 }
 
 /**
- * Check EU compliance for a flavour formulation
+ * Check EU compliance for a formula formulation
  */
 export async function checkEUCompliance(
-  flavourId: number
+  formulaId: number
 ): Promise<ComplianceResult> {
-  // Get flavour info
-  const flavourResult = await sql`
-    SELECT flavour_id, name FROM flavour WHERE flavour_id = ${flavourId}
+  // Get formula info
+  const formulaResult = await sql`
+    SELECT formula_id, name FROM formula WHERE formula_id = ${formulaId}
   `;
 
-  if (flavourResult.length === 0) {
-    throw new Error("Flavour not found");
+  if (formulaResult.length === 0) {
+    throw new Error("Formula not found");
   }
 
-  const flavour = flavourResult[0];
+  const formula = formulaResult[0];
 
   // Get all substances in the formulation with concentrations
   const substances = await sql`
@@ -60,9 +60,9 @@ export async function checkEUCompliance(
       sf.unit,
       s.common_name,
       s.alternative_names
-    FROM substance_flavour sf
+    FROM substance_formula sf
     JOIN substance s ON sf.substance_id = s.substance_id
-    WHERE sf.flavour_id = ${flavourId}
+    WHERE sf.formula_id = ${formulaId}
   `;
 
   const issues: ComplianceIssue[] = [];
@@ -194,8 +194,8 @@ export async function checkEUCompliance(
   const warnings = issues.filter((i) => i.severity === "warning").length;
 
   return {
-    flavourId,
-    flavourName: flavour.name as string,
+    formulaId,
+    formulaName: formula.name as string,
     isCompliant: errors === 0,
     checkedAt: new Date().toISOString(),
     totalSubstances: substances.length,

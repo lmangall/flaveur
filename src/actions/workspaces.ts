@@ -6,11 +6,12 @@ import type {
   Workspace,
   WorkspaceMember,
   WorkspaceInvite,
-  WorkspaceFlavour,
-  Flavour,
+  WorkspaceFormula,
+  Formula,
 } from "@/app/type";
 import type { WorkspaceRoleValue } from "@/constants";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { sendWorkspaceInviteEmail } from "@/lib/email/resend";
 
 // ===========================================
 // WORKSPACE CRUD
@@ -232,7 +233,7 @@ export async function deleteWorkspace(workspaceId: number): Promise<void> {
     throw new Error("Only workspace owners can delete workspaces");
   }
 
-  // Note: CASCADE will delete members, documents, invites, and flavour links
+  // Note: CASCADE will delete members, documents, invites, and formula links
   await sql`
     DELETE FROM workspace WHERE workspace_id = ${workspaceId}
   `;
@@ -340,11 +341,23 @@ export async function addWorkspaceMember(data: {
       `;
     }
 
-    // Create new invite
-    await sql`
+    // Get workspace name and inviter info for the email
+    const [workspaceInfo, inviterInfo] = await Promise.all([
+      sql`SELECT name FROM workspace WHERE workspace_id = ${workspaceId}`,
+      sql`SELECT username, email FROM users WHERE user_id = ${userId}`,
+    ]);
+
+    const workspaceName = workspaceInfo[0]?.name || "Workspace";
+    const inviterName = inviterInfo[0]?.username || inviterInfo[0]?.email || "Someone";
+
+    // Create new invite and get the token
+    const inviteResult = await sql`
       INSERT INTO workspace_invite (workspace_id, invited_email, invited_by_user_id, role)
       VALUES (${workspaceId}, ${normalizedEmail}, ${userId}, ${role})
+      RETURNING invite_token
     `;
+
+    const inviteToken = inviteResult[0]?.invite_token;
 
     // Track invite in PostHog
     const posthog = getPostHogClient();
@@ -358,7 +371,22 @@ export async function addWorkspaceMember(data: {
       },
     });
 
-    // TODO: Send invite email
+    // Send invite email
+    if (inviteToken) {
+      try {
+        await sendWorkspaceInviteEmail(
+          normalizedEmail,
+          inviterName,
+          workspaceName,
+          role,
+          inviteToken,
+          "en" // Default to English; could be enhanced to use inviter's locale
+        );
+      } catch (error) {
+        console.error("[addWorkspaceMember] Failed to send invite email:", error);
+        // Don't throw - invite was created successfully, email is a nice-to-have
+      }
+    }
 
     return { type: "invite", email: normalizedEmail };
   }
@@ -680,15 +708,15 @@ export async function convertPendingWorkspaceInvites(
 }
 
 // ===========================================
-// FLAVOUR LINKING
+// FORMULA LINKING
 // ===========================================
 
 /**
- * Get all flavours linked to a workspace.
+ * Get all formulas linked to a workspace.
  */
-export async function getWorkspaceFlavours(
+export async function getWorkspaceFormulas(
   workspaceId: number
-): Promise<(WorkspaceFlavour & { flavour: Flavour })[]> {
+): Promise<(WorkspaceFormula & { formula: Formula })[]> {
   const userId = await getUserId();
 
   // Verify membership
@@ -701,10 +729,10 @@ export async function getWorkspaceFlavours(
     throw new Error("Workspace not found or you are not a member");
   }
 
-  const flavours = await sql`
+  const formulas = await sql`
     SELECT
       wf.*,
-      f.flavour_id,
+      f.formula_id,
       f.name,
       f.description,
       f.is_public,
@@ -715,58 +743,62 @@ export async function getWorkspaceFlavours(
       f.base_unit,
       f.flavor_profile,
       f.notes,
-      f.created_at as flavour_created_at,
-      f.updated_at as flavour_updated_at,
+      f.project_type,
+      f.concentration_type,
+      f.created_at as formula_created_at,
+      f.updated_at as formula_updated_at,
       u.username as added_by_username
-    FROM workspace_flavour wf
-    JOIN flavour f ON wf.flavour_id = f.flavour_id
+    FROM workspace_formula wf
+    JOIN formula f ON wf.formula_id = f.formula_id
     LEFT JOIN users u ON wf.added_by = u.user_id
     WHERE wf.workspace_id = ${workspaceId}
     ORDER BY wf.added_at DESC
   `;
 
-  return flavours.map((row) => ({
+  return formulas.map((row) => ({
     workspace_id: Number(row.workspace_id),
-    flavour_id: Number(row.flavour_id),
+    formula_id: Number(row.formula_id),
     added_by: row.added_by ? String(row.added_by) : null,
     added_at: String(row.added_at),
-    flavour: {
-      flavour_id: Number(row.flavour_id),
+    formula: {
+      formula_id: Number(row.formula_id),
       name: String(row.name),
       description: row.description ? String(row.description) : null,
       is_public: Boolean(row.is_public),
       user_id: row.user_id ? String(row.user_id) : null,
       category_id: row.category_id ? Number(row.category_id) : null,
-      status: String(row.status) as Flavour["status"],
+      status: String(row.status) as Formula["status"],
       version: Number(row.version),
-      base_unit: String(row.base_unit) as Flavour["base_unit"],
+      base_unit: String(row.base_unit) as Formula["base_unit"],
       flavor_profile: row.flavor_profile,
       notes: row.notes ? String(row.notes) : null,
-      created_at: String(row.flavour_created_at),
-      updated_at: String(row.flavour_updated_at),
+      project_type: (row.project_type as Formula["project_type"]) || "flavor",
+      concentration_type: (row.concentration_type as Formula["concentration_type"]) || null,
+      created_at: String(row.formula_created_at),
+      updated_at: String(row.formula_updated_at),
     },
   }));
 }
 
 /**
- * Link a flavour to a workspace. User must own the flavour.
+ * Link a formula to a workspace. User must own the formula.
  */
-export async function linkFlavourToWorkspace(data: {
-  flavourId: number;
+export async function linkFormulaToWorkspace(data: {
+  formulaId: number;
   workspaceId: number;
 }): Promise<void> {
   const userId = await getUserId();
 
-  const { flavourId, workspaceId } = data;
+  const { formulaId, workspaceId } = data;
 
-  // Verify user owns the flavour
-  const flavourCheck = await sql`
-    SELECT flavour_id FROM flavour
-    WHERE flavour_id = ${flavourId} AND user_id = ${userId}
+  // Verify user owns the formula
+  const formulaCheck = await sql`
+    SELECT formula_id FROM formula
+    WHERE formula_id = ${formulaId} AND user_id = ${userId}
   `;
 
-  if (flavourCheck.length === 0) {
-    throw new Error("Flavour not found or you don't own it");
+  if (formulaCheck.length === 0) {
+    throw new Error("Formula not found or you don't own it");
   }
 
   // Verify user is workspace member with edit permission
@@ -780,46 +812,46 @@ export async function linkFlavourToWorkspace(data: {
   }
 
   if (memberCheck[0].role === "viewer") {
-    throw new Error("Viewers cannot link flavours to workspaces");
+    throw new Error("Viewers cannot link formulas to workspaces");
   }
 
   // Check if already linked
   const existingLink = await sql`
-    SELECT workspace_id FROM workspace_flavour
-    WHERE workspace_id = ${workspaceId} AND flavour_id = ${flavourId}
+    SELECT workspace_id FROM workspace_formula
+    WHERE workspace_id = ${workspaceId} AND formula_id = ${formulaId}
   `;
 
   if (existingLink.length > 0) {
-    throw new Error("Flavour is already linked to this workspace");
+    throw new Error("Formula is already linked to this workspace");
   }
 
   await sql`
-    INSERT INTO workspace_flavour (workspace_id, flavour_id, added_by)
-    VALUES (${workspaceId}, ${flavourId}, ${userId})
+    INSERT INTO workspace_formula (workspace_id, formula_id, added_by)
+    VALUES (${workspaceId}, ${formulaId}, ${userId})
   `;
 
-  // Track flavour linking in PostHog
+  // Track formula linking in PostHog
   const posthog = getPostHogClient();
   posthog.capture({
     distinctId: userId,
-    event: "flavour_linked_to_workspace",
+    event: "formula_linked_to_workspace",
     properties: {
-      flavour_id: flavourId,
+      formula_id: formulaId,
       workspace_id: workspaceId,
     },
   });
 }
 
 /**
- * Unlink a flavour from a workspace. Editor/Owner only.
+ * Unlink a formula from a workspace. Editor/Owner only.
  */
-export async function unlinkFlavourFromWorkspace(data: {
-  flavourId: number;
+export async function unlinkFormulaFromWorkspace(data: {
+  formulaId: number;
   workspaceId: number;
 }): Promise<void> {
   const userId = await getUserId();
 
-  const { flavourId, workspaceId } = data;
+  const { formulaId, workspaceId } = data;
 
   // Verify user is workspace member with edit permission
   const memberCheck = await sql`
@@ -832,12 +864,12 @@ export async function unlinkFlavourFromWorkspace(data: {
   }
 
   if (memberCheck[0].role === "viewer") {
-    throw new Error("Viewers cannot unlink flavours from workspaces");
+    throw new Error("Viewers cannot unlink formulas from workspaces");
   }
 
   await sql`
-    DELETE FROM workspace_flavour
-    WHERE workspace_id = ${workspaceId} AND flavour_id = ${flavourId}
+    DELETE FROM workspace_formula
+    WHERE workspace_id = ${workspaceId} AND formula_id = ${formulaId}
   `;
 }
 

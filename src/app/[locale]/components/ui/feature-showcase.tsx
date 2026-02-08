@@ -102,14 +102,14 @@ const FEATURE_SHOWCASE: FeatureItem[] = [
     imagePosition: "right",
     accentColor: "primary",
   },
-  {
-    icon: Sparkles,
-    titleKey: "featureAITitle",
-    descriptionKey: "featureAIDesc",
-    bullets: ["featureAIBullet1", "featureAIBullet2", "featureAIBullet3"],
-    imagePosition: "left",
-    accentColor: "secondary",
-  },
+  // {
+  //   icon: Sparkles,
+  //   titleKey: "featureAITitle",
+  //   descriptionKey: "featureAIDesc",
+  //   bullets: ["featureAIBullet1", "featureAIBullet2", "featureAIBullet3"],
+  //   imagePosition: "left",
+  //   accentColor: "secondary",
+  // },
   {
     icon: Users,
     titleKey: "featureWorkspacesTitle",
@@ -257,7 +257,7 @@ export function FeatureShowcase({ videoSrc = "/videos/flavour-creation-demo.mp4"
   // Pillars for intro section
   const PILLARS = [
     { titleKey: "learn", descKey: "learnDescription", ctaKey: "pillarCta1", href: "/substances" },
-    { titleKey: "create", descKey: "createDescription", ctaKey: "pillarCta2", href: "/flavours" },
+    { titleKey: "create", descKey: "createDescription", ctaKey: "pillarCta2", href: "/formulas" },
     { titleKey: "showcase", descKey: "showcaseDescription", ctaKey: "pillarCta3", href: "/jobs" },
   ];
 

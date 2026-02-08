@@ -27,23 +27,49 @@ export async function GET(request: Request) {
     const result = await processMonitors();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error processing search monitors:", error);
+    // Comprehensive error serialization
+    const errorMessage = serializeError(error);
+    console.error("[monitor-searches] Error processing search monitors:", errorMessage);
 
     try {
       await sendCronErrorNotification({
         cronRoute: "monitor-searches",
-        errorMessage: error instanceof Error ? error.stack || error.message : String(error),
+        errorMessage,
         timestamp: new Date().toISOString(),
       });
     } catch (emailError) {
-      console.error("[monitor-searches] Failed to send error notification email:", emailError);
+      const emailErrorMessage = serializeError(emailError);
+      console.error("[monitor-searches] Failed to send error notification email:", emailErrorMessage);
     }
 
     return NextResponse.json(
-      { error: "Failed to process search monitors" },
+      { error: "Failed to process search monitors", details: errorMessage },
       { status: 500 }
     );
   }
+}
+
+/**
+ * Serialize any error to a readable string format
+ */
+function serializeError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.stack || `${error.name}: ${error.message}`;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error && typeof error === "object") {
+    try {
+      return JSON.stringify(error, null, 2);
+    } catch {
+      return `Non-serializable error object: ${Object.prototype.toString.call(error)}`;
+    }
+  }
+
+  return String(error);
 }
 
 type MonitorRow = typeof job_search_monitors.$inferSelect;
@@ -168,7 +194,7 @@ async function processMonitors() {
 
       totalNew += await upsertListings(monitor, listings, allNewListings);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = serializeError(error);
       console.error(
         `[monitor-searches] Error for ${monitor.label}:`,
         message
@@ -242,8 +268,7 @@ async function processMonitors() {
               allNewListings
             );
           } catch (error) {
-            const message =
-              error instanceof Error ? error.message : String(error);
+            const message = serializeError(error);
             console.error(
               `[monitor-searches] Error for ${monitor.label}:`,
               message
@@ -285,7 +310,8 @@ async function processMonitors() {
       );
     }
   } catch (crossRefError) {
-    console.error("[monitor-searches] Cross-reference failed:", crossRefError);
+    const crossRefErrorMessage = serializeError(crossRefError);
+    console.error("[monitor-searches] Cross-reference failed:", crossRefErrorMessage);
   }
 
   // Send email if there are new listings
@@ -303,7 +329,8 @@ async function processMonitors() {
         })),
       });
     } catch (emailError) {
-      console.error("[monitor-searches] Failed to send email:", emailError);
+      const emailErrorMessage = serializeError(emailError);
+      console.error("[monitor-searches] Failed to send email:", emailErrorMessage);
     }
   }
 
@@ -317,7 +344,8 @@ async function processMonitors() {
         context: "The cron returned HTTP 200 but every monitor encountered an error. Check individual monitor last_error fields in the database.",
       });
     } catch (emailError) {
-      console.error("[monitor-searches] Failed to send all-failed notification:", emailError);
+      const emailErrorMessage = serializeError(emailError);
+      console.error("[monitor-searches] Failed to send all-failed notification:", emailErrorMessage);
     }
   }
 

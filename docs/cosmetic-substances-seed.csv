@@ -1,0 +1,139 @@
+common_name,inci_name,cas_id,ci_number,category,cosmetic_role,hlb_value,hlb_required,ph_range_min,ph_range_max,water_solubility,use_level_min,use_level_max,uv_coverage,melting_point,domain,description
+Polysorbate 20,POLYSORBATE 20,9005-64-5,,Emulsifiers,"[""emulsifier""]",16.7,,,,soluble,,,,,cosmetic,"O/W emulsifier, solubilizer for essential oils"
+Polysorbate 60,POLYSORBATE 60,9005-67-8,,Emulsifiers,"[""emulsifier""]",14.9,,,,soluble,,,,,cosmetic,O/W emulsifier for creams and lotions
+Polysorbate 80,POLYSORBATE 80,9005-65-6,,Emulsifiers,"[""emulsifier""]",15.0,,,,soluble,,,,,cosmetic,"Versatile O/W emulsifier, pairs with Span 80"
+Sorbitan Oleate,SORBITAN OLEATE,1338-43-8,,Emulsifiers,"[""emulsifier""]",4.3,,,,insoluble,,,,,cosmetic,W/O emulsifier (Span 80)
+Sorbitan Stearate,SORBITAN STEARATE,1338-41-6,,Emulsifiers,"[""emulsifier""]",4.7,,,,insoluble,,,,,cosmetic,W/O emulsifier (Span 60)
+Glyceryl Stearate,GLYCERYL STEARATE,31566-31-1,,Emulsifiers,"[""emulsifier""]",3.8,,,,insoluble,,,,,cosmetic,Mild W/O emulsifier + co-emulsifier
+Glyceryl Stearate SE,GLYCERYL STEARATE SE,11099-07-3,,Emulsifiers,"[""emulsifier""]",5.8,,,,insoluble,,,,,cosmetic,Self-emulsifying version
+Cetearyl Alcohol + Ceteareth-20,CETEARYL ALCOHOL (AND) CETEARETH-20,,,Emulsifiers,"[""emulsifier""]",15.2,,,,insoluble,,,,,cosmetic,Complete emulsifying wax for O/W
+Olivem 1000,CETEARYL OLIVATE (AND) SORBITAN OLIVATE,,,Emulsifiers,"[""emulsifier""]",10.0,,,,insoluble,,,,,cosmetic,"Olive-derived, liquid crystal structures"
+PEG-40 Hydrogenated Castor Oil,PEG-40 HYDROGENATED CASTOR OIL,61788-85-0,,Emulsifiers,"[""emulsifier""]",15.0,,,,soluble,,,,,cosmetic,Solubilizer for fragrances/EOs
+Lecithin,LECITHIN,8002-43-5,,Emulsifiers,"[""emulsifier""]",7.0,,,,dispersible,,,,,cosmetic,"Natural phospholipid, liposome former"
+Sweet Almond Oil,PRUNUS AMYGDALUS DULCIS OIL,8007-69-0,,Oils & Butters,"[""emollient""]",,7.0,,,insoluble,,,,,cosmetic,"Light carrier oil, all skin types"
+Jojoba Oil,SIMMONDSIA CHINENSIS SEED OIL,61789-91-1,,Oils & Butters,"[""emollient""]",,6.0,,,insoluble,,,,,cosmetic,"Liquid wax ester mimicking sebum, non-comedogenic"
+Argan Oil,ARGANIA SPINOSA KERNEL OIL,223747-87-1,,Oils & Butters,"[""emollient""]",,7.0,,,insoluble,,,,,cosmetic,"Rich in vitamin E, premium oil"
+Coconut Oil,COCOS NUCIFERA OIL,8001-31-8,,Oils & Butters,"[""emollient""]",,8.0,,,insoluble,,,,,cosmetic,"Solid <25C, lauric acid, can be comedogenic"
+Shea Butter,BUTYROSPERMUM PARKII BUTTER,194043-92-0,,Oils & Butters,"[""emollient""]",,8.0,,,insoluble,,,,,cosmetic,"Rich butter, high unsaponifiables"
+Cocoa Butter,THEOBROMA CACAO SEED BUTTER,8002-31-1,,Oils & Butters,"[""emollient"",""structure""]",,6.0,,,insoluble,,,,34,cosmetic,"Hard butter, melts ~34C, structure agent"
+Avocado Oil,PERSEA GRATISSIMA OIL,8024-32-6,,Oils & Butters,"[""emollient""]",,7.0,,,insoluble,,,,,cosmetic,Rich in oleic acid + phytosterols
+Rosehip Seed Oil,ROSA CANINA SEED OIL,84603-93-0,,Oils & Butters,"[""emollient"",""active""]",,7.0,,,insoluble,,,,,cosmetic,"High linoleic acid, anti-aging"
+Castor Oil,RICINUS COMMUNIS SEED OIL,8001-79-4,,Oils & Butters,"[""emollient""]",,14.0,,,insoluble,,,,,cosmetic,"Very viscous, ricinoleic acid, #1 lipstick oil"
+Sunflower Seed Oil,HELIANTHUS ANNUUS SEED OIL,8001-21-6,,Oils & Butters,"[""emollient""]",,7.0,,,insoluble,,,,,cosmetic,"Light, affordable, high linoleic"
+Caprylic/Capric Triglyceride,CAPRYLIC/CAPRIC TRIGLYCERIDE,65381-09-1,,Oils & Butters,"[""emollient""]",,5.0,,,insoluble,,,,,cosmetic,"Fractionated coconut, non-greasy"
+Squalane,SQUALANE,111-01-3,,Oils & Butters,"[""emollient""]",,5.0,,,insoluble,,,,,cosmetic,"Skin-identical lipid, ultra-light"
+Isopropyl Myristate,ISOPROPYL MYRISTATE,110-27-0,,Oils & Butters,"[""emollient"",""sensory""]",,4.0,,,insoluble,,,,,cosmetic,Fast-absorbing synthetic ester
+Mineral Oil,PARAFFINUM LIQUIDUM,8012-95-1,,Oils & Butters,"[""emollient""]",,10.5,,,insoluble,,,,,cosmetic,"Excellent occlusive, inert"
+Beeswax,CERA ALBA,8012-89-3,,Waxes & Structure,"[""structure""]",,9.0,,,insoluble,,,,62,cosmetic,"MP 62-65C, structure + water resistance"
+Cetyl Alcohol,CETYL ALCOHOL,36653-82-4,,Waxes & Structure,"[""structure"",""emulsifier""]",,13.0,,,insoluble,,,,,cosmetic,Fatty alcohol thickener + co-emulsifier
+Cetearyl Alcohol,CETEARYL ALCOHOL,67762-27-0,,Waxes & Structure,"[""structure""]",,13.0,,,insoluble,,,,,cosmetic,Blend of C16/C18 fatty alcohols
+Stearic Acid,STEARIC ACID,57-11-4,,Waxes & Structure,"[""structure"",""thickener""]",,15.0,,,insoluble,,,,,cosmetic,"Thickener, hardener, forms soap with alkali"
+Candelilla Wax,EUPHORBIA CERIFERA WAX,8006-44-8,,Waxes & Structure,"[""structure""]",,9.0,,,insoluble,,,,68,cosmetic,"Vegan, MP 68-73C, glossy"
+Carnauba Wax,COPERNICIA CERIFERA WAX,8015-86-9,,Waxes & Structure,"[""structure""]",,9.0,,,insoluble,,,,82,cosmetic,"Hardest natural wax, MP 82-86C"
+Glycerin,GLYCERIN,56-81-5,,Humectants,"[""humectant""]",,,4.0,8.0,soluble,2,10,,,both,Most common humectant
+Sodium Hyaluronate,SODIUM HYALURONATE,9067-32-7,,Humectants,"[""humectant""]",,,5.0,7.5,soluble,0.1,2,,,cosmetic,Holds 1000x weight in water
+Panthenol,PANTHENOL,81-13-0,,Humectants,"[""humectant"",""active""]",,,4.0,7.0,soluble,1,5,,,both,"Pro-vitamin B5, 1-5%"
+Propylene Glycol,PROPYLENE GLYCOL,57-55-6,,Humectants,"[""humectant"",""solvent""]",,,4.0,8.0,soluble,,,,,both,Humectant + penetration enhancer
+Butylene Glycol,BUTYLENE GLYCOL,107-88-0,,Humectants,"[""humectant"",""solvent""]",,,4.0,8.0,soluble,,,,,cosmetic,"Lighter than PG, less irritating"
+Urea,UREA,57-13-6,,Humectants,"[""humectant"",""active""]",,,4.0,7.0,soluble,5,40,,,both,"5-10% moisturizing, 20-40% exfoliating"
+Sodium PCA,SODIUM PCA,28874-51-3,,Humectants,"[""humectant""]",,,4.5,6.5,soluble,2,5,,,cosmetic,"Part of skin's NMF, 2-5%"
+Aloe Vera Gel,ALOE BARBADENSIS LEAF JUICE,85507-69-3,,Humectants,"[""humectant"",""active""]",,,4.0,6.0,soluble,,,,,cosmetic,"Soothing, can replace part of water phase"
+Dimethicone,DIMETHICONE,9006-65-9,,Silicones,"[""sensory"",""emollient""]",,,,,insoluble,,,,,cosmetic,"Most common silicone, non-greasy film"
+Cyclomethicone,CYCLOPENTASILOXANE,541-02-6,,Silicones,"[""sensory"",""solvent""]",,,,,insoluble,,,,,cosmetic,"Volatile, evaporates leaving silky feel"
+Dimethicone Crosspolymer,DIMETHICONE/VINYL DIMETHICONE CROSSPOLYMER,68083-19-2,,Silicones,"[""sensory""]",,,,,insoluble,,,,,cosmetic,"Elastomer gel, velvety primer feel"
+Cetyl Dimethicone,CETYL DIMETHICONE,17955-88-3,,Silicones,"[""emulsifier"",""sensory""]",2.0,,,,insoluble,,,,,cosmetic,Waxy silicone W/O emulsifier
+Carbomer 940,CARBOMER,9003-01-4,,Thickeners,"[""thickener""]",,,5.0,10.0,dispersible,0.1,0.5,,,both,"Must neutralize with NaOH/TEA"
+Xanthan Gum,XANTHAN GUM,11138-66-2,,Thickeners,"[""thickener""]",,,3.0,12.0,soluble,0.1,1,,,both,"Natural, stable across wide pH"
+Hydroxyethylcellulose,HYDROXYETHYLCELLULOSE,9004-62-0,,Thickeners,"[""thickener""]",,,2.0,12.0,soluble,0.5,2,,,cosmetic,"Nonionic, clear gels"
+Guar Gum,CYAMOPSIS TETRAGONOLOBA GUM,9000-30-0,,Thickeners,"[""thickener""]",,,4.0,10.0,soluble,0.1,1,,,both,"Natural, hair conditioning"
+Sodium Polyacrylate,SODIUM POLYACRYLATE,9003-04-7,,Thickeners,"[""thickener""]",,,5.0,8.0,dispersible,,,,,cosmetic,"Pre-neutralized, no pH adjust needed"
+Phenoxyethanol,PHENOXYETHANOL,122-99-6,,Preservatives,"[""preservative""]",,,3.0,10.0,,,,,,both,"Broad-spectrum, gram-negative, max 1% EU"
+Sodium Benzoate,SODIUM BENZOATE,532-32-1,,Preservatives,"[""preservative""]",,,2.0,5.0,,,,,,both,"Effective below pH 5, max 2.5% EU"
+Potassium Sorbate,POTASSIUM SORBATE,24634-61-5,,Preservatives,"[""preservative""]",,,2.0,5.5,,,,,,both,"Anti-yeast/mold, pair with Na benzoate, max 0.6% EU"
+Benzisothiazolinone,BENZISOTHIAZOLINONE,2634-33-5,,Preservatives,"[""preservative""]",,,3.0,9.0,,0.01,0.05,,,cosmetic,"Booster, pairs with phenoxyethanol"
+DHA + Benzyl Alcohol,DEHYDROACETIC ACID (AND) BENZYL ALCOHOL,,,Preservatives,"[""preservative""]",,,3.0,6.5,,0.5,1,,,cosmetic,Popular in natural cosmetics
+Tocopherol,TOCOPHEROL,59-02-9,,Preservatives,"[""antioxidant""]",,,,,,,0.05,0.5,,,both,Vitamin E antioxidant (not a true preservative)
+Sodium Laureth Sulfate,SODIUM LAURETH SULFATE,9004-82-4,,Surfactants,"[""surfactant""]",,,5.0,8.0,,5,15,,,cosmetic,"Anionic, strong foam, shampoos"
+Cocamidopropyl Betaine,COCAMIDOPROPYL BETAINE,61789-40-0,,Surfactants,"[""surfactant""]",,,4.0,9.0,,2,8,,,cosmetic,"Amphoteric, reduces irritation, boosts foam"
+Decyl Glucoside,DECYL GLUCOSIDE,68515-73-1,,Surfactants,"[""surfactant""]",,,4.0,9.0,,,,,,cosmetic,"Nonionic, mild APG, baby-safe"
+Coco Glucoside,COCO-GLUCOSIDE,110615-47-9,,Surfactants,"[""surfactant""]",,,4.0,9.0,,4,15,,,cosmetic,"Nonionic, very gentle APG"
+Sodium Cocoyl Isethionate,SODIUM COCOYL ISETHIONATE,61789-32-0,,Surfactants,"[""surfactant""]",,,5.0,7.0,,,,,,cosmetic,"Anionic, ultra-mild baby dove surfactant"
+Sodium Lauroyl Sarcosinate,SODIUM LAUROYL SARCOSINATE,137-16-6,,Surfactants,"[""surfactant""]",,,5.0,8.0,,2,10,,,cosmetic,"Anionic, amino acid-based"
+Niacinamide,NIACINAMIDE,98-92-0,,Actives,"[""active""]",,,5.0,7.0,soluble,2,10,,,cosmetic,"Vitamin B3, pores + barrier"
+Ascorbic Acid,ASCORBIC ACID,50-81-7,,Actives,"[""active""]",,,2.5,3.5,soluble,5,20,,,cosmetic,"Pure Vitamin C, very unstable"
+Retinol,RETINOL,68-26-8,,Actives,"[""active""]",,,5.0,6.5,insoluble,0.1,1,,,cosmetic,"Vitamin A, light/air sensitive"
+Salicylic Acid,SALICYLIC ACID,69-72-7,,Actives,"[""active""]",,,3.0,4.0,partially,0.5,2,,,cosmetic,"BHA, oil-soluble, anti-acne"
+Glycolic Acid,GLYCOLIC ACID,79-14-1,,Actives,"[""active""]",,,3.0,4.5,soluble,5,10,,,cosmetic,Smallest AHA
+Lactic Acid,LACTIC ACID,50-21-5,,Actives,"[""active"",""humectant""]",,,3.0,5.0,soluble,5,10,,,cosmetic,Gentle AHA + humectant
+Allantoin,ALLANTOIN,97-59-6,,Actives,"[""active""]",,,4.0,7.0,partially,0.1,2,,,cosmetic,"Soothing, wound healing"
+Caffeine,CAFFEINE,58-08-2,,Actives,"[""active""]",,,4.0,7.0,soluble,1,5,,,cosmetic,"Vasoconstrictor, eye creams"
+Alpha-Arbutin,ALPHA-ARBUTIN,84380-01-8,,Actives,"[""active""]",,,3.5,6.5,soluble,0.5,2,,,cosmetic,Skin brightening
+Azelaic Acid,AZELAIC ACID,123-99-9,,Actives,"[""active""]",,,4.0,5.0,partially,10,20,,,cosmetic,"Anti-acne, anti-rosacea"
+Citric Acid,CITRIC ACID,77-92-9,,pH Adjusters,"[""ph_adjuster"",""chelating""]",,,,,soluble,,,,,both,"Lower pH, also chelating agent, use as 10-50% solution"
+Sodium Hydroxide,SODIUM HYDROXIDE,1310-73-2,,pH Adjusters,"[""ph_adjuster""]",,,,,soluble,,,,,both,"Raise pH, neutralizes carbomers, use as 10-20% solution"
+Triethanolamine,TRIETHANOLAMINE,102-71-6,,pH Adjusters,"[""ph_adjuster""]",,,,,soluble,,,,,both,"Raise pH, alternative to NaOH, softer gels, max 2.5% EU"
+Sodium Lactate,SODIUM LACTATE,72-17-3,,pH Adjusters,"[""ph_adjuster"",""humectant""]",,,,,soluble,1,3,,,both,"Buffer, part of NMF, humectant + pH buffer"
+Disodium EDTA,DISODIUM EDTA,139-33-3,,Chelating Agents,"[""chelating""]",,,,,soluble,0.05,0.2,,,cosmetic,"Chelates metal ions, protects preservatives"
+Sodium Phytate,SODIUM PHYTATE,14306-25-3,,Chelating Agents,"[""chelating""]",,,,,soluble,0.05,0.2,,,cosmetic,"Natural EDTA alternative, rice-derived"
+Water,AQUA,7732-18-5,,Solvents & Base,"[""solvent""]",,,,,soluble,,,,,both,Use distilled or deionized
+Ethanol,ALCOHOL DENAT.,64-17-5,,Solvents & Base,"[""solvent""]",,,,,soluble,,,,,both,"Solvent, astringent, can be drying"
+Witch Hazel Extract,HAMAMELIS VIRGINIANA LEAF EXTRACT,68916-73-4,,Solvents & Base,"[""solvent"",""active""]",,,,,soluble,,,,,both,"Natural astringent, can replace part of water phase"
+Iron Oxide Yellow,IRON OXIDES,51274-00-1,CI 77492,Colorants & Pigments,"[""colorant""]",,,,,insoluble,1,10,,,cosmetic,"Warm yellow pigment, foundation/concealer base"
+Iron Oxide Red,IRON OXIDES,1309-37-1,CI 77491,Colorants & Pigments,"[""colorant""]",,,,,insoluble,0.5,5,,,cosmetic,"Red-brown pigment, foundation/blush/lipstick"
+Iron Oxide Black,IRON OXIDES,1317-61-9,CI 77499,Colorants & Pigments,"[""colorant""]",,,,,insoluble,0.1,3,,,cosmetic,"Black pigment, eyeliner/mascara/shade adjustment"
+Titanium Dioxide,TITANIUM DIOXIDE,13463-67-7,CI 77891,Colorants & Pigments,"[""colorant"",""uv_filter""]",,,,,insoluble,2,25,,,cosmetic,White pigment + UV filter + opacity in foundations
+Zinc Oxide,ZINC OXIDE,1314-13-2,CI 77947,Colorants & Pigments,"[""colorant"",""uv_filter"",""active""]",,,,,insoluble,2,25,,,cosmetic,"White pigment + UV filter + mattifying, calming"
+Mica,MICA,12001-26-2,CI 77019,Colorants & Pigments,"[""colorant"",""sensory""]",,,,,insoluble,5,40,,,cosmetic,"Pearlescent base, slip agent, shimmer in eyeshadow/highlighter"
+Ultramarine Blue,ULTRAMARINES,57455-37-5,CI 77007,Colorants & Pigments,"[""colorant""]",,,,,insoluble,0.5,5,,,cosmetic,"Vivid blue, eyeshadow, color correctors"
+Ultramarine Violet,ULTRAMARINES,12769-96-9,CI 77007,Colorants & Pigments,"[""colorant""]",,,,,insoluble,0.5,5,,,cosmetic,"Purple shade, eyeshadow, blush toning"
+Chromium Oxide Green,CHROMIUM OXIDE GREENS,1308-38-9,CI 77288,Colorants & Pigments,"[""colorant""]",,,,,insoluble,0.5,5,,,cosmetic,"Stable matte green, eyeshadow"
+Carmine,CARMINE,1390-65-4,CI 75470,Colorants & Pigments,"[""colorant""]",,,,,partially,0.5,5,,,cosmetic,"Natural red from cochineal, lipstick staple"
+D&C Red No. 7 Ca Lake,D&C RED NO. 7 CALCIUM LAKE,5281-04-9,CI 15850:1,Colorants & Pigments,"[""colorant""]",,,,,insoluble,0.5,3,,,cosmetic,Lip-safe red lake pigment
+FD&C Yellow No. 5 Al Lake,FD&C YELLOW NO. 5 ALUMINUM LAKE,12225-21-7,CI 19140:1,Colorants & Pigments,"[""colorant""]",,,,,insoluble,0.5,3,,,cosmetic,Yellow lake for color cosmetics
+Talc,TALC,14807-96-6,,Powder Fillers & Binders,"[""sensory"",""structure""]",,,,,insoluble,10,80,,,cosmetic,"Classic filler, slip agent, bulk in pressed powders"
+Kaolin,KAOLIN,1332-58-7,,Powder Fillers & Binders,"[""structure"",""active""]",,,,,insoluble,5,30,,,cosmetic,"Oil-absorbing clay, mattifying, binder for pressed powders"
+Silica (Amorphous),SILICA,7631-86-9,,Powder Fillers & Binders,"[""sensory"",""structure""]",,,,,insoluble,1,10,,,cosmetic,"Mattifying microspheres, oil absorption, soft-focus"
+Magnesium Stearate,MAGNESIUM STEARATE,557-04-0,,Powder Fillers & Binders,"[""structure""]",,,,,insoluble,1,5,,,cosmetic,"Binder/lubricant for pressed powders, adhesion"
+Zinc Stearate,ZINC STEARATE,557-05-1,,Powder Fillers & Binders,"[""structure"",""sensory""]",,,,,insoluble,1,10,,,cosmetic,"Adhesion promoter, skin-feel modifier, compressibility"
+Calcium Carbonate,CALCIUM CARBONATE,471-34-1,,Powder Fillers & Binders,"[""structure""]",,,,,insoluble,5,30,,,cosmetic,"Cheap filler, mild abrasive, opacity"
+Nylon-12,NYLON-12,24937-16-4,,Powder Fillers & Binders,"[""sensory""]",,,,,insoluble,2,15,,,cosmetic,"Spherical powder, silky texture, blur/soft-focus effect"
+Boron Nitride,BORON NITRIDE,10043-11-5,,Powder Fillers & Binders,"[""sensory""]",,,,,insoluble,2,10,,,cosmetic,"Ultra-luxe slip agent, soft focus, satin finish"
+Rice Starch,ORYZA SATIVA STARCH,9005-25-8,,Powder Fillers & Binders,"[""structure"",""sensory""]",,,,,insoluble,5,20,,,cosmetic,"Natural oil absorber, mattifying, dry shampoo"
+Sericite,SERICITE,12001-26-2,,Powder Fillers & Binders,"[""sensory"",""structure""]",,,,,insoluble,5,30,,,cosmetic,"Fine-grade mica, superior adhesion in foundations"
+Ozokerite,OZOKERITE,12198-93-5,,Lip & Stick Ingredients,"[""structure""]",,,,,insoluble,5,15,,,58,cosmetic,"Mineral wax, key lipstick structure agent, MP 58-70C"
+Microcrystalline Wax,CERA MICROCRISTALLINA,63231-60-7,,Lip & Stick Ingredients,"[""structure""]",,,,,insoluble,5,20,,,,cosmetic,"Flexible structure, prevents sweating/blooming in sticks"
+Ceresin,CERESIN,8001-75-0,,Lip & Stick Ingredients,"[""structure""]",,,,,insoluble,5,15,,,,cosmetic,"Purified ozokerite, smooth stick structure"
+Lanolin,LANOLIN,8006-54-0,,Lip & Stick Ingredients,"[""emollient""]",,,,,insoluble,2,15,,,,cosmetic,"Skin-identical lipid, superb lip emollient, occlusive"
+Polybutene,POLYBUTENE,9003-29-6,,Lip & Stick Ingredients,"[""sensory"",""thickener""]",,,,,insoluble,5,30,,,,cosmetic,Glossy viscosity builder in lip glosses
+Hydrogenated Polyisobutene,HYDROGENATED POLYISOBUTENE,68937-10-0,,Lip & Stick Ingredients,"[""sensory"",""emollient""]",,,,,insoluble,5,25,,,,cosmetic,"Non-tacky gloss agent, occlusive film"
+Diisostearyl Malate,DIISOSTEARYL MALATE,70969-70-9,,Lip & Stick Ingredients,"[""sensory"",""emollient""]",,,,,insoluble,5,25,,,,cosmetic,Long-wear pigment binder in lipstick
+Octyldodecanol,OCTYLDODECANOL,5333-42-6,,Lip & Stick Ingredients,"[""emollient"",""sensory""]",,,,,insoluble,5,20,,,,cosmetic,Emollient + excellent pigment dispersant
+Bis-Diglyceryl Polyacyladipate-2,BIS-DIGLYCERYL POLYACYLADIPATE-2,126928-07-2,,Lip & Stick Ingredients,"[""emollient"",""sensory""]",,,,,insoluble,10,40,,,,cosmetic,"Glossy, non-sticky emollient for lip oils"
+VP/VA Copolymer,VP/VA COPOLYMER,25086-89-9,,Film Formers & Fixatives,"[""structure""]",,,,,soluble,2,10,,,,cosmetic,"Hair fixative, styling hold, film former"
+PVP,PVP,9003-39-8,,Film Formers & Fixatives,"[""structure""]",,,,,soluble,1,5,,,,cosmetic,"Film former, hair styling, adhesion"
+Acrylates Copolymer,ACRYLATES COPOLYMER,25133-97-5,,Film Formers & Fixatives,"[""structure""]",,,,,dispersible,2,10,,,,cosmetic,"Waterproof film, mascara, sunscreen, long-wear"
+Acrylates/Octylacrylamide Copolymer,ACRYLATES/OCTYLACRYLAMIDE COPOLYMER,65033-31-6,,Film Formers & Fixatives,"[""structure""]",,,,,insoluble,1,5,,,,cosmetic,"Water-resistant film for mascara, sun care"
+Shellac,SHELLAC,9000-59-3,,Film Formers & Fixatives,"[""structure""]",,,,,insoluble,2,10,,,,cosmetic,"Natural resin film former, mascara, nail"
+Zinc Oxide (nano),ZINC OXIDE,1314-13-2,,UV Filters,"[""uv_filter""]",,,,,insoluble,,25,broad,,cosmetic,"Mineral filter, also pigment, reef-safer"
+Titanium Dioxide (nano),TITANIUM DIOXIDE,13463-67-7,,UV Filters,"[""uv_filter""]",,,,,insoluble,,25,UVB+UVA2,,cosmetic,"Mineral filter, white cast concern"
+Avobenzone,BUTYL METHOXYDIBENZOYLMETHANE,70356-09-1,,UV Filters,"[""uv_filter""]",,,,,insoluble,,3,UVA1,,cosmetic,"Key UVA filter, photo-unstable alone"
+Homosalate,HOMOSALATE,118-56-9,,UV Filters,"[""uv_filter""]",,,,,insoluble,,10,UVB,,cosmetic,"Common UVB filter, solvent properties"
+Octinoxate,ETHYLHEXYL METHOXYCINNAMATE,5466-77-3,,UV Filters,"[""uv_filter""]",,,,,insoluble,,10,UVB,,cosmetic,"Widely used UVB filter, eco concerns"
+Octocrylene,OCTOCRYLENE,6197-30-4,,UV Filters,"[""uv_filter""]",,,,,insoluble,,10,UVB,,cosmetic,"Photostabilizes avobenzone, film former"
+Tinosorb S,BIS-ETHYLHEXYLOXYPHENOL METHOXYPHENYL TRIAZINE,187393-00-6,,UV Filters,"[""uv_filter""]",,,,,insoluble,,10,broad,,cosmetic,"Oil-soluble broad-spectrum, photostable"
+Tinosorb M,METHYLENE BIS-BENZOTRIAZOLYL TETRAMETHYLBUTYLPHENOL,103597-45-1,,UV Filters,"[""uv_filter""]",,,,,dispersible,,10,broad,,cosmetic,"Particulate UV filter, boosts SPF synergistically"
+Uvinul A Plus,DIETHYLAMINO HYDROXYBENZOYL HEXYL BENZOATE,302776-68-7,,UV Filters,"[""uv_filter""]",,,,,insoluble,,10,UVA,,cosmetic,"Photostable UVA filter, oil-soluble"
+Cetyl Ethylhexanoate,CETYL ETHYLHEXANOATE,59130-69-7,,Emollients & Esters,"[""emollient""]",,5.0,,,insoluble,,,,,cosmetic,"Lightweight dry-touch ester, fast absorption"
+Coco-Caprylate,COCO-CAPRYLATE,95912-87-1,,Emollients & Esters,"[""emollient""]",,5.0,,,insoluble,,,,,cosmetic,"Natural-derived, dry non-greasy feel"
+Dicaprylyl Carbonate,DICAPRYLYL CARBONATE,1680-31-5,,Emollients & Esters,"[""emollient""]",,5.0,,,insoluble,,,,,cosmetic,"Ultra-light, volatile-feeling, spreadability"
+Ethylhexyl Palmitate,ETHYLHEXYL PALMITATE,29806-73-3,,Emollients & Esters,"[""emollient"",""sensory""]",,5.0,,,insoluble,,,,,cosmetic,"Spreading agent, pigment dispersant in makeup"
+C12-15 Alkyl Benzoate,C12-15 ALKYL BENZOATE,68411-27-8,,Emollients & Esters,"[""emollient""]",,5.0,,,insoluble,,,,,cosmetic,"SPF booster, emollient, good pigment wetter"
+Isododecane,ISODODECANE,31807-55-3,,Emollients & Esters,"[""emollient"",""solvent""]",,,,,insoluble,,,,,cosmetic,"Volatile emollient, dry quick-evap feel, foundation/mascara carrier"
+Stearalkonium Hectorite,STEARALKONIUM HECTORITE,12691-60-0,,Oil-Phase Rheology Modifiers,"[""thickener""]",,,,,insoluble,1,4,,,cosmetic,"Organoclay, thickens/gels oils, suspends pigments (Bentone Gel)"
+Silica Silylate,SILICA SILYLATE,68909-20-6,,Oil-Phase Rheology Modifiers,"[""thickener""]",,,,,insoluble,1,5,,,cosmetic,"Thickens oils into gel texture, stabilizes emulsions"
+Disteardimonium Hectorite,DISTEARDIMONIUM HECTORITE,68153-33-9,,Oil-Phase Rheology Modifiers,"[""thickener""]",,,,,insoluble,1,4,,,cosmetic,"Organoclay for anhydrous systems, lipstick/mascara structure"
+Polymethylsilsesquioxane,POLYMETHYLSILSESQUIOXANE,68554-70-1,,Sensory Modifiers,"[""sensory""]",,,,,insoluble,2,10,,,cosmetic,"Silicone microspheres, soft-focus blur, velvety feel"
+Lauroyl Lysine,LAUROYL LYSINE,52315-75-0,,Sensory Modifiers,"[""sensory""]",,,,,insoluble,2,15,,,cosmetic,"Amino acid powder, skin adhesion, silky slip in powders"
+Ethylhexyl Hydroxystearate,ETHYLHEXYL HYDROXYSTEARATE,29710-25-6,,Sensory Modifiers,"[""sensory"",""emollient""]",,,,,insoluble,5,20,,,cosmetic,"Cushiony feel in lip products, pigment wetter"
+Trimethylsiloxysilicate,TRIMETHYLSILOXYSILICATE,56275-01-5,,Sensory Modifiers,"[""sensory"",""structure""]",,,,,insoluble,2,10,,,cosmetic,"Silicone resin, long-wear adhesion, transfer resistance"
+Calcium Aluminum Borosilicate,CALCIUM ALUMINUM BOROSILICATE,65997-17-3,,Sensory Modifiers,"[""sensory"",""colorant""]",,,,,insoluble,1,15,,,cosmetic,Glass flake base for shimmer/glitter effects

@@ -36,7 +36,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/app/[locale]/components/ui/collapsible";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import { PageContainer } from "@/components/layout";
 import {
   getMyProgress,

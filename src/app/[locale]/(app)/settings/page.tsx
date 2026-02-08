@@ -47,7 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/app/[locale]/components/ui/alert-dialog";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 import {
   getNewsletterStatus,

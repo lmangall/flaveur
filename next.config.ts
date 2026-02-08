@@ -16,6 +16,21 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "4mb",
     },
   },
+  // Redirect old flavours URLs to new formulas URLs
+  async redirects() {
+    return [
+      {
+        source: "/:locale/flavours",
+        destination: "/:locale/formulas",
+        permanent: true,
+      },
+      {
+        source: "/:locale/flavours/:path*",
+        destination: "/:locale/formulas/:path*",
+        permanent: true,
+      },
+    ];
+  },
   // PostHog reverse proxy - makes requests less likely to be blocked by ad blockers
   async rewrites() {
     return [

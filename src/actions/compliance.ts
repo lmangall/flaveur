@@ -9,29 +9,29 @@ import { sql } from "@/lib/db";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 /**
- * Check EU compliance for a flavour
+ * Check EU compliance for a formula
  * User must be owner or have shared access
  */
-export async function checkFlavourEUCompliance(
-  flavourId: number
+export async function checkFormulaEUCompliance(
+  formulaId: number
 ): Promise<ComplianceResult> {
   const userId = await getUserId();
 
-  // Check user has access to this flavour
+  // Check user has access to this formula
   const accessCheck = await sql`
-    SELECT f.flavour_id
-    FROM flavour f
-    LEFT JOIN flavour_shares fs ON f.flavour_id = fs.flavour_id
+    SELECT f.formula_id
+    FROM formula f
+    LEFT JOIN formula_shares fs ON f.formula_id = fs.formula_id
       AND fs.shared_with_user_id = ${userId}
-    WHERE f.flavour_id = ${flavourId}
+    WHERE f.formula_id = ${formulaId}
       AND (f.user_id = ${userId} OR fs.share_id IS NOT NULL)
   `;
 
   if (accessCheck.length === 0) {
-    throw new Error("Forbidden: You do not have access to this flavour");
+    throw new Error("Forbidden: You do not have access to this formula");
   }
 
-  const result = await checkEUCompliance(flavourId);
+  const result = await checkEUCompliance(formulaId);
 
   // Track compliance check in PostHog
   const posthog = getPostHogClient();
@@ -39,7 +39,7 @@ export async function checkFlavourEUCompliance(
     distinctId: userId,
     event: "compliance_check_run",
     properties: {
-      flavour_id: flavourId,
+      formula_id: formulaId,
       is_compliant: result.isCompliant,
       issue_count: result.issues?.length ?? 0,
       region: "EU",

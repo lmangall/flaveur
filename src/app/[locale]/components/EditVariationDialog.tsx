@@ -21,10 +21,10 @@ import {
   updateVariationDetails,
   syncVariationDescriptions,
 } from "@/actions/variations";
-import type { FlavourVariation } from "@/actions/variations";
+import type { FormulaVariation } from "@/actions/variations";
 
 interface EditVariationDialogProps {
-  variation: FlavourVariation;
+  variation: FormulaVariation;
   onVariationUpdated?: () => void;
   trigger?: React.ReactNode;
 }
@@ -44,14 +44,14 @@ export function EditVariationDialog({
     setIsSaving(true);
     try {
       // Update the variation details
-      await updateVariationDetails(variation.flavour_id, {
+      await updateVariationDetails(variation.formula_id, {
         label: label.trim() || undefined,
         description: description.trim() || null,
       });
 
       // Sync description to all variations if requested
       if (syncToAll) {
-        await syncVariationDescriptions(variation.flavour_id);
+        await syncVariationDescriptions(variation.formula_id);
         toast.success("Variation updated and description synced to all variations");
       } else {
         toast.success("Variation updated");

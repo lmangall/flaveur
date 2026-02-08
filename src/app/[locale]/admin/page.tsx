@@ -47,8 +47,8 @@ async function getStats() {
 
 async function getSharingStats() {
   const [sharesResult, invitesResult] = await Promise.all([
-    db.execute(sql`SELECT COUNT(*) as count FROM flavour_shares`),
-    db.execute(sql`SELECT COUNT(*) as count FROM flavour_invites WHERE status = 'pending'`),
+    db.execute(sql`SELECT COUNT(*) as count FROM formula_shares`),
+    db.execute(sql`SELECT COUNT(*) as count FROM formula_invites WHERE status = 'pending'`),
   ]);
 
   return {
@@ -61,7 +61,7 @@ type PendingInvite = {
   invite_id: number;
   invited_email: string;
   created_at: string;
-  flavour_name: string;
+  formula_name: string;
   inviter_username: string | null;
   inviter_email: string;
 };
@@ -72,11 +72,11 @@ async function getPendingInvites(): Promise<PendingInvite[]> {
       fi.invite_id,
       fi.invited_email,
       fi.created_at,
-      f.name as flavour_name,
+      f.name as formula_name,
       u.username as inviter_username,
       u.email as inviter_email
-    FROM flavour_invites fi
-    JOIN flavour f ON fi.flavour_id = f.flavour_id
+    FROM formula_invites fi
+    JOIN formula f ON fi.formula_id = f.formula_id
     JOIN users u ON fi.invited_by_user_id = u.user_id
     WHERE fi.status = 'pending'
     ORDER BY fi.created_at DESC
@@ -146,7 +146,7 @@ async function getUsersWithStats(): Promise<UserWithStats[]> {
     ) i ON u.user_id = i.user_id
     LEFT JOIN (
       SELECT user_id, COUNT(*) as flavors_count
-      FROM flavour
+      FROM formula
       GROUP BY user_id
     ) f ON u.user_id = f.user_id
     LEFT JOIN job_alert_preferences jap ON u.user_id = jap.user_id
@@ -486,7 +486,7 @@ export default async function AdminDashboard() {
                 {pendingInvites.map((invite) => (
                   <TableRow key={invite.invite_id}>
                     <TableCell className="font-medium">{invite.invited_email}</TableCell>
-                    <TableCell>{invite.flavour_name}</TableCell>
+                    <TableCell>{invite.formula_name}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {invite.inviter_username || invite.inviter_email}
                     </TableCell>

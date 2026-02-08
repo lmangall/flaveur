@@ -100,7 +100,7 @@ export function OnboardingDialog({ open, onOpenChange }: OnboardingDialogProps) 
           />
         );
       case 1:
-        // Feature: Flavour Formulas
+        // Feature: Formula Formulas
         return (
           <OnboardingFeature
             icon={FlaskConical}

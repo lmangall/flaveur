@@ -9,7 +9,7 @@ import TurndownService from "turndown";
 import { marked } from "marked";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Separator } from "@/app/[locale]/components/ui/separator";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   Bold,
   Italic,

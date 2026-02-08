@@ -3,23 +3,153 @@
 import { sql } from "@/lib/db";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { getSession } from "@/lib/auth-server";
+import type { UserDomain } from "@/lib/domain-filter";
 
-export async function getSubstances(page: number = 1) {
+/**
+ * Find a substance by INCI name or CAS number.
+ * Used by the ingredients encyclopedia to look up seeded substances.
+ * Returns substance_id and fema_number, or null if not found.
+ */
+export async function findSubstanceByInci(
+  inciName: string,
+  casId?: string | null
+): Promise<{
+  substance_id: number;
+  fema_number: number | null;
+  common_name: string;
+} | null> {
+  // Try INCI name first (case-insensitive)
+  const results = await sql`
+    SELECT substance_id, fema_number, common_name
+    FROM substance
+    WHERE UPPER(inci_name) = UPPER(${inciName})
+    LIMIT 1
+  `;
+
+  if (results.length > 0) {
+    return {
+      substance_id: Number(results[0].substance_id),
+      fema_number: results[0].fema_number != null ? Number(results[0].fema_number) : null,
+      common_name: String(results[0].common_name),
+    };
+  }
+
+  // Fallback: try CAS number if provided
+  if (casId) {
+    const casFallback = await sql`
+      SELECT substance_id, fema_number, common_name
+      FROM substance
+      WHERE cas_id = ${casId}
+      LIMIT 1
+    `;
+
+    if (casFallback.length > 0) {
+      return {
+        substance_id: Number(casFallback[0].substance_id),
+        fema_number: casFallback[0].fema_number != null ? Number(casFallback[0].fema_number) : null,
+        common_name: String(casFallback[0].common_name),
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Add a substance to a formula by substance_id (bypassing fema_number lookup).
+ * Used by the ingredients encyclopedia for cosmetic substances that may not have FEMA numbers.
+ */
+export async function addSubstanceToFormulaById(
+  formulaId: number,
+  substanceId: number,
+  orderIndex: number,
+  phase?: string | null
+) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Authentication required");
+  }
+
+  const userId = session.user.id;
+
+  // Check formula exists and user has edit access
+  const accessCheck = await sql`
+    SELECT f.formula_id
+    FROM flavour f
+    LEFT JOIN workspace_formula wf ON f.formula_id = wf.formula_id
+    LEFT JOIN workspace_member wm ON wf.workspace_id = wm.workspace_id AND wm.user_id = ${userId}
+    WHERE f.formula_id = ${formulaId}
+      AND (f.user_id = ${userId} OR wm.role IN ('owner', 'editor'))
+    LIMIT 1
+  `;
+
+  if (accessCheck.length === 0) {
+    throw new Error("Formula not found or no edit access");
+  }
+
+  // Check substance exists
+  const substanceCheck = await sql`
+    SELECT substance_id FROM substance WHERE substance_id = ${substanceId}
+  `;
+
+  if (substanceCheck.length === 0) {
+    throw new Error("Substance not found");
+  }
+
+  // Check if already added
+  const existingCheck = await sql`
+    SELECT 1 FROM substance_formula
+    WHERE formula_id = ${formulaId} AND substance_id = ${substanceId}
+  `;
+
+  if (existingCheck.length > 0) {
+    return { alreadyExists: true };
+  }
+
+  // Insert
+  await sql`
+    INSERT INTO substance_formula (formula_id, substance_id, order_index, phase)
+    VALUES (${formulaId}, ${substanceId}, ${orderIndex}, ${phase ?? null})
+  `;
+
+  return { alreadyExists: false };
+}
+
+/**
+ * Get paginated substances filtered by domain.
+ * @param page - Page number (1-indexed)
+ * @param domain - User's preferred domain ("flavor" or "fragrance")
+ */
+export async function getSubstances(
+  page: number = 1,
+  domain: UserDomain = "flavor"
+) {
   const limit = 20;
   const offset = (page - 1) * limit;
 
   const result = await sql`
-    SELECT * FROM substance LIMIT ${limit} OFFSET ${offset}
+    SELECT * FROM substance
+    WHERE (domain IN (${domain}, 'both') OR domain IS NULL)
+    LIMIT ${limit} OFFSET ${offset}
   `;
 
   return result;
 }
 
+/**
+ * Search substances with domain filtering.
+ * @param query - Search term
+ * @param category - Search category ("all", "name", "profile", "cas_id", "fema_number")
+ * @param page - Page number
+ * @param limit - Results per page
+ * @param domain - User's preferred domain ("flavor" or "fragrance")
+ */
 export async function searchSubstances(
   query: string,
   category: string = "all",
   page: number = 1,
-  limit: number = 20
+  limit: number = 20,
+  domain: UserDomain = "flavor"
 ) {
   if (!query) {
     throw new Error("Search query is required");
@@ -44,39 +174,53 @@ export async function searchSubstances(
             ELSE 5
           END AS name_match_priority
         FROM substance
-        WHERE common_name ILIKE ${searchTerm}
-           OR alternative_names::text ILIKE ${searchTerm}
+        WHERE (common_name ILIKE ${searchTerm}
+           OR alternative_names::text ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY name_match_priority ASC, common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const nameCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE common_name ILIKE ${searchTerm}
-           OR alternative_names::text ILIKE ${searchTerm}
+        WHERE (common_name ILIKE ${searchTerm}
+           OR alternative_names::text ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
       `;
       totalResults = parseInt(nameCount[0].count as string);
       break;
 
     case "profile":
-      // Simple keyword search on flavor/odor profiles
+      // Simple keyword search on flavor/odor profiles and perfumery fields
       results = await sql`
         SELECT *
         FROM substance
-        WHERE olfactory_taste_notes ILIKE ${searchTerm}
+        WHERE (olfactory_taste_notes ILIKE ${searchTerm}
            OR flavor_profile ILIKE ${searchTerm}
            OR fema_flavor_profile ILIKE ${searchTerm}
            OR taste ILIKE ${searchTerm}
            OR odor ILIKE ${searchTerm}
+           OR odor_profile_tags::text ILIKE ${searchTerm}
+           OR olfactive_family ILIKE ${searchTerm}
+           OR volatility_class ILIKE ${searchTerm}
+           OR substantivity ILIKE ${searchTerm}
+           OR uses_in_perfumery ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const profileCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE olfactory_taste_notes ILIKE ${searchTerm}
+        WHERE (olfactory_taste_notes ILIKE ${searchTerm}
            OR flavor_profile ILIKE ${searchTerm}
            OR fema_flavor_profile ILIKE ${searchTerm}
            OR taste ILIKE ${searchTerm}
            OR odor ILIKE ${searchTerm}
+           OR odor_profile_tags::text ILIKE ${searchTerm}
+           OR olfactive_family ILIKE ${searchTerm}
+           OR volatility_class ILIKE ${searchTerm}
+           OR substantivity ILIKE ${searchTerm}
+           OR uses_in_perfumery ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
       `;
       totalResults = parseInt(profileCount[0].count as string);
       break;
@@ -86,11 +230,14 @@ export async function searchSubstances(
       results = await sql`
         SELECT * FROM substance
         WHERE cas_id ILIKE ${searchTerm}
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY cas_id
         LIMIT ${limit} OFFSET ${offset}
       `;
       const casCount = await sql`
-        SELECT COUNT(*) FROM substance WHERE cas_id ILIKE ${searchTerm}
+        SELECT COUNT(*) FROM substance
+        WHERE cas_id ILIKE ${searchTerm}
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
       `;
       totalResults = parseInt(casCount[0].count as string);
       break;
@@ -100,18 +247,21 @@ export async function searchSubstances(
       results = await sql`
         SELECT * FROM substance
         WHERE fema_number::text ILIKE ${searchTerm}
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY fema_number
         LIMIT ${limit} OFFSET ${offset}
       `;
       const femaCount = await sql`
-        SELECT COUNT(*) FROM substance WHERE fema_number::text ILIKE ${searchTerm}
+        SELECT COUNT(*) FROM substance
+        WHERE fema_number::text ILIKE ${searchTerm}
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
       `;
       totalResults = parseInt(femaCount[0].count as string);
       break;
 
     case "all":
     default:
-      // Simple keyword search with exact match prioritization
+      // Simple keyword search with exact match prioritization - searches all fields
       results = await sql`
         SELECT *,
           CASE
@@ -121,19 +271,53 @@ export async function searchSubstances(
             ELSE 4
           END AS name_match_priority
         FROM substance
-        WHERE common_name ILIKE ${searchTerm}
+        WHERE (common_name ILIKE ${searchTerm}
            OR alternative_names::text ILIKE ${searchTerm}
            OR cas_id ILIKE ${searchTerm}
            OR fema_number::text ILIKE ${searchTerm}
+           OR olfactory_taste_notes ILIKE ${searchTerm}
+           OR flavor_profile ILIKE ${searchTerm}
+           OR fema_flavor_profile ILIKE ${searchTerm}
+           OR taste ILIKE ${searchTerm}
+           OR odor ILIKE ${searchTerm}
+           OR odor_profile_tags::text ILIKE ${searchTerm}
+           OR olfactive_family ILIKE ${searchTerm}
+           OR volatility_class ILIKE ${searchTerm}
+           OR substantivity ILIKE ${searchTerm}
+           OR uses_in_perfumery ILIKE ${searchTerm}
+           OR source_datasets ILIKE ${searchTerm}
+           OR log_p ILIKE ${searchTerm}
+           OR inchikey ILIKE ${searchTerm}
+           OR vapor_pressure ILIKE ${searchTerm}
+           OR density ILIKE ${searchTerm}
+           OR refractive_index ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY name_match_priority ASC, common_name
         LIMIT ${limit} OFFSET ${offset}
       `;
       const allCount = await sql`
         SELECT COUNT(*) FROM substance
-        WHERE common_name ILIKE ${searchTerm}
+        WHERE (common_name ILIKE ${searchTerm}
            OR alternative_names::text ILIKE ${searchTerm}
            OR cas_id ILIKE ${searchTerm}
            OR fema_number::text ILIKE ${searchTerm}
+           OR olfactory_taste_notes ILIKE ${searchTerm}
+           OR flavor_profile ILIKE ${searchTerm}
+           OR fema_flavor_profile ILIKE ${searchTerm}
+           OR taste ILIKE ${searchTerm}
+           OR odor ILIKE ${searchTerm}
+           OR odor_profile_tags::text ILIKE ${searchTerm}
+           OR olfactive_family ILIKE ${searchTerm}
+           OR volatility_class ILIKE ${searchTerm}
+           OR substantivity ILIKE ${searchTerm}
+           OR uses_in_perfumery ILIKE ${searchTerm}
+           OR source_datasets ILIKE ${searchTerm}
+           OR log_p ILIKE ${searchTerm}
+           OR inchikey ILIKE ${searchTerm}
+           OR vapor_pressure ILIKE ${searchTerm}
+           OR density ILIKE ${searchTerm}
+           OR refractive_index ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
       `;
       totalResults = parseInt(allCount[0].count as string);
       break;
@@ -185,7 +369,10 @@ export async function getSubstanceByFemaNumber(femaNumber: number) {
   return result[0];
 }
 
-export async function getSubstancesWithSmiles(limit: number = 10) {
+export async function getSubstancesWithSmiles(
+  limit: number = 10,
+  domain: UserDomain = "flavor"
+) {
   const result = await sql`
     SELECT
       substance_id,
@@ -197,6 +384,7 @@ export async function getSubstancesWithSmiles(limit: number = 10) {
       iupac_name
     FROM substance
     WHERE smile IS NOT NULL AND smile != ''
+      AND (domain IN (${domain}, 'both') OR domain IS NULL)
     LIMIT ${limit}
   `;
 
@@ -206,7 +394,8 @@ export async function getSubstancesWithSmiles(limit: number = 10) {
 export async function searchSubstancesWithSmiles(
   query: string,
   category: string = "all",
-  limit: number = 20
+  limit: number = 20,
+  domain: UserDomain = "flavor"
 ) {
   if (!query || query.trim().length < 2) {
     return [];
@@ -236,9 +425,10 @@ export async function searchSubstancesWithSmiles(
                END AS name_match_priority
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
-        AND (search_vector @@ to_tsquery('english', ${tsQuery})
-             OR common_name ILIKE ${searchTerm}
-             OR alternative_names::text ILIKE ${searchTerm})
+          AND (search_vector @@ to_tsquery('english', ${tsQuery})
+               OR common_name ILIKE ${searchTerm}
+               OR alternative_names::text ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY name_match_priority ASC, rank DESC NULLS LAST, common_name
         LIMIT ${limit}
       `;
@@ -250,12 +440,18 @@ export async function searchSubstancesWithSmiles(
                ts_rank(search_vector, to_tsquery('english', ${tsQuery})) AS rank
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
-        AND (search_vector @@ to_tsquery('english', ${tsQuery})
-             OR olfactory_taste_notes ILIKE ${searchTerm}
-             OR flavor_profile ILIKE ${searchTerm}
-             OR fema_flavor_profile ILIKE ${searchTerm}
-             OR taste ILIKE ${searchTerm}
-             OR odor ILIKE ${searchTerm})
+          AND (search_vector @@ to_tsquery('english', ${tsQuery})
+               OR olfactory_taste_notes ILIKE ${searchTerm}
+               OR flavor_profile ILIKE ${searchTerm}
+               OR fema_flavor_profile ILIKE ${searchTerm}
+               OR taste ILIKE ${searchTerm}
+               OR odor ILIKE ${searchTerm}
+               OR odor_profile_tags::text ILIKE ${searchTerm}
+               OR olfactive_family ILIKE ${searchTerm}
+               OR volatility_class ILIKE ${searchTerm}
+               OR substantivity ILIKE ${searchTerm}
+               OR uses_in_perfumery ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY rank DESC NULLS LAST, common_name
         LIMIT ${limit}
       `;
@@ -266,7 +462,8 @@ export async function searchSubstancesWithSmiles(
         SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
-        AND cas_id ILIKE ${searchTerm}
+          AND cas_id ILIKE ${searchTerm}
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY cas_id
         LIMIT ${limit}
       `;
@@ -277,7 +474,8 @@ export async function searchSubstancesWithSmiles(
         SELECT substance_id, fema_number, common_name, smile, molecular_formula, pubchem_cid, iupac_name
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
-        AND fema_number::text ILIKE ${searchTerm}
+          AND fema_number::text ILIKE ${searchTerm}
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY fema_number
         LIMIT ${limit}
       `;
@@ -296,10 +494,19 @@ export async function searchSubstancesWithSmiles(
                END AS name_match_priority
         FROM substance
         WHERE smile IS NOT NULL AND smile != ''
-        AND (search_vector @@ to_tsquery('english', ${tsQuery})
-             OR common_name ILIKE ${searchTerm}
-             OR cas_id ILIKE ${searchTerm}
-             OR fema_number::text ILIKE ${searchTerm})
+          AND (search_vector @@ to_tsquery('english', ${tsQuery})
+               OR common_name ILIKE ${searchTerm}
+               OR cas_id ILIKE ${searchTerm}
+               OR fema_number::text ILIKE ${searchTerm}
+               OR odor_profile_tags::text ILIKE ${searchTerm}
+               OR olfactive_family ILIKE ${searchTerm}
+               OR volatility_class ILIKE ${searchTerm}
+               OR substantivity ILIKE ${searchTerm}
+               OR uses_in_perfumery ILIKE ${searchTerm}
+               OR source_datasets ILIKE ${searchTerm}
+               OR log_p ILIKE ${searchTerm}
+               OR inchikey ILIKE ${searchTerm})
+          AND (domain IN (${domain}, 'both') OR domain IS NULL)
         ORDER BY name_match_priority ASC, rank DESC NULLS LAST, common_name
         LIMIT ${limit}
       `;
@@ -615,14 +822,19 @@ export async function getSubstanceWithRelations(substanceId: number) {
 export async function searchSubstancesFuzzy(
   query: string,
   threshold: number = 0.3,
-  limit: number = 20
+  limit: number = 20,
+  domain: UserDomain = "flavor"
 ) {
   if (!query || query.trim().length < 2) {
     return [];
   }
 
+  // Note: The search_substances_fuzzy function needs to be updated to accept domain parameter
+  // For now, we filter the results after the fuzzy search
   const results = await sql`
-    SELECT * FROM search_substances_fuzzy(${query}, ${threshold}, ${limit})
+    SELECT * FROM search_substances_fuzzy(${query}, ${threshold}, ${limit * 2})
+    WHERE (domain IN (${domain}, 'both') OR domain IS NULL)
+    LIMIT ${limit}
   `;
 
   return results;
@@ -639,7 +851,8 @@ export async function searchSubstancesFuzzy(
  */
 export async function getRelatedSubstanceVariations(
   substanceId: number,
-  limit: number = 10
+  limit: number = 10,
+  domain: UserDomain = "flavor"
 ): Promise<{
   substance_id: number;
   fema_number: number | null;
@@ -691,6 +904,7 @@ export async function getRelatedSubstanceVariations(
         common_name ILIKE ${searchPattern}
         OR LOWER(${sourceName}) LIKE LOWER(common_name) || '%'
       )
+      AND (domain IN (${domain}, 'both') OR domain IS NULL)
     ORDER BY
       CASE
         WHEN LOWER(common_name) = LOWER(${baseName}) THEN 1

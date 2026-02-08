@@ -46,7 +46,7 @@ const faqCategories: FAQCategory[] = [
     titleKey: "categoryRegulatory",
     items: [
       { questionKey: "regulatoryDataQuestion", answerKey: "regulatoryDataAnswer" },
-      { questionKey: "additiveVsFlavouringQuestion", answerKey: "additiveVsFlavouringAnswer" },
+      { questionKey: "additiveVsFormulaingQuestion", answerKey: "additiveVsFormulaingAnswer" },
     ],
   },
   {

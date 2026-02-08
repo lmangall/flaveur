@@ -57,21 +57,21 @@ const features: FeatureItem[] = [
     descKey: "flavorCreationDesc",
     icon: <FlaskConical className="h-5 w-5" />,
     implemented: true,
-    href: "/flavours",
+    href: "/formulas",
   },
   {
     key: "sharing",
     descKey: "sharingDesc",
     icon: <Share2 className="h-5 w-5" />,
     implemented: true,
-    href: "/flavours",
+    href: "/formulas",
   },
   {
     key: "radarChart",
     descKey: "radarChartDesc",
     icon: <PieChart className="h-5 w-5" />,
     implemented: true,
-    href: "/flavours",
+    href: "/formulas",
   },
   {
     key: "moleculeViewer",
@@ -85,7 +85,7 @@ const features: FeatureItem[] = [
     descKey: "euComplianceDesc",
     icon: <ShieldCheck className="h-5 w-5" />,
     implemented: true,
-    href: "/flavours",
+    href: "/formulas",
   },
   {
     key: "contributions",

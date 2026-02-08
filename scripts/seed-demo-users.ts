@@ -134,6 +134,7 @@ interface SubstanceIngredient {
   concentration: number;
   unit: string;
   order_index: number;
+  pyramid_position?: "top" | "heart" | "base";
 }
 
 interface FlavorProfileAttribute {
@@ -164,14 +165,14 @@ const ARTHUR_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Vanilla",
     substances: [
-      { common_name: "Vanillin", concentration: 180.0, unit: "g/kg", order_index: 1 },
-      { common_name: "Ethyl vanillin", concentration: 25.0, unit: "g/kg", order_index: 2 },
-      { common_name: "Heliotropin", concentration: 8.0, unit: "g/kg", order_index: 3 },
-      { common_name: "Anisyl alcohol", concentration: 5.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Maltol", concentration: 12.0, unit: "g/kg", order_index: 5 },
-      { common_name: "Furaneol", concentration: 3.5, unit: "g/kg", order_index: 6 },
-      { common_name: "Guaiacol", concentration: 0.8, unit: "g/kg", order_index: 7 },
-      { common_name: "Acetoin", concentration: 4.0, unit: "g/kg", order_index: 8 },
+      { common_name: "Vanillin", concentration: 180.0, unit: "g/kg", order_index: 1, pyramid_position: "heart" },
+      { common_name: "Ethyl vanillin", concentration: 25.0, unit: "g/kg", order_index: 2, pyramid_position: "heart" },
+      { common_name: "Heliotropin", concentration: 8.0, unit: "g/kg", order_index: 3, pyramid_position: "heart" },
+      { common_name: "Anisyl alcohol", concentration: 5.0, unit: "g/kg", order_index: 4, pyramid_position: "heart" },
+      { common_name: "Maltol", concentration: 12.0, unit: "g/kg", order_index: 5, pyramid_position: "base" },
+      { common_name: "Furaneol", concentration: 3.5, unit: "g/kg", order_index: 6, pyramid_position: "heart" },
+      { common_name: "Guaiacol", concentration: 0.8, unit: "g/kg", order_index: 7, pyramid_position: "base" },
+      { common_name: "Acetoin", concentration: 4.0, unit: "g/kg", order_index: 8, pyramid_position: "heart" },
     ],
   },
   {
@@ -187,12 +188,12 @@ const ARTHUR_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Dairy",
     substances: [
-      { common_name: "Diacetyl", concentration: 45.0, unit: "g/kg", order_index: 1 },
-      { common_name: "Acetoin", concentration: 35.0, unit: "g/kg", order_index: 2 },
-      { common_name: "delta-Decalactone", concentration: 18.0, unit: "g/kg", order_index: 3 },
-      { common_name: "delta-Dodecalactone", concentration: 8.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Butyric acid", concentration: 2.5, unit: "g/kg", order_index: 5 },
-      { common_name: "Acetaldehyde", concentration: 1.2, unit: "g/kg", order_index: 6 },
+      { common_name: "Diacetyl", concentration: 45.0, unit: "g/kg", order_index: 1, pyramid_position: "top" },
+      { common_name: "Acetoin", concentration: 35.0, unit: "g/kg", order_index: 2, pyramid_position: "heart" },
+      { common_name: "delta-Decalactone", concentration: 18.0, unit: "g/kg", order_index: 3, pyramid_position: "base" },
+      { common_name: "delta-Dodecalactone", concentration: 8.0, unit: "g/kg", order_index: 4, pyramid_position: "base" },
+      { common_name: "Butyric acid", concentration: 2.5, unit: "g/kg", order_index: 5, pyramid_position: "heart" },
+      { common_name: "Acetaldehyde", concentration: 1.2, unit: "g/kg", order_index: 6, pyramid_position: "top" },
     ],
   },
   {
@@ -208,13 +209,13 @@ const ARTHUR_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Sweet",
     substances: [
-      { common_name: "Furaneol", concentration: 85.0, unit: "g/kg", order_index: 1 },
-      { common_name: "Maltol", concentration: 45.0, unit: "g/kg", order_index: 2 },
-      { common_name: "Cyclotene", concentration: 25.0, unit: "g/kg", order_index: 3 },
-      { common_name: "Diacetyl", concentration: 18.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Vanillin", concentration: 15.0, unit: "g/kg", order_index: 5 },
-      { common_name: "Ethyl maltol", concentration: 8.0, unit: "g/kg", order_index: 6 },
-      { common_name: "Acetoin", concentration: 6.0, unit: "g/kg", order_index: 7 },
+      { common_name: "Furaneol", concentration: 85.0, unit: "g/kg", order_index: 1, pyramid_position: "heart" },
+      { common_name: "Maltol", concentration: 45.0, unit: "g/kg", order_index: 2, pyramid_position: "base" },
+      { common_name: "Cyclotene", concentration: 25.0, unit: "g/kg", order_index: 3, pyramid_position: "base" },
+      { common_name: "Diacetyl", concentration: 18.0, unit: "g/kg", order_index: 4, pyramid_position: "top" },
+      { common_name: "Vanillin", concentration: 15.0, unit: "g/kg", order_index: 5, pyramid_position: "heart" },
+      { common_name: "Ethyl maltol", concentration: 8.0, unit: "g/kg", order_index: 6, pyramid_position: "base" },
+      { common_name: "Acetoin", concentration: 6.0, unit: "g/kg", order_index: 7, pyramid_position: "heart" },
     ],
   },
 ];
@@ -233,13 +234,13 @@ const FORD_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Citrus",
     substances: [
-      { common_name: "Limonene", concentration: 320.0, unit: "g/kg", order_index: 1 },
-      { common_name: "Linalool", concentration: 45.0, unit: "g/kg", order_index: 2 },
-      { common_name: "Octanal", concentration: 28.0, unit: "g/kg", order_index: 3 },
-      { common_name: "Decanal", concentration: 18.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Citral", concentration: 12.0, unit: "g/kg", order_index: 5 },
-      { common_name: "Ethyl butyrate", concentration: 8.0, unit: "g/kg", order_index: 6 },
-      { common_name: "gamma-Terpinene", concentration: 15.0, unit: "g/kg", order_index: 7 },
+      { common_name: "Limonene", concentration: 320.0, unit: "g/kg", order_index: 1, pyramid_position: "top" },
+      { common_name: "Linalool", concentration: 45.0, unit: "g/kg", order_index: 2, pyramid_position: "heart" },
+      { common_name: "Octanal", concentration: 28.0, unit: "g/kg", order_index: 3, pyramid_position: "top" },
+      { common_name: "Decanal", concentration: 18.0, unit: "g/kg", order_index: 4, pyramid_position: "top" },
+      { common_name: "Citral", concentration: 12.0, unit: "g/kg", order_index: 5, pyramid_position: "top" },
+      { common_name: "Ethyl butyrate", concentration: 8.0, unit: "g/kg", order_index: 6, pyramid_position: "top" },
+      { common_name: "gamma-Terpinene", concentration: 15.0, unit: "g/kg", order_index: 7, pyramid_position: "top" },
     ],
   },
   {
@@ -255,13 +256,13 @@ const FORD_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Berry",
     substances: [
-      { common_name: "Ethyl butyrate", concentration: 120.0, unit: "g/kg", order_index: 1 },
-      { common_name: "Ethyl methylphenylglycidate", concentration: 85.0, unit: "g/kg", order_index: 2 },
-      { common_name: "Furaneol", concentration: 45.0, unit: "g/kg", order_index: 3 },
-      { common_name: "gamma-Decalactone", concentration: 25.0, unit: "g/kg", order_index: 4 },
-      { common_name: "cis-3-Hexenol", concentration: 8.0, unit: "g/kg", order_index: 5 },
-      { common_name: "Linalool", concentration: 6.0, unit: "g/kg", order_index: 6 },
-      { common_name: "Maltol", concentration: 12.0, unit: "g/kg", order_index: 7 },
+      { common_name: "Ethyl butyrate", concentration: 120.0, unit: "g/kg", order_index: 1, pyramid_position: "top" },
+      { common_name: "Ethyl methylphenylglycidate", concentration: 85.0, unit: "g/kg", order_index: 2, pyramid_position: "heart" },
+      { common_name: "Furaneol", concentration: 45.0, unit: "g/kg", order_index: 3, pyramid_position: "heart" },
+      { common_name: "gamma-Decalactone", concentration: 25.0, unit: "g/kg", order_index: 4, pyramid_position: "base" },
+      { common_name: "cis-3-Hexenol", concentration: 8.0, unit: "g/kg", order_index: 5, pyramid_position: "top" },
+      { common_name: "Linalool", concentration: 6.0, unit: "g/kg", order_index: 6, pyramid_position: "heart" },
+      { common_name: "Maltol", concentration: 12.0, unit: "g/kg", order_index: 7, pyramid_position: "base" },
     ],
   },
   {
@@ -277,12 +278,12 @@ const FORD_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Citrus",
     substances: [
-      { common_name: "Limonene", concentration: 280.0, unit: "g/kg", order_index: 1 },
-      { common_name: "Citral", concentration: 95.0, unit: "g/kg", order_index: 2 },
-      { common_name: "Linalool", concentration: 25.0, unit: "g/kg", order_index: 3 },
-      { common_name: "Geraniol", concentration: 12.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Nonanal", concentration: 5.0, unit: "g/kg", order_index: 5 },
-      { common_name: "Octanal", concentration: 8.0, unit: "g/kg", order_index: 6 },
+      { common_name: "Limonene", concentration: 280.0, unit: "g/kg", order_index: 1, pyramid_position: "top" },
+      { common_name: "Citral", concentration: 95.0, unit: "g/kg", order_index: 2, pyramid_position: "top" },
+      { common_name: "Linalool", concentration: 25.0, unit: "g/kg", order_index: 3, pyramid_position: "heart" },
+      { common_name: "Geraniol", concentration: 12.0, unit: "g/kg", order_index: 4, pyramid_position: "heart" },
+      { common_name: "Nonanal", concentration: 5.0, unit: "g/kg", order_index: 5, pyramid_position: "top" },
+      { common_name: "Octanal", concentration: 8.0, unit: "g/kg", order_index: 6, pyramid_position: "top" },
     ],
   },
   {
@@ -298,12 +299,12 @@ const FORD_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Stone Fruit",
     substances: [
-      { common_name: "gamma-Decalactone", concentration: 145.0, unit: "g/kg", order_index: 1 },
-      { common_name: "delta-Decalactone", concentration: 55.0, unit: "g/kg", order_index: 2 },
-      { common_name: "gamma-Undecalactone", concentration: 25.0, unit: "g/kg", order_index: 3 },
-      { common_name: "Linalool", concentration: 18.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Benzaldehyde", concentration: 8.0, unit: "g/kg", order_index: 5 },
-      { common_name: "cis-3-Hexenol", concentration: 4.0, unit: "g/kg", order_index: 6 },
+      { common_name: "gamma-Decalactone", concentration: 145.0, unit: "g/kg", order_index: 1, pyramid_position: "heart" },
+      { common_name: "delta-Decalactone", concentration: 55.0, unit: "g/kg", order_index: 2, pyramid_position: "base" },
+      { common_name: "gamma-Undecalactone", concentration: 25.0, unit: "g/kg", order_index: 3, pyramid_position: "base" },
+      { common_name: "Linalool", concentration: 18.0, unit: "g/kg", order_index: 4, pyramid_position: "heart" },
+      { common_name: "Benzaldehyde", concentration: 8.0, unit: "g/kg", order_index: 5, pyramid_position: "top" },
+      { common_name: "cis-3-Hexenol", concentration: 4.0, unit: "g/kg", order_index: 6, pyramid_position: "top" },
     ],
   },
 ];
@@ -322,12 +323,12 @@ const TRILLIAN_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Tropical",
     substances: [
-      { common_name: "gamma-Octalactone", concentration: 85.0, unit: "g/kg", order_index: 1 },
-      { common_name: "delta-Decalactone", concentration: 45.0, unit: "g/kg", order_index: 2 },
-      { common_name: "Linalool", concentration: 25.0, unit: "g/kg", order_index: 3 },
-      { common_name: "Ethyl butyrate", concentration: 18.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Geraniol", concentration: 8.0, unit: "g/kg", order_index: 5 },
-      { common_name: "cis-3-Hexenol", concentration: 3.0, unit: "g/kg", order_index: 6 },
+      { common_name: "gamma-Octalactone", concentration: 85.0, unit: "g/kg", order_index: 1, pyramid_position: "heart" },
+      { common_name: "delta-Decalactone", concentration: 45.0, unit: "g/kg", order_index: 2, pyramid_position: "base" },
+      { common_name: "Linalool", concentration: 25.0, unit: "g/kg", order_index: 3, pyramid_position: "heart" },
+      { common_name: "Ethyl butyrate", concentration: 18.0, unit: "g/kg", order_index: 4, pyramid_position: "top" },
+      { common_name: "Geraniol", concentration: 8.0, unit: "g/kg", order_index: 5, pyramid_position: "heart" },
+      { common_name: "cis-3-Hexenol", concentration: 3.0, unit: "g/kg", order_index: 6, pyramid_position: "top" },
     ],
   },
   {
@@ -343,12 +344,12 @@ const TRILLIAN_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Floral",
     substances: [
-      { common_name: "Linalool", concentration: 120.0, unit: "g/kg", order_index: 1 },
-      { common_name: "Benzyl acetate", concentration: 65.0, unit: "g/kg", order_index: 2 },
-      { common_name: "Indole", concentration: 2.0, unit: "g/kg", order_index: 3 },
-      { common_name: "Methyl anthranilate", concentration: 8.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Geraniol", concentration: 15.0, unit: "g/kg", order_index: 5 },
-      { common_name: "Phenylethyl alcohol", concentration: 25.0, unit: "g/kg", order_index: 6 },
+      { common_name: "Linalool", concentration: 120.0, unit: "g/kg", order_index: 1, pyramid_position: "heart" },
+      { common_name: "Benzyl acetate", concentration: 65.0, unit: "g/kg", order_index: 2, pyramid_position: "heart" },
+      { common_name: "Indole", concentration: 2.0, unit: "g/kg", order_index: 3, pyramid_position: "base" },
+      { common_name: "Methyl anthranilate", concentration: 8.0, unit: "g/kg", order_index: 4, pyramid_position: "heart" },
+      { common_name: "Geraniol", concentration: 15.0, unit: "g/kg", order_index: 5, pyramid_position: "heart" },
+      { common_name: "Phenylethyl alcohol", concentration: 25.0, unit: "g/kg", order_index: 6, pyramid_position: "heart" },
     ],
   },
   {
@@ -364,11 +365,11 @@ const TRILLIAN_FLAVOURS: FlavourFormula[] = [
     ],
     category_name: "Tropical",
     substances: [
-      { common_name: "Ethyl butyrate", concentration: 95.0, unit: "g/kg", order_index: 1 },
-      { common_name: "Ethyl hexanoate", concentration: 45.0, unit: "g/kg", order_index: 2 },
-      { common_name: "Linalool", concentration: 20.0, unit: "g/kg", order_index: 3 },
-      { common_name: "gamma-Decalactone", concentration: 15.0, unit: "g/kg", order_index: 4 },
-      { common_name: "Hexanal", concentration: 5.0, unit: "g/kg", order_index: 5 },
+      { common_name: "Ethyl butyrate", concentration: 95.0, unit: "g/kg", order_index: 1, pyramid_position: "top" },
+      { common_name: "Ethyl hexanoate", concentration: 45.0, unit: "g/kg", order_index: 2, pyramid_position: "top" },
+      { common_name: "Linalool", concentration: 20.0, unit: "g/kg", order_index: 3, pyramid_position: "heart" },
+      { common_name: "gamma-Decalactone", concentration: 15.0, unit: "g/kg", order_index: 4, pyramid_position: "base" },
+      { common_name: "Hexanal", concentration: 5.0, unit: "g/kg", order_index: 5, pyramid_position: "top" },
     ],
   },
 ];
@@ -1802,13 +1803,13 @@ async function createFlavour(
 
   // Check if flavour already exists for this user
   const existing = await sql`
-    SELECT flavour_id FROM flavour
+    SELECT formula_id FROM formula
     WHERE user_id = ${userId} AND name = ${formula.name}
   `;
 
   if (existing.length > 0) {
     console.log(`  ✓ Flavour already exists: ${formula.name}`);
-    return existing[0].flavour_id as number;
+    return existing[0].formula_id as number;
   }
 
   // Get or create category
@@ -1822,7 +1823,7 @@ async function createFlavour(
 
   // Create flavour
   const result = await sql`
-    INSERT INTO flavour (
+    INSERT INTO formula (
       name, description, is_public, user_id, category_id, status,
       version, base_unit, flavor_profile
     )
@@ -1837,9 +1838,9 @@ async function createFlavour(
       ${formula.base_unit},
       ${JSON.stringify(formula.flavor_profile)}
     )
-    RETURNING flavour_id
+    RETURNING formula_id
   `;
-  const flavourId = result[0].flavour_id as number;
+  const flavourId = result[0].formula_id as number;
   console.log(`  ✓ Created flavour: ${formula.name} (ID: ${flavourId})`);
 
   // Add substances
@@ -1848,13 +1849,13 @@ async function createFlavour(
     const substanceId = await findSubstanceByName(sub.common_name);
     if (substanceId) {
       await sql`
-        INSERT INTO substance_flavour (
-          substance_id, flavour_id, concentration, unit, order_index
+        INSERT INTO substance_formula (
+          substance_id, formula_id, concentration, unit, order_index, pyramid_position
         )
         VALUES (
-          ${substanceId}, ${flavourId}, ${sub.concentration}, ${sub.unit}, ${sub.order_index}
+          ${substanceId}, ${flavourId}, ${sub.concentration}, ${sub.unit}, ${sub.order_index}, ${sub.pyramid_position ?? null}
         )
-        ON CONFLICT (substance_id, flavour_id) DO NOTHING
+        ON CONFLICT (substance_id, formula_id) DO NOTHING
       `;
       addedCount++;
     } else {
@@ -1992,9 +1993,9 @@ async function createWorkspace(
     const flavourId = flavourIdMap.get(flavourName);
     if (flavourId) {
       await sql`
-        INSERT INTO workspace_flavour (workspace_id, flavour_id, added_by)
+        INSERT INTO workspace_formula (workspace_id, formula_id, added_by)
         VALUES (${workspaceId}, ${flavourId}, ${createdByUserId})
-        ON CONFLICT (workspace_id, flavour_id) DO NOTHING
+        ON CONFLICT (workspace_id, formula_id) DO NOTHING
       `;
       console.log(`  ✓ Added flavour: ${flavourName}`);
     } else {
@@ -2361,12 +2362,12 @@ async function cleanDemoData(): Promise<void> {
     `;
     console.log(`✓ Deleted ${workspacesDeleted.length} workspaces for ${userId}`);
 
-    // Delete flavours
+    // Delete formulas
     const flavoursDeleted = await sql`
-      DELETE FROM flavour WHERE user_id = ${userId}
-      RETURNING flavour_id
+      DELETE FROM formula WHERE user_id = ${userId}
+      RETURNING formula_id
     `;
-    console.log(`✓ Deleted ${flavoursDeleted.length} flavours for ${userId}`);
+    console.log(`✓ Deleted ${flavoursDeleted.length} formulas for ${userId}`);
 
     // Delete profiles and social links (cascade from user delete)
     // Delete user

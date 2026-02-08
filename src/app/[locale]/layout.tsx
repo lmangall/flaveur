@@ -10,7 +10,7 @@ import { PostHogPageView } from "@/app/[locale]/components/posthog-pageview";
 import { PostHogIdentify } from "@/app/[locale]/components/posthog-identify";
 import { Mona_Sans as FontSans } from "next/font/google";
 import { TooltipProvider } from "@/app/[locale]/components/ui/tooltip";
-import { cn } from "src/app/lib/utils";
+import { cn } from "@/lib/utils";
 import { getLocale } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "next-themes";

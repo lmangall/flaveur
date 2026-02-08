@@ -14,7 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import { Button } from "@/app/[locale]/components/ui/button";
 import { Badge } from "@/app/[locale]/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/app/[locale]/components/ui/card";

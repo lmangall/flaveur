@@ -6,7 +6,7 @@ import { Button } from "@/app/[locale]/components/ui/button";
 import { Card } from "@/app/[locale]/components/ui/card";
 import { ScrollArea } from "@/app/[locale]/components/ui/scroll-area";
 import { Textarea } from "@/app/[locale]/components/ui/textarea";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import { useSupportChat } from "./useSupportChat";
 import { useTranslations } from "next-intl";
 

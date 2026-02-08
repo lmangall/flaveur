@@ -10,12 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/[locale]/components/ui/dropdown-menu";
-import type { FlavourVariation } from "@/actions/variations";
+import type { FormulaVariation } from "@/actions/variations";
 
 interface ColumnToggleProps {
-  variations: FlavourVariation[];
+  variations: FormulaVariation[];
   visibleIds: Set<number>;
-  onToggle: (flavourId: number) => void;
+  onToggle: (formulaId: number) => void;
 }
 
 export function ColumnToggle({
@@ -25,16 +25,16 @@ export function ColumnToggle({
 }: ColumnToggleProps) {
   const showAll = () => {
     variations.forEach((v) => {
-      if (!visibleIds.has(v.flavour_id)) {
-        onToggle(v.flavour_id);
+      if (!visibleIds.has(v.formula_id)) {
+        onToggle(v.formula_id);
       }
     });
   };
 
   const hideNonMain = () => {
     variations.forEach((v) => {
-      if (!v.is_main_variation && visibleIds.has(v.flavour_id)) {
-        onToggle(v.flavour_id);
+      if (!v.is_main_variation && visibleIds.has(v.formula_id)) {
+        onToggle(v.formula_id);
       }
     });
   };
@@ -54,10 +54,10 @@ export function ColumnToggle({
           <DropdownMenuSeparator />
           {variations.map((variation) => (
             <DropdownMenuCheckboxItem
-              key={variation.flavour_id}
-              checked={visibleIds.has(variation.flavour_id)}
-              onCheckedChange={() => onToggle(variation.flavour_id)}
-              disabled={visibleIds.size === 1 && visibleIds.has(variation.flavour_id)}
+              key={variation.formula_id}
+              checked={visibleIds.has(variation.formula_id)}
+              onCheckedChange={() => onToggle(variation.formula_id)}
+              disabled={visibleIds.size === 1 && visibleIds.has(variation.formula_id)}
             >
               <div className="flex items-center gap-2">
                 {variation.is_main_variation && (

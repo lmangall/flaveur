@@ -22,9 +22,9 @@ export default async function NotFound() {
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href={`/${locale}/flavours`}>
+            <Link href={`/${locale}/formulas`}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {t("viewFlavours")}
+              {t("viewFormulas")}
             </Link>
           </Button>
         </div>

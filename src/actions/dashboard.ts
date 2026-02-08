@@ -2,7 +2,7 @@
 
 import { getUserId, getSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
-import { flavour, substance, category, substance_flavour, users } from "@/db/schema";
+import { formula, substance, category, substance_formula, users } from "@/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
 import { DEMO_USER } from "@/constants/samples";
 
@@ -18,7 +18,7 @@ export interface DashboardStats {
 }
 
 export interface RecentFlavor {
-  flavour_id: number;
+  formula_id: number;
   name: string;
   status: string;
   is_public: boolean;
@@ -28,7 +28,7 @@ export interface RecentFlavor {
 }
 
 export interface PublicFlavor {
-  flavour_id: number;
+  formula_id: number;
   name: string;
   description: string | null;
   status: string;
@@ -49,7 +49,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       COUNT(*) FILTER (WHERE status = 'published') as published_count,
       COUNT(*) FILTER (WHERE status = 'archived') as archived_count,
       COUNT(*) FILTER (WHERE updated_at > NOW() - INTERVAL '30 days') as recent_count
-    FROM flavour
+    FROM formula
     WHERE user_id = ${userId}
   `);
 
@@ -75,26 +75,26 @@ export async function getRecentFlavors(limit: number = 6): Promise<RecentFlavor[
 
   const result = await db.execute(sql`
     SELECT
-      f.flavour_id,
+      f.formula_id,
       f.name,
       f.status,
       f.is_public,
       f.updated_at,
       f.created_at,
       COALESCE(sf.substance_count, 0) as substance_count
-    FROM flavour f
+    FROM formula f
     LEFT JOIN (
-      SELECT flavour_id, COUNT(*) as substance_count
-      FROM substance_flavour
-      GROUP BY flavour_id
-    ) sf ON f.flavour_id = sf.flavour_id
+      SELECT formula_id, COUNT(*) as substance_count
+      FROM substance_formula
+      GROUP BY formula_id
+    ) sf ON f.formula_id = sf.formula_id
     WHERE f.user_id = ${userId}
     ORDER BY f.updated_at DESC
     LIMIT ${limit}
   `);
 
   return (result.rows as Record<string, unknown>[]).map((f) => ({
-    flavour_id: Number(f.flavour_id),
+    formula_id: Number(f.formula_id),
     name: String(f.name),
     status: String(f.status),
     is_public: Boolean(f.is_public),
@@ -109,26 +109,26 @@ export async function getFavoriteFlavors(limit: number = 6): Promise<RecentFlavo
 
   const result = await db.execute(sql`
     SELECT
-      f.flavour_id,
+      f.formula_id,
       f.name,
       f.status,
       f.is_public,
       f.updated_at,
       f.created_at,
       COALESCE(sf.substance_count, 0) as substance_count
-    FROM flavour f
+    FROM formula f
     LEFT JOIN (
-      SELECT flavour_id, COUNT(*) as substance_count
-      FROM substance_flavour
-      GROUP BY flavour_id
-    ) sf ON f.flavour_id = sf.flavour_id
+      SELECT formula_id, COUNT(*) as substance_count
+      FROM substance_formula
+      GROUP BY formula_id
+    ) sf ON f.formula_id = sf.formula_id
     WHERE f.user_id = ${userId} AND f.status = 'published'
     ORDER BY f.updated_at DESC
     LIMIT ${limit}
   `);
 
   return (result.rows as Record<string, unknown>[]).map((f) => ({
-    flavour_id: Number(f.flavour_id),
+    formula_id: Number(f.formula_id),
     name: String(f.name),
     status: String(f.status),
     is_public: Boolean(f.is_public),
@@ -143,26 +143,26 @@ export async function getPublicFlavors(limit: number = 6): Promise<RecentFlavor[
 
   const result = await db.execute(sql`
     SELECT
-      f.flavour_id,
+      f.formula_id,
       f.name,
       f.status,
       f.is_public,
       f.updated_at,
       f.created_at,
       COALESCE(sf.substance_count, 0) as substance_count
-    FROM flavour f
+    FROM formula f
     LEFT JOIN (
-      SELECT flavour_id, COUNT(*) as substance_count
-      FROM substance_flavour
-      GROUP BY flavour_id
-    ) sf ON f.flavour_id = sf.flavour_id
+      SELECT formula_id, COUNT(*) as substance_count
+      FROM substance_formula
+      GROUP BY formula_id
+    ) sf ON f.formula_id = sf.formula_id
     WHERE f.user_id = ${userId} AND f.is_public = true
     ORDER BY f.updated_at DESC
     LIMIT ${limit}
   `);
 
   return (result.rows as Record<string, unknown>[]).map((f) => ({
-    flavour_id: Number(f.flavour_id),
+    formula_id: Number(f.formula_id),
     name: String(f.name),
     status: String(f.status),
     is_public: Boolean(f.is_public),
@@ -172,33 +172,74 @@ export async function getPublicFlavors(limit: number = 6): Promise<RecentFlavor[
   }));
 }
 
-export async function getCommunityFlavors(limit: number = 12): Promise<PublicFlavor[]> {
+export interface CommunityFilters {
+  categoryId?: number;
+  projectType?: string;
+  search?: string;
+}
+
+export interface CommunityFlavor extends PublicFlavor {
+  category_name: string | null;
+  project_type: string;
+}
+
+export async function getCommunityFlavors(
+  limit: number = 12,
+  filters?: CommunityFilters
+): Promise<CommunityFlavor[]> {
   const userId = await getUserId();
+
+  // Build WHERE conditions
+  const conditions = [
+    sql`f.is_public = true`,
+    sql`f.user_id != ${userId}`,
+    sql`f.status = 'published'`,
+  ];
+
+  if (filters?.categoryId) {
+    conditions.push(sql`f.category_id = ${filters.categoryId}`);
+  }
+
+  if (filters?.projectType) {
+    conditions.push(sql`f.project_type = ${filters.projectType}`);
+  }
+
+  if (filters?.search) {
+    const searchTerm = `%${filters.search}%`;
+    conditions.push(
+      sql`(f.name ILIKE ${searchTerm} OR f.description ILIKE ${searchTerm})`
+    );
+  }
+
+  const whereClause = sql.join(conditions, sql` AND `);
 
   const result = await db.execute(sql`
     SELECT
-      f.flavour_id,
+      f.formula_id,
       f.name,
       f.description,
       f.status,
       f.updated_at,
       f.user_id,
+      f.project_type,
       u.username,
+      c.name as category_name,
       COALESCE(sf.substance_count, 0) as substance_count
-    FROM flavour f
+    FROM formula f
     LEFT JOIN users u ON f.user_id = u.user_id
+    LEFT JOIN category c ON f.category_id = c.category_id
     LEFT JOIN (
-      SELECT flavour_id, COUNT(*) as substance_count
-      FROM substance_flavour
-      GROUP BY flavour_id
-    ) sf ON f.flavour_id = sf.flavour_id
-    WHERE f.is_public = true AND f.user_id != ${userId}
+      SELECT formula_id, COUNT(*) as substance_count
+      FROM substance_formula
+      GROUP BY formula_id
+    ) sf ON f.formula_id = sf.formula_id
+    WHERE ${whereClause}
     ORDER BY f.updated_at DESC
     LIMIT ${limit}
   `);
 
   return (result.rows as Record<string, unknown>[]).map((f) => ({
-    flavour_id: Number(f.flavour_id),
+    formula_id: Number(f.formula_id),
     name: String(f.name),
     description: f.description ? String(f.description) : null,
     status: String(f.status),
@@ -206,11 +247,13 @@ export async function getCommunityFlavors(limit: number = 12): Promise<PublicFla
     user_id: String(f.user_id),
     username: String(f.username || "Anonymous"),
     substance_count: Number(f.substance_count) || 0,
+    category_name: f.category_name ? String(f.category_name) : null,
+    project_type: String(f.project_type || "flavor"),
   }));
 }
 
 export interface SampleFlavor {
-  flavour_id: number;
+  formula_id: number;
   name: string;
   description: string | null;
   status: string;
@@ -230,7 +273,7 @@ export interface SampleFlavor {
 export async function getSampleFlavors(): Promise<SampleFlavor[]> {
   const result = await db.execute(sql`
     SELECT
-      f.flavour_id,
+      f.formula_id,
       f.name,
       f.description,
       f.status,
@@ -240,15 +283,15 @@ export async function getSampleFlavors(): Promise<SampleFlavor[]> {
       f.is_main_variation,
       COALESCE(sf.substance_count, 0) as substance_count,
       COALESCE(vc.variation_count, 1) as variation_count
-    FROM flavour f
+    FROM formula f
     LEFT JOIN (
-      SELECT flavour_id, COUNT(*) as substance_count
-      FROM substance_flavour
-      GROUP BY flavour_id
-    ) sf ON f.flavour_id = sf.flavour_id
+      SELECT formula_id, COUNT(*) as substance_count
+      FROM substance_formula
+      GROUP BY formula_id
+    ) sf ON f.formula_id = sf.formula_id
     LEFT JOIN (
       SELECT variation_group_id, COUNT(*) as variation_count
-      FROM flavour
+      FROM formula
       WHERE variation_group_id IS NOT NULL
       GROUP BY variation_group_id
     ) vc ON f.variation_group_id = vc.variation_group_id
@@ -258,7 +301,7 @@ export async function getSampleFlavors(): Promise<SampleFlavor[]> {
   `);
 
   return (result.rows as Record<string, unknown>[]).map((f) => ({
-    flavour_id: Number(f.flavour_id),
+    formula_id: Number(f.formula_id),
     name: String(f.name),
     description: f.description ? String(f.description) : null,
     status: String(f.status),
@@ -268,5 +311,42 @@ export async function getSampleFlavors(): Promise<SampleFlavor[]> {
     variation_label: f.variation_label ? String(f.variation_label) : null,
     is_main_variation: Boolean(f.is_main_variation),
     variation_count: Number(f.variation_count) || 1,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────
+// TOP SUBSTANCES
+// ─────────────────────────────────────────────────────────────
+
+export interface TopSubstance {
+  substance_id: number;
+  common_name: string;
+  usage_count: number;
+}
+
+/**
+ * Get the user's most-used substances across all their formulas.
+ */
+export async function getTopSubstances(limit: number = 5): Promise<TopSubstance[]> {
+  const userId = await getUserId();
+
+  const result = await db.execute(sql`
+    SELECT
+      s.substance_id,
+      s.common_name,
+      COUNT(sf.formula_id)::int as usage_count
+    FROM substance_formula sf
+    JOIN substance s ON sf.substance_id = s.substance_id
+    JOIN formula f ON sf.formula_id = f.formula_id
+    WHERE f.user_id = ${userId}
+    GROUP BY s.substance_id, s.common_name
+    ORDER BY usage_count DESC
+    LIMIT ${limit}
+  `);
+
+  return (result.rows as Record<string, unknown>[]).map((row) => ({
+    substance_id: Number(row.substance_id),
+    common_name: String(row.common_name),
+    usage_count: Number(row.usage_count),
   }));
 }

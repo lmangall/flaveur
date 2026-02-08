@@ -95,7 +95,7 @@ export default function NewWorkspacePage() {
         <CardHeader>
           <CardTitle>Create Workspace</CardTitle>
           <CardDescription>
-            Create a new workspace to collaborate with your team on flavours and
+            Create a new workspace to collaborate with your team on formulas and
             documents.
           </CardDescription>
         </CardHeader>

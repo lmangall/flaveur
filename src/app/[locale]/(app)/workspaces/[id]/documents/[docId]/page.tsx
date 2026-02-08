@@ -31,7 +31,7 @@ import { MarkdownEditor } from "@/app/[locale]/components/markdown-editor";
 import { CSVEditor } from "@/app/[locale]/components/csv-editor";
 import type { WorkspaceDocument } from "@/app/type";
 import type { WorkspaceRoleValue } from "@/constants";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 function getDocumentIcon(type: string) {
   switch (type) {

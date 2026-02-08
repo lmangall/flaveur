@@ -38,14 +38,14 @@ import {
 } from "lucide-react";
 import {
   getWorkspaceById,
-  getWorkspaceFlavours,
+  getWorkspaceFormulas,
   getWorkspaceInvites,
 } from "@/actions/workspaces";
 import { getWorkspaceDocuments } from "@/actions/documents";
 import { WorkspaceMemberDialog } from "@/app/[locale]/components/workspace-member-dialog";
 import { DocumentUploadDialog } from "@/app/[locale]/components/document-upload-dialog";
-import { LinkFlavourDialog } from "@/app/[locale]/components/link-flavour-dialog";
-import type { Workspace, WorkspaceMember, WorkspaceDocument, WorkspaceFlavour, Flavour, WorkspaceInvite } from "@/app/type";
+import { LinkFormulaDialog } from "@/app/[locale]/components/link-formula-dialog";
+import type { Workspace, WorkspaceMember, WorkspaceDocument, WorkspaceFormula, Formula, WorkspaceInvite } from "@/app/type";
 import type { WorkspaceRoleValue } from "@/constants";
 
 type MemberWithDetails = WorkspaceMember & { email: string; username: string | null };
@@ -179,31 +179,31 @@ function DocumentCard({ document }: { document: WorkspaceDocument }) {
   );
 }
 
-function FlavourCard({
+function FormulaCard({
   link,
 }: {
-  link: WorkspaceFlavour & { flavour: Flavour };
+  link: WorkspaceFormula & { formula: Formula };
 }) {
-  const flavour = link.flavour;
+  const formula = link.formula;
   return (
     <Card hover glow>
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <FlaskConical className="h-4 w-4" />
-          <CardTitle className="text-base">{flavour.name}</CardTitle>
+          <CardTitle className="text-base">{formula.name}</CardTitle>
         </div>
-        {flavour.description && (
+        {formula.description && (
           <CardDescription className="line-clamp-2">
-            {flavour.description}
+            {formula.description}
           </CardDescription>
         )}
       </CardHeader>
       <CardContent className="pb-2">
-        <Badge variant="outline">{flavour.status}</Badge>
+        <Badge variant="outline">{formula.status}</Badge>
       </CardContent>
       <CardFooter className="border-t pt-3">
         <Button variant="ghost" size="sm" asChild className="ml-auto">
-          <Link href={`/flavours/${flavour.flavour_id}`}>View Flavour</Link>
+          <Link href={`/formulas/${formula.formula_id}`}>View Formula</Link>
         </Button>
       </CardFooter>
     </Card>
@@ -256,8 +256,8 @@ export default function WorkspaceDetailPage() {
 
   const [workspace, setWorkspace] = useState<WorkspaceWithMembers | null>(null);
   const [documents, setDocuments] = useState<WorkspaceDocument[]>([]);
-  const [flavourLinks, setFlavourLinks] = useState<
-    (WorkspaceFlavour & { flavour: Flavour })[]
+  const [formulaLinks, setFormulaLinks] = useState<
+    (WorkspaceFormula & { formula: Formula })[]
   >([]);
   const [invites, setInvites] = useState<WorkspaceInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -265,7 +265,7 @@ export default function WorkspaceDetailPage() {
   const [activeTab, setActiveTab] = useState("documents");
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
-  const [flavourDialogOpen, setFlavourDialogOpen] = useState(false);
+  const [formulaDialogOpen, setFormulaDialogOpen] = useState(false);
 
   const canEdit = workspace?.role === "owner" || workspace?.role === "editor";
 
@@ -296,12 +296,12 @@ export default function WorkspaceDetailPage() {
     }
   }, [workspaceId]);
 
-  const fetchFlavours = useCallback(async () => {
+  const fetchFormulas = useCallback(async () => {
     try {
-      const data = await getWorkspaceFlavours(workspaceId);
-      setFlavourLinks(data);
+      const data = await getWorkspaceFormulas(workspaceId);
+      setFormulaLinks(data);
     } catch (err) {
-      console.error("Failed to fetch flavours:", err);
+      console.error("Failed to fetch formulas:", err);
     }
   }, [workspaceId]);
 
@@ -329,8 +329,8 @@ export default function WorkspaceDetailPage() {
 
     if (activeTab === "documents" && documents.length === 0) {
       fetchDocuments();
-    } else if (activeTab === "flavours" && flavourLinks.length === 0) {
-      fetchFlavours();
+    } else if (activeTab === "formulas" && formulaLinks.length === 0) {
+      fetchFormulas();
     } else if (activeTab === "members" && canEdit && invites.length === 0) {
       fetchInvites();
     }
@@ -338,11 +338,11 @@ export default function WorkspaceDetailPage() {
     activeTab,
     workspace,
     documents.length,
-    flavourLinks.length,
+    formulaLinks.length,
     invites.length,
     canEdit,
     fetchDocuments,
-    fetchFlavours,
+    fetchFormulas,
     fetchInvites,
   ]);
 
@@ -415,9 +415,9 @@ export default function WorkspaceDetailPage() {
             <FileText className="h-4 w-4 mr-2" />
             Documents
           </TabsTrigger>
-          <TabsTrigger value="flavours">
+          <TabsTrigger value="formulas">
             <FlaskConical className="h-4 w-4 mr-2" />
-            Flavours
+            Formulas
           </TabsTrigger>
           <TabsTrigger value="members">
             <Users className="h-4 w-4 mr-2" />
@@ -465,43 +465,43 @@ export default function WorkspaceDetailPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="flavours" className="space-y-4">
+        <TabsContent value="formulas" className="space-y-4">
           {canEdit && (
             <div className="flex justify-end">
-              <Button size="sm" onClick={() => setFlavourDialogOpen(true)}>
+              <Button size="sm" onClick={() => setFormulaDialogOpen(true)}>
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Link Flavour
+                Link Formula
               </Button>
             </div>
           )}
-          {flavourLinks.length > 0 ? (
+          {formulaLinks.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
-              {flavourLinks.map((link) => (
-                <FlavourCard key={link.flavour_id} link={link} />
+              {formulaLinks.map((link) => (
+                <FormulaCard key={link.formula_id} link={link} />
               ))}
             </div>
           ) : (
             <Card className="p-8 text-center">
               <FlaskConical className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-4">
-                No flavours linked. {canEdit && "Link your personal flavours to collaborate on them."}
+                No formulas linked. {canEdit && "Link your personal formulas to collaborate on them."}
               </p>
               {canEdit && (
-                <Button onClick={() => setFlavourDialogOpen(true)}>
+                <Button onClick={() => setFormulaDialogOpen(true)}>
                   <PlusCircle className="h-4 w-4 mr-2" />
-                  Link First Flavour
+                  Link First Formula
                 </Button>
               )}
             </Card>
           )}
 
           {workspace && (
-            <LinkFlavourDialog
-              open={flavourDialogOpen}
-              onOpenChange={setFlavourDialogOpen}
+            <LinkFormulaDialog
+              open={formulaDialogOpen}
+              onOpenChange={setFormulaDialogOpen}
               workspaceId={workspace.workspace_id}
-              linkedFlavourIds={flavourLinks.map((l) => l.flavour_id)}
-              onFlavourLinked={fetchFlavours}
+              linkedFormulaIds={formulaLinks.map((l) => l.formula_id)}
+              onFormulaLinked={fetchFormulas}
             />
           )}
         </TabsContent>

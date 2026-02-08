@@ -66,8 +66,8 @@ export default async function InvitePage({ searchParams, params }: Props) {
           </div>
           <h1 className="text-2xl font-bold mb-4">{t("inviteAlreadyAccepted")}</h1>
           <p className="text-muted-foreground mb-6">{t("inviteAlreadyAcceptedDescription")}</p>
-          <Link href={`/${locale}/flavours/${invite.flavour_id}`}>
-            <Button>{t("viewFlavour")}</Button>
+          <Link href={`/${locale}/formulas/${invite.formula_id}`}>
+            <Button>{t("viewFormula")}</Button>
           </Link>
         </div>
       </div>
@@ -76,19 +76,19 @@ export default async function InvitePage({ searchParams, params }: Props) {
 
   // User is logged in - try to accept the invite
   if (userId) {
-    let acceptResult: { flavourId: number } | null = null;
+    let acceptResult: { formulaId: number } | null = null;
     let acceptError: string | null = null;
 
     try {
       acceptResult = await acceptInvite(token);
     } catch (error) {
-      // Handle error - might be wrong email, own flavour, etc.
+      // Handle error - might be wrong email, own formula, etc.
       acceptError = error instanceof Error ? error.message : "Unknown error";
     }
 
     // If successful, redirect (must be outside try-catch since redirect throws)
     if (acceptResult) {
-      redirect(`/${locale}/flavours/${acceptResult.flavourId}?welcome=true`);
+      redirect(`/${locale}/formulas/${acceptResult.formulaId}?welcome=true`);
     }
 
     // Show error page
@@ -129,7 +129,7 @@ export default async function InvitePage({ searchParams, params }: Props) {
         <p className="text-muted-foreground mb-2">
           <strong>{invite.inviter_name}</strong> {t("invitedYouToView")}
         </p>
-        <p className="text-xl font-semibold mb-6">"{invite.flavour_name}"</p>
+        <p className="text-xl font-semibold mb-6">"{invite.formula_name}"</p>
 
         <div className="bg-muted rounded-lg p-4 mb-6">
           <p className="text-sm text-muted-foreground">

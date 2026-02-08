@@ -1,5 +1,5 @@
 // Re-export all constants
-export * from "./flavour";
+export * from "./formula";
 export * from "./job";
 export * from "./contribution";
 export * from "./workspace";
@@ -7,3 +7,5 @@ export * from "./learning";
 export * from "./samples";
 export * from "./profile";
 export * from "./job-monitor";
+export * from "./perfumery";
+export * from "./cosmetics";

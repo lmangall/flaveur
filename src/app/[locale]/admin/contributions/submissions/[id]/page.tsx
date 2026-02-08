@@ -175,9 +175,9 @@ export default function AdminSubmissionReviewPage() {
     setIsProcessing(true);
     try {
       const result = await rejectSubstance(substanceId, rejectionReason);
-      if (result.removedFromFlavours > 0) {
+      if (result.removedFromFormulas > 0) {
         alert(
-          `Substance rejected. It was removed from ${result.removedFromFlavours} flavour(s).`
+          `Substance rejected. It was removed from ${result.removedFromFormulas} formula(s).`
         );
       }
       router.push("/admin/contributions/submissions?rejected=1");
@@ -403,7 +403,7 @@ export default function AdminSubmissionReviewPage() {
                       <DialogTitle>Reject Submission</DialogTitle>
                       <DialogDescription>
                         This will permanently delete the substance. If it's being
-                        used in any flavours, it will be removed from them.
+                        used in any formulas, it will be removed from them.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">

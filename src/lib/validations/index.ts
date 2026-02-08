@@ -1,5 +1,5 @@
 // Re-export all validation schemas
-export * from "./flavour";
+export * from "./formula";
 export * from "./category";
 export * from "./newsletter";
 export * from "./job-alerts";

@@ -31,7 +31,7 @@ import {
 import { useTranslations } from "next-intl";
 import { getJobs, addJobInteraction } from "@/actions/jobs";
 import { EMPLOYMENT_TYPE_OPTIONS, EXPERIENCE_LEVEL_OPTIONS } from "@/constants";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface JobOffer {
   id: string;

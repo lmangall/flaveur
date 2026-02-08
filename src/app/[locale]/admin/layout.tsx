@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin";
 import { getLocale } from "next-intl/server";
+import { AppLayoutClient } from "../(app)/layout-client";
 
 export default async function AdminLayout({
   children,
@@ -14,6 +15,9 @@ export default async function AdminLayout({
     redirect(`/${locale}`);
   }
 
-  // Admin navigation is now handled by the main AppSidebar
-  return <div className="p-6 max-w-6xl">{children}</div>;
+  return (
+    <AppLayoutClient>
+      <div className="p-6 max-w-6xl">{children}</div>
+    </AppLayoutClient>
+  );
 }

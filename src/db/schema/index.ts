@@ -6,7 +6,7 @@ export * from "./user";
 export * from "./auth";
 export * from "./misc";
 export * from "./substance";
-export * from "./flavour";
+export * from "./formula";
 export * from "./workspace";
 export * from "./learning";
 export * from "./jobs";

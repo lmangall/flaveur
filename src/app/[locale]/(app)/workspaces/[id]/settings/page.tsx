@@ -270,7 +270,7 @@ export default function WorkspaceSettingsPage() {
                     <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
                     <AlertDialogDescription>
                       Are you sure you want to delete this workspace? This action
-                      cannot be undone. All documents and linked flavours will be
+                      cannot be undone. All documents and linked formulas will be
                       removed from this workspace.
                     </AlertDialogDescription>
                   </AlertDialogHeader>

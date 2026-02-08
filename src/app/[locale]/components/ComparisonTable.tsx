@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/app/[locale]/components/ui/table";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   bulkUpdateVariations,
@@ -29,7 +29,7 @@ interface ComparisonTableProps {
 }
 
 type ConcentrationUpdate = {
-  flavourId: number;
+  formulaId: number;
   substanceId: number;
   concentration: number;
 };
@@ -39,7 +39,7 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
   const { visibleIds: visibleVariations, toggleVisibility: toggleVariation } =
     useColumnVisibility(
       data.group.group_id,
-      data.variations.map((v) => v.flavour_id)
+      data.variations.map((v) => v.formula_id)
     );
 
   const [pendingUpdates, setPendingUpdates] = useState<Map<string, ConcentrationUpdate>>(
@@ -48,7 +48,7 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isSettingMain, setIsSettingMain] = useState<number | null>(null);
 
-  // Build a map for quick lookup: substanceId -> { flavourId -> concentration }
+  // Build a map for quick lookup: substanceId -> { formulaId -> concentration }
   const concentrationMap = useMemo(() => {
     const map = new Map<number, Map<number, number>>();
     for (const variation of data.variations) {
@@ -58,7 +58,7 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
         }
         map
           .get(substance.substance_id)!
-          .set(variation.flavour_id, substance.concentration ?? 0);
+          .set(variation.formula_id, substance.concentration ?? 0);
       }
     }
     return map;
@@ -67,26 +67,26 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
   // Get concentration value (with pending updates applied)
   const getConcentration = (
     substanceId: number,
-    flavourId: number
+    formulaId: number
   ): number | null => {
-    const key = `${flavourId}-${substanceId}`;
+    const key = `${formulaId}-${substanceId}`;
     const pending = pendingUpdates.get(key);
     if (pending) {
       return pending.concentration;
     }
-    return concentrationMap.get(substanceId)?.get(flavourId) ?? null;
+    return concentrationMap.get(substanceId)?.get(formulaId) ?? null;
   };
 
   // Handle slider change
   const handleConcentrationChange = (
-    flavourId: number,
+    formulaId: number,
     substanceId: number,
     newValue: number
   ) => {
-    const key = `${flavourId}-${substanceId}`;
+    const key = `${formulaId}-${substanceId}`;
     setPendingUpdates((prev) => {
       const newMap = new Map(prev);
-      newMap.set(key, { flavourId, substanceId, concentration: newValue });
+      newMap.set(key, { formulaId, substanceId, concentration: newValue });
       return newMap;
     });
   };
@@ -114,10 +114,10 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
   };
 
   // Set main variation
-  const handleSetMain = async (flavourId: number) => {
-    setIsSettingMain(flavourId);
+  const handleSetMain = async (formulaId: number) => {
+    setIsSettingMain(formulaId);
     try {
-      await setMainVariation(flavourId);
+      await setMainVariation(formulaId);
       toast.success("Main variation updated");
       onDataChange?.();
     } catch (error) {
@@ -130,7 +130,7 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
 
   // Get visible variations
   const visibleVariationsList = data.variations.filter((v) =>
-    visibleVariations.has(v.flavour_id)
+    visibleVariations.has(v.formula_id)
   );
 
   // Calculate max concentration for slider range
@@ -151,26 +151,26 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
   // Calculate total for a variation
   const calculateTotal = (variation: VariationWithSubstances): number => {
     return variation.substances.reduce((total, sub) => {
-      const concentration = getConcentration(sub.substance_id, variation.flavour_id);
+      const concentration = getConcentration(sub.substance_id, variation.formula_id);
       return total + (concentration ?? 0);
     }, 0);
   };
 
   // Check if a substance is missing from a variation
-  const isMissing = (substanceId: number, flavourId: number): boolean => {
-    const variation = data.variations.find((v) => v.flavour_id === flavourId);
+  const isMissing = (substanceId: number, formulaId: number): boolean => {
+    const variation = data.variations.find((v) => v.formula_id === formulaId);
     if (!variation) return true;
     return !variation.substances.some((s) => s.substance_id === substanceId);
   };
 
   // Check if a substance is unique to this variation
-  const isUnique = (substanceId: number, flavourId: number): boolean => {
+  const isUnique = (substanceId: number, formulaId: number): boolean => {
     const variationsWithSubstance = data.variations.filter((v) =>
       v.substances.some((s) => s.substance_id === substanceId)
     );
     return (
       variationsWithSubstance.length === 1 &&
-      variationsWithSubstance[0].flavour_id === flavourId
+      variationsWithSubstance[0].formula_id === formulaId
     );
   };
 
@@ -211,7 +211,7 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
               </TableHead>
               {visibleVariationsList.map((variation) => (
                 <TableHead
-                  key={variation.flavour_id}
+                  key={variation.formula_id}
                   className="min-w-[200px] text-center"
                 >
                   <div className="flex flex-col items-center gap-1">
@@ -220,7 +220,7 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                       ) : (
                         <button
-                          onClick={() => handleSetMain(variation.flavour_id)}
+                          onClick={() => handleSetMain(variation.formula_id)}
                           disabled={isSettingMain !== null}
                           className="hover:text-yellow-400 transition-colors"
                         >
@@ -255,20 +255,20 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
                   {visibleVariationsList.map((variation) => {
                     const concentration = getConcentration(
                       substance.substance_id,
-                      variation.flavour_id
+                      variation.formula_id
                     );
                     const missing = isMissing(
                       substance.substance_id,
-                      variation.flavour_id
+                      variation.formula_id
                     );
                     const unique = isUnique(
                       substance.substance_id,
-                      variation.flavour_id
+                      variation.formula_id
                     );
 
                     return (
                       <TableCell
-                        key={variation.flavour_id}
+                        key={variation.formula_id}
                         className={cn(
                           "text-center",
                           missing && "bg-red-50 dark:bg-red-950/20",
@@ -287,7 +287,7 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
                                 value={[concentration ?? 0]}
                                 onValueChange={(values) =>
                                   handleConcentrationChange(
-                                    variation.flavour_id,
+                                    variation.formula_id,
                                     substance.substance_id,
                                     values[0]
                                   )
@@ -323,7 +323,7 @@ export function ComparisonTable({ data, onDataChange }: ComparisonTableProps) {
                 TOTAL
               </TableCell>
               {visibleVariationsList.map((variation) => (
-                <TableCell key={variation.flavour_id} className="text-center">
+                <TableCell key={variation.formula_id} className="text-center">
                   <span className="font-mono">
                     {calculateTotal(variation).toFixed(2)}
                   </span>

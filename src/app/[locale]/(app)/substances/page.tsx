@@ -41,6 +41,16 @@ import { SubstanceSearch } from "@/app/[locale]/components/substance-search";
 import { MoleculeImage } from "@/app/[locale]/components/ui/molecule-image";
 import { EUStatusBadge } from "@/app/[locale]/components/eu-status-badge";
 import { Badge } from "@/app/[locale]/components/ui/badge";
+import { OlfactiveFamilyBadge, VolatilityBadge, DomainBadge } from "@/app/[locale]/components/olfactive-family-badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/[locale]/components/ui/select";
+import { Cookie, Droplets, FlaskConical } from "lucide-react";
+import type { UserDomain } from "@/lib/domain-filter";
 import {
   Tooltip,
   TooltipContent,
@@ -57,7 +67,7 @@ import {
   searchSubstances,
   getSubstanceByFemaNumber,
 } from "@/actions/substances";
-import { addSubstanceToFlavour } from "@/actions/flavours";
+import { addSubstanceToFormula } from "@/actions/formulas";
 import { addToLearningQueue } from "@/actions/learning";
 
 type Substance = {
@@ -91,6 +101,27 @@ type Substance = {
   solubility?: Record<string, unknown>;
   food_additive_classes?: string[];
   alternative_names?: string[];
+  // Perfumery fields
+  volatility_class?: string | null;
+  olfactive_family?: string | null;
+  odor_profile_tags?: string[] | null;
+  substantivity?: string | null;
+  performance_notes?: string | null;
+  uses_in_perfumery?: string | null;
+  use_level?: string | null;
+  stability_notes?: string | null;
+  price_range?: string | null;
+  is_blend?: boolean | null;
+  botanical_name?: string | null;
+  extraction_process?: string | null;
+  major_components?: string | null;
+  vegan?: boolean | null;
+  appearance?: string | null;
+  density?: string | null;
+  refractive_index?: string | null;
+  flash_point?: string | null;
+  vapor_pressure?: string | null;
+  domain?: string | null;
 };
 
 export default function SubstancesPage() {
@@ -105,6 +136,7 @@ export default function SubstancesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [newSubstance, setNewSubstance] = useState({
     fema_number: "",
     common_name: "",
@@ -120,6 +152,7 @@ export default function SubstancesPage() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactSubstance, setContactSubstance] = useState<Substance | null>(null);
   const [addingToQueueId, setAddingToQueueId] = useState<number | null>(null);
+  const [domainFilter, setDomainFilter] = useState<UserDomain | "all">("all");
 
   const ITEMS_PER_PAGE = 20;
 
@@ -127,7 +160,8 @@ export default function SubstancesPage() {
     setIsLoading(true);
     try {
       if (searchQuery) {
-        const data = await searchSubstances(searchQuery, searchType, currentPage);
+        const domain = domainFilter === "all" ? "flavor" : domainFilter;
+        const data = await searchSubstances(searchQuery, searchType, currentPage, ITEMS_PER_PAGE, domain);
         setSubstances(data.results as Substance[]);
       } else {
         const data = await getSubstances(currentPage);
@@ -138,11 +172,15 @@ export default function SubstancesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, searchQuery, searchType]);
+  }, [currentPage, searchQuery, searchType, domainFilter]);
 
   useEffect(() => {
     fetchSubstancesData();
   }, [currentPage, fetchSubstancesData]);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Remove the local filtering since we're now using backend search
   const filteredSubstances = substances;
@@ -170,9 +208,9 @@ export default function SubstancesPage() {
         return;
       }
 
-      // Step 2: Add the substance to a flavour using server action
-      // Note: This is a placeholder - you should pass the actual flavour ID
-      await addSubstanceToFlavour(6, {
+      // Step 2: Add the substance to a formula using server action
+      // Note: This is a placeholder - you should pass the actual formula ID
+      await addSubstanceToFormula(6, {
         fema_number: femaNumber,
         concentration: 10.5, // Example concentration
         unit: "g/kg",
@@ -342,10 +380,33 @@ export default function SubstancesPage() {
           onSearchChange={setSearchQuery}
           onSearchTypeChange={setSearchType}
         />
+        <Select value={domainFilter} onValueChange={(val) => setDomainFilter(val as UserDomain | "all")}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All domains" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All domains</SelectItem>
+            <SelectItem value="flavor">
+              <span className="flex items-center gap-2">
+                <Cookie className="h-3 w-3" /> Flavor
+              </span>
+            </SelectItem>
+            <SelectItem value="fragrance">
+              <span className="flex items-center gap-2">
+                <Droplets className="h-3 w-3" /> Fragrance
+              </span>
+            </SelectItem>
+            <SelectItem value="cosmetic">
+              <span className="flex items-center gap-2">
+                <FlaskConical className="h-3 w-3" /> Cosmetic
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Learning feature tip */}
-      {isSignedIn && (
+      {isHydrated && isSignedIn && (
         <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
           <BookOpen className="h-5 w-5 text-primary shrink-0" />
           <p className="text-sm text-muted-foreground">
@@ -366,13 +427,11 @@ export default function SubstancesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[60px]">Structure</TableHead>
-                  <TableHead>FEMA #</TableHead>
-                  <TableHead>CAS ID</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>EU Status</TableHead>
-                  <TableHead>Taste</TableHead>
-                  <TableHead>Olfactory Notes</TableHead>
-                  <TableHead>Flavor Profile</TableHead>
+                  <TableHead>CAS ID</TableHead>
+                  <TableHead>Domain</TableHead>
+                  <TableHead>Family / Profile</TableHead>
+                  <TableHead>Odor / Scent</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -391,24 +450,45 @@ export default function SubstancesPage() {
                         size={48}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {substance.fema_number}
-                    </TableCell>
-                    <TableCell>{substance.cas_id}</TableCell>
-                    <TableCell>{substance.common_name}</TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <EUStatusBadge
-                        chemicalName={substance.common_name}
-                        alternativeNames={substance.alternative_names}
-                        compact
-                        showLink={false}
-                      />
-                    </TableCell>
-                    <TableCell>{substance.taste || "-"}</TableCell>
                     <TableCell>
-                      {substance.olfactory_taste_notes || "-"}
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium">{substance.common_name}</span>
+                        <div className="flex gap-1 flex-wrap">
+                          {substance.fema_number > 0 && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              FEMA {substance.fema_number}
+                            </Badge>
+                          )}
+                          {substance.volatility_class && (
+                            <VolatilityBadge volatilityClass={substance.volatility_class} size="sm" />
+                          )}
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell>{substance.flavor_profile || "-"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{substance.cas_id || "-"}</TableCell>
+                    <TableCell>
+                      {substance.domain ? (
+                        <DomainBadge domain={substance.domain} size="sm" />
+                      ) : (
+                        <DomainBadge domain="flavor" size="sm" />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {substance.olfactive_family ? (
+                        <OlfactiveFamilyBadge family={substance.olfactive_family} size="sm" />
+                      ) : substance.flavor_profile ? (
+                        <span className="text-sm text-muted-foreground line-clamp-2">{substance.flavor_profile}</span>
+                      ) : substance.olfactory_taste_notes ? (
+                        <span className="text-sm text-muted-foreground line-clamp-2">{substance.olfactory_taste_notes}</span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground line-clamp-2">
+                        {substance.odor || substance.taste || "-"}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         {isSignedIn && (

@@ -51,7 +51,7 @@ export function RadarOverlay({ variations, visibleIds }: RadarOverlayProps) {
 
   // Get visible variations
   const visibleVariations = variations.filter((v) =>
-    visibleIds.has(v.flavour_id)
+    visibleIds.has(v.formula_id)
   );
 
   // Check if any variation has flavor profile data
@@ -63,7 +63,7 @@ export function RadarOverlay({ variations, visibleIds }: RadarOverlayProps) {
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {};
     visibleVariations.forEach((variation, index) => {
-      const key = `var_${variation.flavour_id}`;
+      const key = `var_${variation.formula_id}`;
       config[key] = {
         label: variation.variation_label || variation.name,
         color: COLORS[index % COLORS.length],
@@ -91,7 +91,7 @@ export function RadarOverlay({ variations, visibleIds }: RadarOverlayProps) {
       const item: FlavorData = { attribute };
 
       for (const variation of visibleVariations) {
-        const key = `var_${variation.flavour_id}`;
+        const key = `var_${variation.formula_id}`;
         // Find the attribute value in this variation's flavor profile
         const profileAttr = variation.flavor_profile?.find(
           (p) => p.attribute === attribute
@@ -169,9 +169,9 @@ export function RadarOverlay({ variations, visibleIds }: RadarOverlayProps) {
                 <PolarAngleAxis dataKey="attribute" />
                 {visibleVariations.map((variation, index) => (
                   <Radar
-                    key={variation.flavour_id}
+                    key={variation.formula_id}
                     name={variation.variation_label || variation.name}
-                    dataKey={`var_${variation.flavour_id}`}
+                    dataKey={`var_${variation.formula_id}`}
                     fill={COLORS[index % COLORS.length]}
                     fillOpacity={0.2}
                     stroke={COLORS[index % COLORS.length]}
@@ -190,7 +190,7 @@ export function RadarOverlay({ variations, visibleIds }: RadarOverlayProps) {
             </p>
             {visibleVariations.map((variation, index) => (
               <div
-                key={variation.flavour_id}
+                key={variation.formula_id}
                 className="flex items-center gap-2 text-sm"
               >
                 <div

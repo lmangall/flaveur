@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronRight, Home } from "lucide-react";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 // Static route labels for known segments
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
-  flavours: "Flavours",
+  formulas: "Formulas",
   workspaces: "Workspaces",
   substances: "Substances",
   learn: "Learn",
@@ -27,6 +27,7 @@ const ROUTE_LABELS: Record<string, string> = {
   documents: "Documents",
   submit: "Submit",
   invite: "Invite",
+  ingredients: "Ingredients",
 };
 
 interface BreadcrumbItem {
@@ -37,7 +38,7 @@ interface BreadcrumbItem {
 
 interface BreadcrumbsProps {
   // Optional dynamic labels for segments that have IDs
-  // e.g., { "123": "Vanilla Extract" } for /flavours/123
+  // e.g., { "123": "Vanilla Extract" } for /formulas/123
   dynamicLabels?: Record<string, string>;
   className?: string;
 }
@@ -65,7 +66,7 @@ export function Breadcrumbs({ dynamicLabels = {}, className }: BreadcrumbsProps)
 
     // Check for dynamic label first (for IDs)
     if (dynamicLabels[segment]) {
-      // Dynamic labels (like flavour names) should not be translated
+      // Dynamic labels (like formula names) should not be translated
       return { label: dynamicLabels[segment], href, isCurrentPage };
     }
 

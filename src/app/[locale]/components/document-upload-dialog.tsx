@@ -28,7 +28,7 @@ import { Textarea } from "@/app/[locale]/components/ui/textarea";
 import { toast } from "sonner";
 import { createTextDocument, createFileDocument } from "@/actions/documents";
 import { MAX_FILE_SIZE_MB, getDocumentTypeFromMime } from "@/constants/workspace";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 
 type ActionType = "upload" | "create-doc" | "create-csv";
 

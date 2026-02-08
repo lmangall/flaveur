@@ -24,7 +24,7 @@ import {
   type SupportMessage,
 } from "@/actions/support";
 import { Send, User, Shield, ArrowLeft, Loader2 } from "lucide-react";
-import { cn } from "@/app/lib/utils";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { toast } from "sonner";
