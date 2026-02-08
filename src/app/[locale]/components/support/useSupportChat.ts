@@ -227,7 +227,13 @@ export function useSupportChat() {
         });
 
         if (result.success && result.message) {
-          setMessages((prev) => [...prev, result.message]);
+          setMessages((prev) => {
+            // Prevent duplicates by checking if message already exists
+            if (prev.some((m) => m.message_id === result.message!.message_id)) {
+              return prev;
+            }
+            return [...prev, result.message!];
+          });
           return true;
         } else {
           setError(result.error || "Failed to send message");
@@ -258,7 +264,13 @@ export function useSupportChat() {
       ]);
 
       if (messagesResult.success && messagesResult.messages && messagesResult.messages.length > 0) {
-        setMessages((prev) => [...prev, ...messagesResult.messages!]);
+        setMessages((prev) => {
+          // Prevent duplicates by filtering out messages that already exist
+          const existingIds = new Set(prev.map((m) => m.message_id));
+          const newMessages = messagesResult.messages!.filter((m) => !existingIds.has(m.message_id));
+          if (newMessages.length === 0) return prev;
+          return [...prev, ...newMessages];
+        });
       }
 
       if (typingResult.success) {
