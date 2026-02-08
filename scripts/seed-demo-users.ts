@@ -528,7 +528,7 @@ Acétate de néryle,23.56,0.2,MS + RI`,
     ],
   },
   {
-    name: "Recherche & Développement - Flaveur",
+    name: "Recherche & Développement - Oumamie",
     description: "Workspace personnel pour le développement de nouvelles formules et la gestion des projets clients. Documentation technique et notes de travail.",
     created_by_user_id: "LMANGALL",
     flavour_names: [],

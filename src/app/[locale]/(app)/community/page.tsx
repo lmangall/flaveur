@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { useTranslations } from "next-intl";
 import {
@@ -62,6 +62,7 @@ function FlavorCardSkeleton() {
 }
 
 function CommunityFlavorCard({ flavor }: { flavor: CommunityFlavor }) {
+  const router = useRouter();
   const t = useTranslations("Community");
 
   const getProjectIcon = (type: string) => {
@@ -76,7 +77,10 @@ function CommunityFlavorCard({ flavor }: { flavor: CommunityFlavor }) {
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card
+      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => router.push(`/formulas/${flavor.formula_id}`)}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg truncate">{flavor.name}</CardTitle>
@@ -108,13 +112,6 @@ function CommunityFlavorCard({ flavor }: { flavor: CommunityFlavor }) {
           )}
         </div>
       </CardContent>
-      <CardFooter className="border-t bg-muted/30 pt-3">
-        <Button variant="outline" size="sm" asChild className="w-full">
-          <Link href={`/formulas/${flavor.formula_id}`}>
-            {t("viewFormula")}
-          </Link>
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

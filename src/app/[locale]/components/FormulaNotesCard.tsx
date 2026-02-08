@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
   Card,
@@ -33,19 +33,31 @@ export function FormulaNotesCard({
 }: FormulaNotesCardProps) {
   const t = useTranslations("FormulaNotes");
   const [notes, setNotes] = useState(initialNotes || "");
-  const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isIdeasOpen, setIsIdeasOpen] = useState(false);
 
+  // Track last saved value with a ref to avoid effect dependency issues
+  const lastSavedRef = useRef(initialNotes || "");
+
+  // Derive hasChanges from current notes vs last saved
+  const hasChanges = notes !== lastSavedRef.current;
+
   // Autosave with debounce
   useEffect(() => {
-    if (!hasChanges || readOnly) return;
+    if (readOnly) return;
+    if (notes === lastSavedRef.current) return; // No changes to save
 
     const saveTimer = setTimeout(async () => {
+      // Capture the value we're about to save
+      const valueToSave = notes;
+
+      // Skip if it matches what we already saved (race condition safety)
+      if (valueToSave === lastSavedRef.current) return;
+
       setIsSaving(true);
       try {
-        await updateFormulaNotes(formulaId, notes || null);
-        setHasChanges(false);
+        await updateFormulaNotes(formulaId, valueToSave || null);
+        lastSavedRef.current = valueToSave;
       } catch (error) {
         console.error("Error auto-saving notes:", error);
         toast.error(t("failedToSaveNotes"));
@@ -55,11 +67,10 @@ export function FormulaNotesCard({
     }, 800);
 
     return () => clearTimeout(saveTimer);
-  }, [notes, hasChanges, readOnly, formulaId, t]);
+  }, [notes, readOnly, formulaId, t]);
 
   const handleNotesChange = (newNotes: string) => {
     setNotes(newNotes);
-    setHasChanges(true);
   };
 
   const notesIdeas = [

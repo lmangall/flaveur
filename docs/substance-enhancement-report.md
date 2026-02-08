@@ -1,6 +1,6 @@
 # Substance Database Enhancement Report
 
-**Project:** Oumamie/Flaveur
+**Project:** Oumamie
 **Date:** January 2026
 **Database:** Neon PostgreSQL
 

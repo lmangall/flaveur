@@ -82,7 +82,7 @@ export default function Navbar() {
           <div className="relative h-12 w-12">
             <Image
               src="/logo_transparent_bg_tiny.png"
-              alt="Flaveur Logo"
+              alt="Oumamie Logo"
               fill
               className="object-contain"
             />
@@ -214,7 +214,7 @@ export default function Navbar() {
                 <div className="relative h-10 w-10">
                   <Image
                     src="/logo_transparent_bg_tiny.png"
-                    alt="Flaveur Logo"
+                    alt="Oumamie Logo"
                     fill
                     className="object-contain"
                   />

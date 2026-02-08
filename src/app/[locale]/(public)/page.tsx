@@ -97,7 +97,7 @@ export default function Home() {
                 <div className="relative h-[230px] w-[320px] sm:h-[290px] sm:w-[400px] lg:h-[310px] lg:w-[450px] overflow-hidden">
                   <Image
                     src="/logo_transparent_bg.png"
-                    alt="Flaveur Logo"
+                    alt="Oumamie Logo"
                     width={450}
                     height={450}
                     className="object-cover object-top logo-adaptive"

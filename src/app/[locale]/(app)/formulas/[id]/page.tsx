@@ -26,7 +26,13 @@ import {
   CardTitle,
 } from "@/app/[locale]/components/ui/card";
 import { Badge } from "@/app/[locale]/components/ui/badge";
-import { Eye, EyeOff, ChevronDown, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Share2, Shield, HelpCircle, MoreVertical, Check, RefreshCw, Loader2 } from "lucide-react";
+import { PillSelect } from "@/app/[locale]/components/ui/pill-select";
+import { Eye, EyeOff, ChevronDown, ChevronUp, ChevronRight, Trash2, Pencil, Copy, ArrowLeft, Plus, X, Share2, Shield, HelpCircle, MoreVertical, Check, RefreshCw, Loader2, Package, Settings2, Calendar, Tag, Hash, SlidersHorizontal } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/app/[locale]/components/ui/collapsible";
 import {
   Tooltip,
   TooltipContent,
@@ -100,7 +106,13 @@ import { PhaseGroupedView } from "@/app/[locale]/components/PhaseGroupedView";
 import { SubstanceDetailsModal, SubstanceForModal } from "@/app/[locale]/components/substance-details-modal";
 import { CompoundRow, type CompoundIngredient, type NestedSubstance } from "@/app/[locale]/components/compound-row";
 import { CompoundSearchInput } from "@/app/[locale]/components/compound-search-input";
-import { IngredientTypeToggle, type IngredientType } from "@/app/[locale]/components/ingredient-type-toggle";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   addCompoundToFormula,
   removeCompoundFromFormula,
@@ -149,6 +161,8 @@ interface FlavorProfileChartProps {
     minimumAttributes: string;
     flavorProfileSaved: string;
     failedToSaveProfile: string;
+    editProfile: string;
+    hideControls: string;
   };
 }
 
@@ -160,6 +174,7 @@ function FlavorProfileChart({ formulaId, initialProfile, readOnly = false, trans
   const [isSaving, setIsSaving] = useState(false);
   const [newAttribute, setNewAttribute] = useState("");
   const [isAddingAttribute, setIsAddingAttribute] = useState(false);
+  const [showSliders, setShowSliders] = useState(false);
 
   // Autosave with debounce
   useEffect(() => {
@@ -215,9 +230,12 @@ function FlavorProfileChart({ formulaId, initialProfile, readOnly = false, trans
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Radar Chart */}
-        <div className="flex-shrink-0">
+      {/* Radar Chart - centered when sliders hidden */}
+      <div className={cn(
+        "flex gap-6",
+        showSliders ? "flex-col md:flex-row" : "flex-col items-center"
+      )}>
+        <div className={cn("shrink-0", !showSliders && "mx-auto")}>
           <ChartContainer config={chartConfig} className="h-[250px] w-[300px]">
             <RadarChart data={profile}>
               <ChartTooltip
@@ -238,93 +256,107 @@ function FlavorProfileChart({ formulaId, initialProfile, readOnly = false, trans
           </ChartContainer>
         </div>
 
-        {/* Attribute Controls */}
-        <div className="flex-1 space-y-3">
-          {profile.map((item, index) => (
-            <div key={index} className="flex items-center gap-3">
-              {readOnly ? (
-                <span className="w-28 text-sm font-medium">{item.attribute}</span>
-              ) : (
-                <Input
-                  value={item.attribute}
-                  onChange={(e) => handleAttributeNameChange(index, e.target.value)}
-                  className="w-28 h-8 text-sm"
-                />
-              )}
-              <Slider
-                value={[item.value]}
-                onValueChange={(values) => !readOnly && handleValueChange(index, values[0])}
-                max={100}
-                step={1}
-                className="flex-1"
-                disabled={readOnly}
-              />
-              <span className="w-8 text-sm text-right">{item.value}</span>
-              {!readOnly && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleRemoveAttribute(index)}
-                  disabled={profile.length <= 3}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          ))}
-
-          {/* Add Attribute - only for owners */}
-          {!readOnly && (
-            <>
-              {isAddingAttribute ? (
-                <div className="flex items-center gap-2">
+        {/* Attribute Controls - toggleable */}
+        {showSliders && (
+          <div className="flex-1 space-y-3">
+            {profile.map((item, index) => (
+              <div key={index} className="flex items-center gap-3">
+                {readOnly ? (
+                  <span className="w-28 text-sm font-medium">{item.attribute}</span>
+                ) : (
                   <Input
-                    value={newAttribute}
-                    onChange={(e) => setNewAttribute(e.target.value)}
-                    placeholder={translations.newAttributeName}
-                    className="flex-1 h-8"
-                    onKeyDown={(e) => e.key === "Enter" && handleAddAttribute()}
+                    value={item.attribute}
+                    onChange={(e) => handleAttributeNameChange(index, e.target.value)}
+                    className="w-28 h-8 text-sm"
                   />
-                  <Button size="sm" onClick={handleAddAttribute}>
-                    {translations.add}
-                  </Button>
+                )}
+                <Slider
+                  value={[item.value]}
+                  onValueChange={(values) => !readOnly && handleValueChange(index, values[0])}
+                  max={100}
+                  step={1}
+                  className="flex-1"
+                  disabled={readOnly}
+                />
+                <span className="w-8 text-sm text-right">{item.value}</span>
+                {!readOnly && (
                   <Button
-                    size="sm"
                     variant="ghost"
-                    onClick={() => {
-                      setIsAddingAttribute(false);
-                      setNewAttribute("");
-                    }}
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleRemoveAttribute(index)}
+                    disabled={profile.length <= 3}
                   >
-                    {translations.cancel}
+                    <X className="h-4 w-4" />
                   </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddingAttribute(true)}
-                  className="mt-2"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {translations.addAttribute}
-                </Button>
-              )}
-            </>
-          )}
-        </div>
+                )}
+              </div>
+            ))}
+
+            {/* Add Attribute - only for owners */}
+            {!readOnly && (
+              <>
+                {isAddingAttribute ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newAttribute}
+                      onChange={(e) => setNewAttribute(e.target.value)}
+                      placeholder={translations.newAttributeName}
+                      className="flex-1 h-8"
+                      onKeyDown={(e) => e.key === "Enter" && handleAddAttribute()}
+                    />
+                    <Button size="sm" onClick={handleAddAttribute}>
+                      {translations.add}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsAddingAttribute(false);
+                        setNewAttribute("");
+                      }}
+                    >
+                      {translations.cancel}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAddingAttribute(true)}
+                    className="mt-2"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {translations.addAttribute}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Autosave indicator - only show while saving */}
-      {!readOnly && isSaving && (
-        <div className="flex justify-end pt-2 border-t">
+      {/* Toggle button and autosave indicator */}
+      <div className="flex items-center justify-between pt-2 border-t">
+        {!readOnly && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSliders(!showSliders)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            {showSliders ? translations.hideControls : translations.editProfile}
+          </Button>
+        )}
+        {readOnly && <div />}
+        {!readOnly && isSaving && (
           <span className="text-sm text-muted-foreground flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-pink-500 animate-pulse" />
             {translations.saving}
           </span>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -395,7 +427,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
 
     switch (projectType) {
       case "flavor":
-        return { ...base, fema_number: true, is_natural: true, odor: true, flavor_profile: true, pyramid_position: true };
+        return { ...base, fema_number: true, is_natural: true, odor: true, flavor_profile: true };
       case "perfume":
         return { ...base, pyramid_position: true, odor: true, olfactory_taste_notes: true, dilution: true };
       case "cosmetic":
@@ -508,7 +540,7 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
   const [searchHintOpen, setSearchHintOpen] = useState(false);
 
   // Compound/ingredient state
-  const [addIngredientType, setAddIngredientType] = useState<IngredientType>("substance");
+  const [isAddCompoundDialogOpen, setIsAddCompoundDialogOpen] = useState(false);
   const [ingredientFormulas, setIngredientFormulas] = useState<CompoundIngredient[]>(
     (flavor as { ingredientFormulas?: CompoundIngredient[] }).ingredientFormulas || []
   );
@@ -711,9 +743,10 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
 
       setIngredientFormulas((prev) => [...prev, newIngredient]);
 
-      // Clear form
+      // Clear form and close dialog
       setCompoundConcentration("");
       setCompoundUnit("g/kg");
+      setIsAddCompoundDialogOpen(false);
 
       toast.success(`Added ${compound.name} as compound ingredient`);
     } catch (error) {
@@ -1154,9 +1187,9 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
         <VariationPills formulaId={flavor.formula_id} />
       )}
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <p className="text-muted-foreground">{flavor.description}</p>
-        <div className="flex gap-2 text-sm text-muted-foreground items-center">
+        <div className="flex flex-wrap gap-2 text-sm text-muted-foreground items-center">
           <Select
             value={currentStatus}
             onValueChange={(value) => handleStatusChange(value as StatusValue)}
@@ -1184,152 +1217,62 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
           {flavor.base_unit && (
             <Badge variant="outline">{flavor.base_unit}</Badge>
           )}
+          {categoryName && (
+            <Badge variant="outline" className="gap-1">
+              <Tag className="h-3 w-3" />
+              {categoryName}
+            </Badge>
+          )}
         </div>
+
+        {/* Collapsible metadata details */}
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+              <Settings2 className="h-4 w-4" />
+              <span>{tFormula("flavorDetails")}</span>
+              <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-3">
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground">{tFormula("created")}:</span>
+                  <span className="font-medium">{new Date(flavor.created_at).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground">{tFormula("lastUpdated")}:</span>
+                  <span className="font-medium">{new Date(flavor.updated_at).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground">{tFormula("userId")}:</span>
+                  <span className="font-medium truncate max-w-[150px]" title={flavor.user_id ?? undefined}>{flavor.user_id}</span>
+                </div>
+                {!categoryName && flavor.category_id && (
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">{tFormula("category")}:</span>
+                    <span className="font-medium">{tFormula("loading")}</span>
+                  </div>
+                )}
+                {!categoryName && !flavor.category_id && (
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">{tFormula("category")}:</span>
+                    <span className="text-muted-foreground italic">{tFormula("none")}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{tFormula("flavorDetails")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div>
-                <span className="font-medium">{tFormula("created")}:</span>{" "}
-                {new Date(flavor.created_at).toLocaleString()}
-              </div>
-              <div>
-                <span className="font-medium">{tFormula("lastUpdated")}:</span>{" "}
-                {new Date(flavor.updated_at).toLocaleString()}
-              </div>
-              <div>
-                <span className="font-medium">{tFormula("userId")}:</span> {flavor.user_id}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div>
-                <span className="font-medium">{tFormula("category")}:</span>{" "}
-                {categoryName || (flavor.category_id ? tFormula("loading") : tFormula("none"))}
-              </div>
-              <div>
-                <span className="font-medium">{tFormula("baseUnit")}:</span>{" "}
-                {flavor.base_unit || tFormula("none")}
-              </div>
-              <div>
-                <span className="font-medium">{tFormula("version")}:</span>{" "}
-                {flavor.version !== null ? `v${flavor.version}` : tFormula("none")}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {flavor.project_type !== "cosmetic" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{tFormula("flavorProfile")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FlavorProfileChart
-              formulaId={flavor.formula_id}
-              initialProfile={flavor.flavor_profile}
-              readOnly={!isOwner}
-              translations={{
-                addAttribute: tFormula("addAttribute"),
-                newAttributeName: tFormula("newAttributeName"),
-                add: tFormula("add"),
-                cancel: tFormula("cancel"),
-                saving: tFormula("saving"),
-                saveProfile: tFormula("saveProfile"),
-                minimumAttributes: tFormula("minimumAttributes"),
-                flavorProfileSaved: tFormula("flavorProfileSaved"),
-                failedToSaveProfile: tFormula("failedToSaveProfile"),
-              }}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Olfactive Pyramid - only shown for perfume projects */}
-      {flavor.project_type === "perfume" && flavor.substances && flavor.substances.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{tFormula("olfactivePyramid") || "Olfactive Pyramid"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <OlfactivePyramid
-              substances={flavor.substances.map((s) => ({
-                substance_id: s.substance_id,
-                common_name: s.substance?.common_name || "Unknown",
-                pyramid_position: s.pyramid_position || null,
-                concentration: s.concentration,
-                unit: s.unit,
-              }))}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Cosmetic Details - only shown for cosmetic projects */}
-      {flavor.project_type === "cosmetic" && (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <CosmeticDetailsCard
-              formulaId={flavor.formula_id}
-              cosmeticProductType={flavor.cosmetic_product_type ?? null}
-              targetPh={flavor.target_ph ?? null}
-              preservativeSystem={flavor.preservative_system ?? null}
-              manufacturingNotes={flavor.manufacturing_notes ?? null}
-              isOwner={isOwner}
-            />
-            {flavor.substances && flavor.substances.length > 0 && (
-              <PhaseGroupedView
-                substances={flavor.substances.map((s) => ({
-                  substance_id: s.substance_id,
-                  common_name: s.substance?.common_name || "Unknown",
-                  concentration: s.concentration,
-                  unit: s.unit,
-                  phase: s.phase ?? null,
-                  cosmetic_role: s.substance?.cosmetic_role ?? null,
-                  inci_name: s.substance?.inci_name ?? null,
-                  hlb_value: s.substance?.hlb_value ?? null,
-                  hlb_required: s.substance?.hlb_required ?? null,
-                }))}
-                formulaId={flavor.formula_id}
-                cosmeticProductType={flavor.cosmetic_product_type ?? null}
-                isOwner={isOwner}
-                onSubstanceClick={(substanceId) => {
-                  const sub = flavor.substances?.find((s) => s.substance_id === substanceId);
-                  if (sub?.substance) handleOpenSubstanceModal(sub.substance);
-                }}
-              />
-            )}
-          </div>
-          {(flavor.cosmetic_product_type === "emulsion_ow" ||
-            flavor.cosmetic_product_type === "emulsion_wo") &&
-            flavor.substances &&
-            flavor.substances.length > 0 && (
-              <HlbCalculator
-                substances={flavor.substances.map((s) => ({
-                  substance_id: s.substance_id,
-                  common_name: s.substance?.common_name || "Unknown",
-                  concentration: s.concentration,
-                  phase: s.phase ?? null,
-                  cosmetic_role: s.substance?.cosmetic_role ?? null,
-                  hlb_value: s.substance?.hlb_value ?? null,
-                  hlb_required: s.substance?.hlb_required ?? null,
-                }))}
-              />
-            )}
-        </>
-      )}
-
-      <FormulaNotesCard
-        formulaId={flavor.formula_id}
-        initialNotes={flavor.notes}
-        readOnly={!isOwner}
-      />
-
+      {/* Substances Card - Moved up for prominence */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{tFormula("substances")} ({flavor.substances?.length || 0})</CardTitle>
@@ -1352,6 +1295,54 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
               <EyeOff className="h-4 w-4" />
               <span className="hidden sm:inline">{tFormula("hideOptional")}</span>
             </Button>
+            {isOwner && (
+              <Dialog open={isAddCompoundDialogOpen} onOpenChange={setIsAddCompoundDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Package className="h-4 w-4" />
+                    <span className="hidden sm:inline">{tFormula("addCompound") || "Add Compound"}</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>{tFormula("addCompound") || "Add Compound"}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">{tFormula("searchFormulas") || "Search formulas..."}</label>
+                      <CompoundSearchInput
+                        onSelect={handleAddCompound}
+                        excludeFormulaId={flavor.formula_id}
+                        placeholder={tFormula("searchFormulas") || "Search formulas..."}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">{tFormula("concentration") || "Concentration"}</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="100"
+                          className="flex-1 px-3 py-2 border rounded-md text-sm bg-background"
+                          value={compoundConcentration}
+                          onChange={(e) => setCompoundConcentration(e.target.value)}
+                        />
+                        <select
+                          className="w-24 px-2 py-2 border rounded-md text-sm bg-background"
+                          value={compoundUnit}
+                          onChange={(e) => setCompoundUnit(e.target.value)}
+                        >
+                          <option value="g/kg">g/kg</option>
+                          <option value="%(v/v)">%</option>
+                          <option value="g/L">g/L</option>
+                          <option value="mL/L">mL/L</option>
+                          <option value="ppm">ppm</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="ml-auto">
@@ -1452,61 +1443,38 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                       )}
                       {visibleColumns.phase && (
                         <TableCell>
-                          {isOwner ? (
-                            <Select
-                              value={substance.phase ?? "unassigned"}
-                              onValueChange={(val) => handleSetPhase(substance.substance_id, val === "unassigned" ? null : val)}
-                            >
-                              <SelectTrigger className="w-[130px] h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="unassigned">{tCosmetics("unassigned")}</SelectItem>
-                                {COSMETIC_PHASE_OPTIONS.map((p) => (
-                                  <SelectItem key={p.value} value={p.value}>
-                                    {tCosmetics(p.value === "cool_down" ? "coolDownPhase" : `${p.value}Phase`)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            substance.phase ? (
-                              <Badge
-                                variant="outline"
-                                className={`text-xs ${COSMETIC_PHASE_COLORS[substance.phase as CosmeticPhaseValue]?.text || ""} ${COSMETIC_PHASE_COLORS[substance.phase as CosmeticPhaseValue]?.bg || ""}`}
-                              >
-                                {tCosmetics(substance.phase === "cool_down" ? "coolDownPhase" : `${substance.phase}Phase`)}
-                              </Badge>
-                            ) : <span className="text-muted-foreground">-</span>
-                          )}
+                          <PillSelect
+                            value={substance.phase}
+                            options={COSMETIC_PHASE_OPTIONS.map((p) => ({
+                              value: p.value,
+                              label: tCosmetics(p.value === "cool_down" ? "coolDownPhase" : `${p.value}Phase`),
+                            }))}
+                            onChange={(val) => handleSetPhase(substance.substance_id, val)}
+                            unassignedLabel={tCosmetics("unassigned")}
+                            disabled={!isOwner}
+                            getOptionClassName={(value) => {
+                              const colors = COSMETIC_PHASE_COLORS[value as CosmeticPhaseValue];
+                              return colors ? `${colors.bg} ${colors.text}` : "";
+                            }}
+                          />
                         </TableCell>
                       )}
                       {visibleColumns.pyramid_position && (
                         <TableCell>
-                          {isOwner ? (
-                            <Select
-                              value={substance.pyramid_position ?? "unassigned"}
-                              onValueChange={(val) => handleSetPyramidPosition(substance.substance_id, val === "unassigned" ? null : val as "top" | "heart" | "base")}
-                            >
-                              <SelectTrigger className="w-[120px] h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="unassigned">-</SelectItem>
-                                {PYRAMID_POSITION_OPTIONS.map((opt) => (
-                                  <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            substance.pyramid_position ? (
-                              <Badge variant="outline" className="text-xs">
-                                {PYRAMID_POSITION_OPTIONS.find(o => o.value === substance.pyramid_position)?.label || substance.pyramid_position}
-                              </Badge>
-                            ) : "-"
-                          )}
+                          <PillSelect
+                            value={substance.pyramid_position}
+                            options={PYRAMID_POSITION_OPTIONS}
+                            onChange={(val) => handleSetPyramidPosition(substance.substance_id, val as "top" | "heart" | "base" | null)}
+                            disabled={!isOwner}
+                            getOptionClassName={(value) => {
+                              const colors: Record<string, string> = {
+                                top: "bg-sky-100 text-sky-700",
+                                heart: "bg-rose-100 text-rose-700",
+                                base: "bg-amber-100 text-amber-700",
+                              };
+                              return colors[value] || "";
+                            }}
+                          />
                         </TableCell>
                       )}
                       {visibleColumns.concentration && (
@@ -1796,26 +1764,17 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                     />
                   ))}
 
-                  {/* Add ingredient row - only for owners */}
+                  {/* Add substance row - only for owners */}
                   {isOwner && (
                     <TableRow className="bg-muted/30">
                       {visibleColumns.fema_number && (
-                        <TableCell>
-                          <IngredientTypeToggle
-                            value={addIngredientType}
-                            onChange={setAddIngredientType}
-                          />
+                        <TableCell className="text-muted-foreground text-sm">
+                          <Plus className="h-4 w-4" />
                         </TableCell>
                       )}
                       {visibleColumns.common_name && (
                         <TableCell className="relative">
-                          {addIngredientType === "compound" ? (
-                            <CompoundSearchInput
-                              onSelect={handleAddCompound}
-                              excludeFormulaId={flavor.formula_id}
-                              placeholder={tFormula("searchFormulas") || "Search formulas..."}
-                            />
-                          ) : selectedSubstance ? (
+                          {selectedSubstance ? (
                             <div className="flex items-center gap-1">
                               <span className="text-sm">{selectedSubstance.common_name}</span>
                               <button
@@ -1876,50 +1835,27 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                       )}
                       {visibleColumns.concentration && (
                         <TableCell>
-                          {addIngredientType === "compound" ? (
-                            <div className="flex gap-1">
-                              <input
-                                type="text"
-                                placeholder="100"
-                                className="w-16 px-2 py-1 border rounded text-sm bg-background"
-                                value={compoundConcentration}
-                                onChange={(e) => setCompoundConcentration(e.target.value)}
-                              />
-                              <select
-                                className="w-20 px-1 py-1 border rounded text-sm bg-background"
-                                value={compoundUnit}
-                                onChange={(e) => setCompoundUnit(e.target.value)}
-                              >
-                                <option value="g/kg">g/kg</option>
-                                <option value="%(v/v)">%</option>
-                                <option value="g/L">g/L</option>
-                                <option value="mL/L">mL/L</option>
-                                <option value="ppm">ppm</option>
-                              </select>
-                            </div>
-                          ) : (
-                            <div className="flex gap-1">
-                              <input
-                                type="text"
-                                placeholder="0.5"
-                                className="w-16 px-2 py-1 border rounded text-sm bg-background"
-                                value={concentration}
-                                onChange={(e) => setConcentration(e.target.value)}
-                              />
-                              <select
-                                className="w-20 px-1 py-1 border rounded text-sm bg-background"
-                                value={unit}
-                                onChange={(e) => setUnit(e.target.value)}
-                              >
-                                <option value="">—</option>
-                                <option value="%(v/v)">%</option>
-                                <option value="g/kg">g/kg</option>
-                                <option value="g/L">g/L</option>
-                                <option value="mL/L">mL/L</option>
-                                <option value="ppm">ppm</option>
-                              </select>
-                            </div>
-                          )}
+                          <div className="flex gap-1">
+                            <input
+                              type="text"
+                              placeholder="0.5"
+                              className="w-16 px-2 py-1 border rounded text-sm bg-background"
+                              value={concentration}
+                              onChange={(e) => setConcentration(e.target.value)}
+                            />
+                            <select
+                              className="w-20 px-1 py-1 border rounded text-sm bg-background"
+                              value={unit}
+                              onChange={(e) => setUnit(e.target.value)}
+                            >
+                              <option value="">—</option>
+                              <option value="%(v/v)">%</option>
+                              <option value="g/kg">g/kg</option>
+                              <option value="g/L">g/L</option>
+                              <option value="mL/L">mL/L</option>
+                              <option value="ppm">ppm</option>
+                            </select>
+                          </div>
                         </TableCell>
                       )}
                       {visibleColumns.inci_name && (
@@ -2048,28 +1984,26 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
                         </TableCell>
                       )}
                       <TableCell className="text-right">
-                        {addIngredientType === "substance" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleAddSubstance}
-                            disabled={!femaNumberToAdd}
-                            className={`${
-                              !femaNumberToAdd
-                                ? "text-muted-foreground"
-                                : "text-green-600 hover:text-green-700 hover:bg-green-50"
-                            }`}
-                            title={!femaNumberToAdd ? tFormula("selectSubstanceFirst") : tFormula("addSubstance")}
-                          >
-                            <Plus className="h-4 w-4 mr-1" />
-                            {tFormula("add")}
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleAddSubstance}
+                          disabled={!femaNumberToAdd}
+                          className={`${
+                            !femaNumberToAdd
+                              ? "text-muted-foreground"
+                              : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                          }`}
+                          title={!femaNumberToAdd ? tFormula("selectSubstanceFirst") : tFormula("addSubstance")}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          {tFormula("add")}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   )}
-                  {/* Search results as table rows - only for substance mode */}
-                  {isOwner && addIngredientType === "substance" && showSearchResults && searchResults.length > 0 && (
+                  {/* Search results as table rows */}
+                  {isOwner && showSearchResults && searchResults.length > 0 && (
                     searchResults.map((substance, index) => (
                       <TableRow
                         key={`search-${substance.substance_id}`}
@@ -2164,6 +2098,125 @@ function FlavorContent({ flavor, setFlavor, isOwner, isSharedWithMe, sharedBy }:
           )}
         </CardContent>
       </Card>
+
+      {/* Olfactive Pyramid - only shown for perfume projects */}
+      {flavor.project_type === "perfume" && flavor.substances && flavor.substances.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{tFormula("olfactivePyramid") || "Olfactive Pyramid"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <OlfactivePyramid
+              substances={flavor.substances.map((s) => ({
+                substance_id: s.substance_id,
+                common_name: s.substance?.common_name || "Unknown",
+                pyramid_position: s.pyramid_position || null,
+                concentration: s.concentration,
+                unit: s.unit,
+              }))}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cosmetic Details - only shown for cosmetic projects */}
+      {flavor.project_type === "cosmetic" && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <CosmeticDetailsCard
+              formulaId={flavor.formula_id}
+              cosmeticProductType={flavor.cosmetic_product_type ?? null}
+              targetPh={flavor.target_ph ?? null}
+              preservativeSystem={flavor.preservative_system ?? null}
+              manufacturingNotes={flavor.manufacturing_notes ?? null}
+              isOwner={isOwner}
+            />
+            {flavor.substances && flavor.substances.length > 0 && (
+              <PhaseGroupedView
+                substances={flavor.substances.map((s) => ({
+                  substance_id: s.substance_id,
+                  common_name: s.substance?.common_name || "Unknown",
+                  concentration: s.concentration,
+                  unit: s.unit,
+                  phase: s.phase ?? null,
+                  cosmetic_role: s.substance?.cosmetic_role ?? null,
+                  inci_name: s.substance?.inci_name ?? null,
+                  hlb_value: s.substance?.hlb_value ?? null,
+                  hlb_required: s.substance?.hlb_required ?? null,
+                }))}
+                formulaId={flavor.formula_id}
+                cosmeticProductType={flavor.cosmetic_product_type ?? null}
+                isOwner={isOwner}
+                onSubstanceClick={(substanceId) => {
+                  const sub = flavor.substances?.find((s) => s.substance_id === substanceId);
+                  if (sub?.substance) handleOpenSubstanceModal(sub.substance);
+                }}
+              />
+            )}
+          </div>
+          {(flavor.cosmetic_product_type === "emulsion_ow" ||
+            flavor.cosmetic_product_type === "emulsion_wo") &&
+            flavor.substances &&
+            flavor.substances.length > 0 && (
+              <HlbCalculator
+                substances={flavor.substances.map((s) => ({
+                  substance_id: s.substance_id,
+                  common_name: s.substance?.common_name || "Unknown",
+                  concentration: s.concentration,
+                  phase: s.phase ?? null,
+                  cosmetic_role: s.substance?.cosmetic_role ?? null,
+                  hlb_value: s.substance?.hlb_value ?? null,
+                  hlb_required: s.substance?.hlb_required ?? null,
+                }))}
+              />
+            )}
+        </>
+      )}
+
+      {/* Flavor Profile and Notes - side by side grid for non-cosmetic */}
+      {flavor.project_type !== "cosmetic" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{tFormula("flavorProfile")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FlavorProfileChart
+                formulaId={flavor.formula_id}
+                initialProfile={flavor.flavor_profile}
+                readOnly={!isOwner}
+                translations={{
+                  addAttribute: tFormula("addAttribute"),
+                  newAttributeName: tFormula("newAttributeName"),
+                  add: tFormula("add"),
+                  cancel: tFormula("cancel"),
+                  saving: tFormula("saving"),
+                  saveProfile: tFormula("saveProfile"),
+                  minimumAttributes: tFormula("minimumAttributes"),
+                  flavorProfileSaved: tFormula("flavorProfileSaved"),
+                  failedToSaveProfile: tFormula("failedToSaveProfile"),
+                  editProfile: tFormula("editProfile"),
+                  hideControls: tFormula("hideControls"),
+                }}
+              />
+            </CardContent>
+          </Card>
+          <FormulaNotesCard
+            formulaId={flavor.formula_id}
+            initialNotes={flavor.notes}
+            readOnly={!isOwner}
+          />
+        </div>
+      )}
+
+      {/* Notes card for cosmetic projects - full width */}
+      {flavor.project_type === "cosmetic" && (
+        <FormulaNotesCard
+          formulaId={flavor.formula_id}
+          initialNotes={flavor.notes}
+          readOnly={!isOwner}
+        />
+      )}
 
       {/* Substance Details Modal */}
       <SubstanceDetailsModal

@@ -1253,7 +1253,7 @@
 		"userTyping": "Typing..."
 	  },
 	  "Onboarding": {
-		"welcomeTitle": "Welcome to Flaveur!",
+		"welcomeTitle": "Welcome to Oumamie!",
 		"welcomeSubtitle": "You've joined a community of flavor scientists, students, and enthusiasts.",
 		"welcomeBody": "Let's take a quick tour of the key features.",
 		"featureFormulasTitle": "Create Flavour Formulas",
@@ -1387,6 +1387,8 @@
 		"minimumAttributes": "Minimum 3 attributes required",
 		"flavorProfileSaved": "Flavor profile saved",
 		"failedToSaveProfile": "Failed to save flavor profile",
+		"editProfile": "Edit Profile",
+		"hideControls": "Hide Controls",
 		"showAll": "Show All",
 		"hideOptional": "Hide Optional",
 		"columns": "Columns",
@@ -1451,7 +1453,9 @@
 		"pyramidPositionSet": "Set as {position}",
 		"pyramidPositionCleared": "Pyramid position cleared",
 		"failedToSetPyramidPosition": "Failed to set pyramid position",
-		"failedToUpdatePhase": "Failed to update phase"
+		"failedToUpdatePhase": "Failed to update phase",
+		"addCompound": "Add Compound",
+		"compound": "Compound"
 	  },
 	  "Community": {
 		"title": "Community",

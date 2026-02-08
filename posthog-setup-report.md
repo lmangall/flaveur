@@ -1,6 +1,6 @@
 # PostHog post-wizard report
 
-The wizard has completed a deep integration of PostHog into your Oumamie/Flaveur Next.js application. This integration includes:
+The wizard has completed a deep integration of PostHog into your Oumamie Next.js application. This integration includes:
 
 - **Client-side tracking** via `instrumentation-client.ts` (Next.js 15.3+ approach)
 - **Server-side tracking** via `posthog-node` for server actions

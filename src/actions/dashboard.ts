@@ -4,7 +4,7 @@ import { getUserId, getSession } from "@/lib/auth-server";
 import { db } from "@/lib/db";
 import { formula, substance, category, substance_formula, users } from "@/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
-import { DEMO_USER } from "@/constants/samples";
+import { DEMO_USER, DEMO_USERS } from "@/constants/samples";
 
 export interface DashboardStats {
   totalFlavors: number;
@@ -189,11 +189,15 @@ export async function getCommunityFlavors(
 ): Promise<CommunityFlavor[]> {
   const userId = await getUserId();
 
-  // Build WHERE conditions
+  // Get demo user IDs
+  const demoUserIds = DEMO_USERS.map((u) => u.user_id);
+
+  // Build WHERE conditions - only show formulas from demo users
   const conditions = [
     sql`f.is_public = true`,
     sql`f.user_id != ${userId}`,
     sql`f.status = 'published'`,
+    sql`f.user_id = ANY(${demoUserIds})`,
   ];
 
   if (filters?.categoryId) {

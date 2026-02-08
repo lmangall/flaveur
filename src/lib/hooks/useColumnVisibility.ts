@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const STORAGE_KEY_PREFIX = "flaveur-column-visibility-";
+const STORAGE_KEY_PREFIX = "oumamie-column-visibility-";
 
 /**
  * Hook to persist column visibility preferences in localStorage.

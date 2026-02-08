@@ -1248,7 +1248,7 @@
 		"userTyping": "En train d'écrire..."
 	  },
 	  "Onboarding": {
-		"welcomeTitle": "Bienvenue sur Flaveur !",
+		"welcomeTitle": "Bienvenue sur Oumamie !",
 		"welcomeSubtitle": "Vous rejoignez une communauté de scientifiques, étudiants et passionnés des arômes.",
 		"welcomeBody": "Découvrons ensemble les fonctionnalités clés.",
 		"featureFormulasTitle": "Créez des formules d'arômes",
@@ -1382,6 +1382,8 @@
 		"minimumAttributes": "Minimum 3 attributs requis",
 		"flavorProfileSaved": "Profil aromatique enregistré",
 		"failedToSaveProfile": "Échec de l'enregistrement du profil",
+		"editProfile": "Modifier le profil",
+		"hideControls": "Masquer les contrôles",
 		"showAll": "Tout afficher",
 		"hideOptional": "Masquer optionnels",
 		"columns": "Colonnes",
@@ -1446,7 +1448,9 @@
 		"pyramidPositionSet": "Défini comme {position}",
 		"pyramidPositionCleared": "Position dans la pyramide effacée",
 		"failedToSetPyramidPosition": "Échec de la définition de la position",
-		"failedToUpdatePhase": "Échec de la mise à jour de la phase"
+		"failedToUpdatePhase": "Échec de la mise à jour de la phase",
+		"addCompound": "Ajouter un Composé",
+		"compound": "Composé"
 	  },
 	  "Community": {
 		"title": "Communauté",
