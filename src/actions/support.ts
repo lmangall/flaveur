@@ -6,6 +6,7 @@ import { eq, and, desc, sql, asc } from "drizzle-orm";
 import { getSession } from "@/lib/auth-server";
 import { requireAdmin } from "@/lib/admin";
 import { sendSupportNotification } from "@/lib/email/resend";
+import { pusherServer, getConversationChannel, PUSHER_EVENTS } from "@/lib/pusher";
 import { z } from "zod";
 
 // ============================================
@@ -255,6 +256,17 @@ export async function sendSupportMessage(input: {
       has_unread_admin: senderType !== "admin",
     })
     .where(eq(support_conversation.conversation_id, conversationId));
+
+  // Trigger Pusher event for real-time updates
+  try {
+    await pusherServer.trigger(
+      getConversationChannel(conversationId),
+      PUSHER_EVENTS.NEW_MESSAGE,
+      newMessage as SupportMessage
+    );
+  } catch (pusherError) {
+    console.error("[sendSupportMessage] Failed to trigger Pusher event:", pusherError);
+  }
 
   // Send email notification to admin for new user/guest messages
   if (senderType !== "admin") {
@@ -624,6 +636,18 @@ export async function updateTypingStatus(
       .where(eq(support_conversation.conversation_id, conversationId));
   } else {
     return { success: false, error: "Unauthorized" };
+  }
+
+  // Trigger Pusher typing event
+  try {
+    const eventName = isTyping ? PUSHER_EVENTS.TYPING_START : PUSHER_EVENTS.TYPING_STOP;
+    await pusherServer.trigger(
+      getConversationChannel(conversationId),
+      eventName,
+      { isAdmin }
+    );
+  } catch (pusherError) {
+    console.error("[updateTypingStatus] Failed to trigger Pusher event:", pusherError);
   }
 
   return { success: true };

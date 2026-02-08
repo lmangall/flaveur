@@ -7,13 +7,17 @@ import {
   getConversationByGuestSession,
   getMyConversation,
   sendSupportMessage,
-  pollMessagesAndTyping,
   updateTypingStatus,
   type SupportMessage,
 } from "@/actions/support";
+import {
+  getPusherClient,
+  getConversationChannel,
+  PUSHER_EVENTS,
+} from "@/lib/pusher-client";
+import type { Channel } from "pusher-js";
 
 const GUEST_SESSION_KEY = "oumamie_support_session";
-const POLL_INTERVAL = 2000; // 2 seconds for responsive chat
 
 interface GuestSession {
   sessionId: string;
@@ -32,11 +36,8 @@ export function useSupportChat() {
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [adminIsTyping, setAdminIsTyping] = useState(false);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<Channel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Get the last message ID for polling
-  const lastMessageId = messages.length > 0 ? messages[messages.length - 1].message_id : 0;
 
   // Initialize conversation - only loads existing conversations, does NOT create new ones
   const initialize = useCallback(async () => {
@@ -226,8 +227,8 @@ export function useSupportChat() {
         });
 
         if (result.success && result.message) {
+          // Message will arrive via Pusher, but also add locally for instant feedback
           setMessages((prev) => {
-            // Prevent duplicates by checking if message already exists
             if (prev.some((m) => m.message_id === result.message!.message_id)) {
               return prev;
             }
@@ -248,34 +249,6 @@ export function useSupportChat() {
     },
     [conversationId, session?.user, guestSessionId, initUserConversation]
   );
-
-  // Poll for new messages and typing status (combined in one API call)
-  const poll = useCallback(async () => {
-    if (!conversationId) return;
-
-    try {
-      const result = await pollMessagesAndTyping(
-        conversationId,
-        lastMessageId,
-        guestSessionId || undefined
-      );
-
-      if (result.success) {
-        if (result.messages && result.messages.length > 0) {
-          setMessages((prev) => {
-            // Prevent duplicates by filtering out messages that already exist
-            const existingIds = new Set(prev.map((m) => m.message_id));
-            const newMessages = result.messages!.filter((m) => !existingIds.has(m.message_id));
-            if (newMessages.length === 0) return prev;
-            return [...prev, ...newMessages];
-          });
-        }
-        setAdminIsTyping(result.isTyping || false);
-      }
-    } catch (err) {
-      console.error("[useSupportChat] Error polling:", err);
-    }
-  }, [conversationId, lastMessageId, guestSessionId]);
 
   // Send typing indicator (debounced)
   const setTyping = useCallback(
@@ -305,23 +278,52 @@ export function useSupportChat() {
     [conversationId, guestSessionId]
   );
 
-  // Start/stop polling when conversation exists
+  // Subscribe to Pusher channel when conversation exists
   useEffect(() => {
-    if (conversationId) {
-      pollIntervalRef.current = setInterval(poll, POLL_INTERVAL);
-    }
+    if (!conversationId) return;
 
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
+    const pusher = getPusherClient();
+    const channelName = getConversationChannel(conversationId);
+
+    // Subscribe to the private channel
+    const channel = pusher.subscribe(channelName);
+    channelRef.current = channel;
+
+    // Handle new messages
+    channel.bind(PUSHER_EVENTS.NEW_MESSAGE, (message: SupportMessage) => {
+      setMessages((prev) => {
+        // Prevent duplicates
+        if (prev.some((m) => m.message_id === message.message_id)) {
+          return prev;
+        }
+        return [...prev, message];
+      });
+    });
+
+    // Handle typing events
+    channel.bind(PUSHER_EVENTS.TYPING_START, (data: { isAdmin: boolean }) => {
+      if (data.isAdmin) {
+        setAdminIsTyping(true);
       }
+    });
+
+    channel.bind(PUSHER_EVENTS.TYPING_STOP, (data: { isAdmin: boolean }) => {
+      if (data.isAdmin) {
+        setAdminIsTyping(false);
+      }
+    });
+
+    // Cleanup on unmount or conversation change
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(channelName);
+      channelRef.current = null;
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
       }
     };
-  }, [conversationId, poll]);
+  }, [conversationId]);
 
   // Clear guest session (for testing/logout)
   const clearSession = useCallback(() => {

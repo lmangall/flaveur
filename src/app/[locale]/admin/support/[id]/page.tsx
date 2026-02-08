@@ -18,16 +18,20 @@ import {
   getAdminConversationDetail,
   sendAdminReply,
   updateConversationStatus,
-  pollMessages,
   updateTypingStatus,
-  getTypingStatus,
   type SupportMessage,
 } from "@/actions/support";
+import {
+  getPusherClient,
+  getConversationChannel,
+  PUSHER_EVENTS,
+} from "@/lib/pusher-client";
 import { Send, User, Shield, ArrowLeft, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { toast } from "sonner";
+import type { Channel } from "pusher-js";
 
 export default function AdminConversationDetailPage() {
   const params = useParams();
@@ -52,7 +56,7 @@ export default function AdminConversationDetailPage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [userIsTyping, setUserIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<Channel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load conversation
@@ -80,36 +84,48 @@ export default function AdminConversationDetailPage() {
     }
   }, [messages]);
 
-  // Poll for new messages and typing status
+  // Subscribe to Pusher for real-time updates
   useEffect(() => {
     if (!conversationId) return;
 
-    const lastMessageId = messages.length > 0 ? messages[messages.length - 1].message_id : 0;
+    const pusher = getPusherClient();
+    const channelName = getConversationChannel(conversationId);
+    const channel = pusher.subscribe(channelName);
+    channelRef.current = channel;
 
-    pollIntervalRef.current = setInterval(async () => {
-      const [messagesResult, typingResult] = await Promise.all([
-        lastMessageId > 0 ? pollMessages(conversationId, lastMessageId) : Promise.resolve({ success: true, messages: [] }),
-        getTypingStatus(conversationId),
-      ]);
+    // Handle new messages
+    channel.bind(PUSHER_EVENTS.NEW_MESSAGE, (message: SupportMessage) => {
+      setMessages((prev) => {
+        // Prevent duplicates
+        if (prev.some((m) => m.message_id === message.message_id)) {
+          return prev;
+        }
+        return [...prev, message];
+      });
+    });
 
-      if (messagesResult.success && messagesResult.messages && messagesResult.messages.length > 0) {
-        setMessages((prev) => [...prev, ...messagesResult.messages!]);
+    // Handle user typing events
+    channel.bind(PUSHER_EVENTS.TYPING_START, (data: { isAdmin: boolean }) => {
+      if (!data.isAdmin) {
+        setUserIsTyping(true);
       }
+    });
 
-      if (typingResult.success) {
-        setUserIsTyping(typingResult.isTyping || false);
+    channel.bind(PUSHER_EVENTS.TYPING_STOP, (data: { isAdmin: boolean }) => {
+      if (!data.isAdmin) {
+        setUserIsTyping(false);
       }
-    }, 3000);
+    });
 
     return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
+      channel.unbind_all();
+      pusher.unsubscribe(channelName);
+      channelRef.current = null;
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [conversationId, messages.length]);
+  }, [conversationId]);
 
   // Send admin typing status
   function handleReplyChange(value: string) {
@@ -139,7 +155,13 @@ export default function AdminConversationDetailPage() {
     setIsSending(true);
     const result = await sendAdminReply(conversationId, replyContent.trim());
     if (result.success && result.message) {
-      setMessages((prev) => [...prev, result.message]);
+      // Message will arrive via Pusher, but add locally for instant feedback
+      setMessages((prev) => {
+        if (prev.some((m) => m.message_id === result.message!.message_id)) {
+          return prev;
+        }
+        return [...prev, result.message!];
+      });
       setReplyContent("");
       toast.success("Reply sent");
     } else {
@@ -248,7 +270,7 @@ export default function AdminConversationDetailPage() {
                     className={cn(
                       "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
                       msg.sender_type === "admin"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-pink text-white"
                         : "bg-muted"
                     )}
                   >
@@ -262,7 +284,7 @@ export default function AdminConversationDetailPage() {
                     className={cn(
                       "max-w-[70%] rounded-lg p-3",
                       msg.sender_type === "admin"
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-pink text-white"
                         : "bg-muted"
                     )}
                   >
@@ -271,7 +293,7 @@ export default function AdminConversationDetailPage() {
                       className={cn(
                         "text-xs mt-2",
                         msg.sender_type === "admin"
-                          ? "text-primary-foreground/70"
+                          ? "text-white/70"
                           : "text-muted-foreground"
                       )}
                     >
@@ -319,7 +341,7 @@ export default function AdminConversationDetailPage() {
             <Button
               onClick={handleSendReply}
               disabled={isSending || !replyContent.trim()}
-              className="self-end"
+              className="self-end bg-pink hover:bg-pink/90"
             >
               {isSending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
