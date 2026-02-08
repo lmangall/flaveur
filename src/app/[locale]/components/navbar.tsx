@@ -37,7 +37,7 @@ const publicRoutes = [
 ];
 
 // Protected routes (shown with lock icon when logged out)
-const protectedRoutes = ["/formulas", "/workspaces", "/substances", "/learn", "/molecules", "/calculator", "/dashboard"];
+const protectedRoutes = ["/formulas", "/workspaces", "/substances", "/learn", "/molecules", "/calculator", "/dashboard", "/faq"];
 
 export default function Navbar() {
   const locale = useLocale();

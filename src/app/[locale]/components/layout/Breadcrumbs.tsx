@@ -28,6 +28,7 @@ const ROUTE_LABELS: Record<string, string> = {
   submit: "Submit",
   invite: "Invite",
   ingredients: "Ingredients",
+  faq: "FAQ",
 };
 
 interface BreadcrumbItem {
