@@ -17,6 +17,8 @@ export function SupportChatWidget() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [messageInput, setMessageInput] = useState("");
   const [showPopup, setShowPopup] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+  const [lastSeenCount, setLastSeenCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Show popup after 3 seconds if chat hasn't been opened
@@ -62,6 +64,22 @@ export function SupportChatWidget() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Track unread admin messages when chat is closed or minimized
+  useEffect(() => {
+    const adminMessages = messages.filter((m) => m.sender_type === "admin");
+    const newAdminCount = adminMessages.length;
+
+    if (newAdminCount > lastSeenCount && (!isOpen || isMinimized)) {
+      setHasUnread(true);
+    }
+
+    // Update seen count when chat is open and not minimized
+    if (isOpen && !isMinimized) {
+      setLastSeenCount(newAdminCount);
+      setHasUnread(false);
+    }
+  }, [messages, isOpen, isMinimized, lastSeenCount]);
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() || isSending) return;
@@ -115,14 +133,29 @@ export function SupportChatWidget() {
               <p className="text-sm">{t("popupMessage")}</p>
             </div>
           )}
-          <Button
-            onClick={() => setIsOpen(true)}
-            className="h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform bg-pink hover:bg-pink/90 text-white"
-            size="icon"
-            aria-label={t("openChat")}
-          >
-            <MessageCircle className="h-6 w-6" />
-          </Button>
+          <div className="relative">
+            {hasUnread && (
+              <>
+                {/* Pulsing ring effect */}
+                <span className="absolute inset-0 rounded-full bg-pink/50 animate-ping" />
+                {/* Notification dot */}
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-white border-2 border-pink flex items-center justify-center">
+                  <span className="h-2 w-2 rounded-full bg-pink" />
+                </span>
+              </>
+            )}
+            <Button
+              onClick={() => setIsOpen(true)}
+              className={cn(
+                "h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform bg-pink hover:bg-pink/90 text-white relative",
+                hasUnread && "shadow-pink/50 shadow-xl"
+              )}
+              size="icon"
+              aria-label={t("openChat")}
+            >
+              <MessageCircle className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -135,8 +168,16 @@ export function SupportChatWidget() {
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-pink text-white shrink-0">
-            <span className="font-semibold">{t("title")}</span>
+          <div className={cn(
+            "flex items-center justify-between p-4 border-b bg-pink text-white shrink-0",
+            hasUnread && isMinimized && "animate-pulse"
+          )}>
+            <span className="font-semibold flex items-center gap-2">
+              {t("title")}
+              {hasUnread && isMinimized && (
+                <span className="h-2 w-2 rounded-full bg-white animate-bounce" />
+              )}
+            </span>
             <div className="flex gap-1">
               <Button
                 variant="ghost"

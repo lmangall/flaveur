@@ -7,14 +7,13 @@ import {
   getConversationByGuestSession,
   getMyConversation,
   sendSupportMessage,
-  pollMessages,
+  pollMessagesAndTyping,
   updateTypingStatus,
-  getTypingStatus,
   type SupportMessage,
 } from "@/actions/support";
 
 const GUEST_SESSION_KEY = "oumamie_support_session";
-const POLL_INTERVAL = 5000; // 5 seconds
+const POLL_INTERVAL = 2000; // 2 seconds for responsive chat
 
 interface GuestSession {
   sessionId: string;

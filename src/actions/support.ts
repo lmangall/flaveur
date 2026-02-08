@@ -479,6 +479,90 @@ export async function pollMessages(
   };
 }
 
+// Combined polling endpoint - gets messages AND typing status in one call
+export async function pollMessagesAndTyping(
+  conversationId: number,
+  lastMessageId: number,
+  guestSessionId?: string
+) {
+  const session = await getSession();
+
+  // Get conversation with typing status in one query
+  const conversation = await db
+    .select({
+      conversation_id: support_conversation.conversation_id,
+      user_id: support_conversation.user_id,
+      guest_session_id: support_conversation.guest_session_id,
+      admin_typing_at: support_conversation.admin_typing_at,
+      user_typing_at: support_conversation.user_typing_at,
+    })
+    .from(support_conversation)
+    .where(eq(support_conversation.conversation_id, conversationId))
+    .limit(1);
+
+  if (conversation.length === 0) {
+    return { success: false, error: "Conversation not found" };
+  }
+
+  const conv = conversation[0];
+
+  // Check authorization
+  let isAdmin = false;
+  if (conv.user_id) {
+    if (!session?.user || conv.user_id !== session.user.id) {
+      try {
+        await requireAdmin();
+        isAdmin = true;
+      } catch {
+        return { success: false, error: "Unauthorized" };
+      }
+    }
+  } else if (conv.guest_session_id) {
+    if (guestSessionId !== conv.guest_session_id) {
+      try {
+        await requireAdmin();
+        isAdmin = true;
+      } catch {
+        return { success: false, error: "Unauthorized" };
+      }
+    }
+  }
+
+  // Get new messages
+  const newMessages = await db
+    .select()
+    .from(support_message)
+    .where(
+      and(
+        eq(support_message.conversation_id, conversationId),
+        sql`${support_message.message_id} > ${lastMessageId}`
+      )
+    )
+    .orderBy(asc(support_message.created_at));
+
+  // Determine typing status
+  const now = Date.now();
+  let isTyping = false;
+
+  if (isAdmin) {
+    if (conv.user_typing_at) {
+      const typingTime = new Date(conv.user_typing_at).getTime();
+      isTyping = now - typingTime < TYPING_TIMEOUT_MS;
+    }
+  } else {
+    if (conv.admin_typing_at) {
+      const typingTime = new Date(conv.admin_typing_at).getTime();
+      isTyping = now - typingTime < TYPING_TIMEOUT_MS;
+    }
+  }
+
+  return {
+    success: true,
+    messages: newMessages as SupportMessage[],
+    isTyping,
+  };
+}
+
 // ============================================
 // TYPING INDICATOR ACTIONS
 // ============================================
