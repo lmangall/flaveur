@@ -109,10 +109,17 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center p-4 overflow-hidden">
+      {/* Pink gradient background */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-pink-50 via-white to-pink-100/50 dark:from-pink-950/20 dark:via-background dark:to-pink-900/10" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-pink-200/40 dark:bg-pink-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-pink-300/30 dark:bg-pink-600/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+      </div>
+
+      <Card className="w-full max-w-md border-pink-200/50 dark:border-pink-500/20 shadow-lg shadow-pink-100/50 dark:shadow-pink-900/20">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-pink-500 dark:from-pink-400 dark:to-pink-300 bg-clip-text text-transparent">Sign in</CardTitle>
           <CardDescription>
             Choose your preferred sign in method
           </CardDescription>
@@ -174,7 +181,11 @@ export default function SignInPage() {
                 disabled={isLoading || isGoogleLoading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-500 text-white"
+              disabled={isLoading || isGoogleLoading}
+            >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign in with Email
             </Button>
@@ -185,7 +196,7 @@ export default function SignInPage() {
             Don&apos;t have an account?{" "}
             <Link
               href={`/${locale}/auth/sign-up`}
-              className="text-primary hover:underline"
+              className="text-pink-600 dark:text-pink-400 hover:underline font-medium"
             >
               Sign up
             </Link>
